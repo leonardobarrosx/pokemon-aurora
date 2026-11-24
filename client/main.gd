@@ -2,7 +2,9 @@ extends Node2D
 
 const AREAS={"casa":"Meu cantinho","vila":"Vila Alvorada","rota":"Trilha das Folhas","jardim":"Jardim de berries","mina":"Mina da Lua","ginasio":"Ginásio Raiz","safari":"Reserva Orvalho","lago":"Lago Celeste"}
 const QUESTS=["Converse com Íris na vila","Capture um parceiro na rota","Plante, regue e colha uma berry","Encontre um cristal na mina","Vença Flora no Ginásio Raiz"]
-const ACCENT=Color("a9d8ad")
+const ACCENT=Color("64d9e5")
+var hud:Control
+var previous_focus:Control
 var data:Dictionary={}
 var token=""
 var endpoint="http://127.0.0.1:8787"
@@ -20,17 +22,13 @@ var placing=""
 var view:Node2D
 var ui:Control
 var overlay:Control
-var sidebar:Control
 var status:Label
-var header_info:Label
 var overlay_body:VBoxContainer
 var name_input:LineEdit
 var server_input:LineEdit
 var starter:int=1
 var message_input:LineEdit
 var last_notice=""
-var sidebar_signature=""
-var combat_labels:Dictionary={}
 var refresh_pending=false
 var font:SystemFont
 var preview_mode=false
@@ -50,33 +48,26 @@ func _ready():
 			if arg.begins_with("--server="):override=true
 		if not override:endpoint=saved_endpoint
 		elif saved_endpoint!=endpoint:token=""
-	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.position=Vector2(0,64);view.scale=Vector2(2,2);add_child(view)
+	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.position=Vector2(128,32);view.scale=Vector2(2,2);add_child(view)
 	ui=Control.new();ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(ui)
-	var theme=Theme.new();theme.default_font=font;theme.default_font_size=16
-	for kind in ["normal","hover","pressed","disabled","focus"]:
-		var color=Color("263b42")
-		if kind=="hover":color=Color("385650")
-		if kind=="pressed":color=Color("50705c")
-		theme.set_stylebox(kind,"Button",box(color,10))
-	theme.set_color("font_color","Button",Color("e1e9df"));theme.set_color("font_disabled_color","Button",Color("718078"))
-	theme.set_stylebox("normal","LineEdit",box(Color("172a32"),8));theme.set_color("font_color","LineEdit",Color("eaf0e4"));ui.theme=theme
-	header();sidebar=Control.new();sidebar.position=Vector2(1024,64);sidebar.size=Vector2(256,768);ui.add_child(sidebar)
+	ui.theme=preload("res://aurora_theme.gd").make(font)
+	hud=Control.new();hud.set_script(load("res://aurora_hud.gd"));hud.game=self;ui.add_child(hud)
 	http=HTTPRequest.new();http.timeout=5;add_child(http);http.request_completed.connect(received)
 	if token!="":send({"type":"poll"})
 	else:login()
 	if preview_mode:
 		get_tree().create_timer(3).timeout.connect(func(): get_viewport().get_texture().get_image().save_png("user://aurora-preview.png"))
 
-func box(color:Color,radius:int=12)->StyleBoxFlat:
-	var s=StyleBoxFlat.new();s.bg_color=color;s.set_corner_radius_all(radius);s.content_margin_left=14;s.content_margin_right=14;s.content_margin_top=10;s.content_margin_bottom=10;return s
+func box(color:Color,radius:int=4)->StyleBoxFlat:
+	return preload("res://aurora_theme.gd").surface(color,mini(radius,4))
 
-func label(parent:Node,text:String,size:int=16,color:Color=Color("e7ece2"))->Label:
+func label(parent:Node,text:String,size:int=16,color:Color=Color("edf2fa"))->Label:
 	var l=Label.new();l.text=text;l.add_theme_font_size_override("font_size",size);l.add_theme_color_override("font_color",color);parent.add_child(l);return l
 
 func btn(parent:Node,text:String,callback:Callable,width:float=0)->Button:
 	var b=Button.new();b.text=text;b.custom_minimum_size=Vector2(width,40);b.pressed.connect(callback);parent.add_child(b);return b
 
-func panel(parent:Node,color:Color=Color("1c3038"))->PanelContainer:
+func panel(parent:Node,color:Color=Color("172237"))->PanelContainer:
 	var p=PanelContainer.new();p.add_theme_stylebox_override("panel",box(color));parent.add_child(p);return p
 
 func column(parent:Node,gap:int=10)->VBoxContainer:
@@ -84,13 +75,6 @@ func column(parent:Node,gap:int=10)->VBoxContainer:
 
 func row(parent:Node,gap:int=10)->HBoxContainer:
 	var r=HBoxContainer.new();r.add_theme_constant_override("separation",gap);parent.add_child(r);return r
-
-func header():
-	var bg=Panel.new();bg.position=Vector2.ZERO;bg.size=Vector2(1280,64);bg.add_theme_stylebox_override("panel",box(Color("10242d"),0));ui.add_child(bg)
-	var title=label(bg,"◈  AURORA",26,ACCENT);title.position=Vector2(24,12)
-	var sub=label(bg,"POKÉMON ONLINE",12,Color("a2b4ae"));sub.position=Vector2(205,25)
-	header_info=label(bg,"UMA NOVA JORNADA",16);header_info.position=Vector2(438,22)
-	var badge=label(bg,"DESKTOP ALFA",12,Color("d4bd8b"));badge.position=Vector2(1120,24)
 
 func server_time()->float:return Time.get_unix_time_from_system()+clock_offset
 
@@ -125,6 +109,7 @@ func received(_result:int,code:int,_headers:PackedStringArray,body:PackedByteArr
 func _process(delta:float):
 	timer+=delta
 	if view:view.queue_redraw()
+	if hud and not data.is_empty():hud.update_values()
 	if not data.is_empty() and token!="" and timer>=.1:
 		timer=0
 		if not request_busy and commands.is_empty():
@@ -137,8 +122,13 @@ func _process(delta:float):
 	if not request_busy and not commands.is_empty():dispatch(commands.pop_front())
 
 func notice(text:String):
-	if status:status.queue_free()
-	status=Label.new();status.text=text;status.position=Vector2(24,790);status.size=Vector2(974,36);status.add_theme_font_size_override("font_size",16);status.add_theme_color_override("font_color",Color("f0efd7"));status.add_theme_stylebox_override("normal",box(Color("193038"),8));status.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS;ui.add_child(status)
+	if is_instance_valid(status):status.queue_free()
+	status=label(ui,text,14,Color("f2e3bd"));status.position=Vector2(250,740);status.size=Vector2(780,36)
+	status.add_theme_stylebox_override("normal",box(Color("192239"),4));status.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
+	status.mouse_filter=Control.MOUSE_FILTER_IGNORE
+	var current_id=status.get_instance_id()
+	get_tree().create_timer(5).timeout.connect(func():
+		if is_instance_id_valid(current_id):instance_from_id(current_id).queue_free())
 
 func login():
 	modal("Sua história começa aqui","Conecte seu treinador ao mundo de Aurora.");screen="login"
@@ -154,85 +144,34 @@ func login():
 	label(c,"O progresso fica no servidor. Esta instalação guarda sua chave de acesso.",14,Color("9eb2ad"))
 
 func modal(title:String,subtitle:String):
-	if overlay:overlay.queue_free()
+	if not is_instance_valid(overlay):previous_focus=get_viewport().gui_get_focus_owner()
+	else:overlay.queue_free()
+	hud.visible=false
 	overlay=Control.new();overlay.size=Vector2(1280,832);ui.add_child(overlay)
-	var shade=ColorRect.new();shade.color=Color(0.03,.09,.12,.76);shade.size=Vector2(1280,832);overlay.add_child(shade)
-	var shell=panel(overlay,Color("142a33"));shell.position=Vector2(124,92);shell.size=Vector2(1032,652)
-	var root=column(shell,12);var top=row(root)
-	var title_box=column(top,2);title_box.size_flags_horizontal=Control.SIZE_EXPAND_FILL;label(title_box,title,30);label(title_box,subtitle,15,Color("a2b6b1"))
-	btn(top,"Fechar",close_panel,90)
-	var scroll=ScrollContainer.new();scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;scroll.custom_minimum_size=Vector2(970,500);root.add_child(scroll)
-	overlay_body=column(scroll,14);overlay_body.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	var shade=ColorRect.new();shade.color=Color("0a1020");shade.color.a=.94;shade.size=Vector2(1280,832);overlay.add_child(shade)
+	var brand=label(overlay,"A U R O R A   /   CENTRAL DO TREINADOR",13,ACCENT);brand.position=Vector2(28,20)
+	var heading=label(overlay,title,30);heading.position=Vector2(240,52)
+	var sub=label(overlay,subtitle,14,Color("9eaec5"));sub.position=Vector2(240,94)
+	var close=btn(overlay,"ESC  Fechar",close_panel,116);close.position=Vector2(1136,12)
+	var navigation=column(overlay,7);navigation.position=Vector2(24,138);navigation.size=Vector2(192,650)
+	for entry in [["equipe","01   Equipe"],["mapa","02   Mapa"],["loja","03   Mochila e loja"],["breeding","04   Linhagens"],["treino","05   Treinamento"],["mercado","06   Mercado"],["casa","07   Minha casa"],["profissao","08   Profissão"],["ranking","09   Liga e saguão"]]:
+		var nav=btn(navigation,entry[1],func():open_panel(entry[0]),192)
+		nav.alignment=HORIZONTAL_ALIGNMENT_LEFT
+		if entry[0]==screen:nav.add_theme_stylebox_override("normal",box(Color("27475b")))
+	var shell=panel(overlay,Color("111b2c"));shell.position=Vector2(236,132);shell.size=Vector2(1020,676)
+	var scroll=ScrollContainer.new();scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_AUTO;scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;shell.add_child(scroll)
+	overlay_body=column(scroll,16);overlay_body.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	close.grab_focus()
+	if data.is_empty():navigation.hide();brand.text="A U R O R A   /   UMA NOVA JORNADA"
 
 func close_panel():
-	if overlay:overlay.queue_free();overlay=null
+	if is_instance_valid(overlay):overlay.queue_free();overlay=null
 	screen="";selected.clear()
+	if hud:hud.visible=true;hud.refresh()
+	if is_instance_valid(previous_focus):previous_focus.grab_focus()
 
 func refresh_sidebar():
-	if data.is_empty():return
-	var signature=JSON.stringify([data.player.area,data.player.quest,data.player.team,data.player.coins,data.player.points,data.player.xp,data.player.mons,data.players.size(),data.player.battle])
-	if signature==sidebar_signature:
-		update_combat_labels();return
-	sidebar_signature=signature
-	for child in sidebar.get_children():child.queue_free()
-	if data.is_empty():return
-	var p:Dictionary=data.player
-	header_info.text="%s  ·  Nv. %d        ◉ %d    ✧ %d"%[p.name,1+int(p.xp)/100,p.coins,p.points]
-	var bg=Panel.new();bg.size=Vector2(256,768);bg.add_theme_stylebox_override("panel",box(Color("142a31"),0));sidebar.add_child(bg)
-	var c=column(bg,8);c.position=Vector2(16,16);c.size=Vector2(224,730)
-	label(c,"SEU LUGAR NO MUNDO",11,ACCENT);label(c,AREAS.get(p.area,p.area),20)
-	label(c,"%d treinador(es) conectado(s)"%(data.players.size()+1),12,Color("8fa7a1"))
-	if data.get("battle")!=null:
-		combat_sidebar(c);return
-	var sep=HSeparator.new();c.add_child(sep)
-	var q=panel(c);var qc=column(q,6);label(qc,"DIÁRIO DE JORNADA",11,Color("d9c48e"));var qtext=label(qc,QUESTS[min(int(p.quest),4)] if int(p.quest)<5 else "Aurora voltou a brilhar!",15);qtext.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART;qtext.custom_minimum_size.x=190
-	btn(qc,"Resgatar missão",func():send({"type":"quest"}))
-	label(c,"SEUS PARCEIROS",11,ACCENT)
-	var tr=row(c,0)
-	for i in min(3,p.team.size()):
-		var im=TextureRect.new();im.texture=view.mon_texture(team_mon(i));im.custom_minimum_size=Vector2(70,62);im.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;im.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;im.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;tr.add_child(im)
-	btn(c,"Equipe & Pokédex",func():open_panel("equipe"))
-	btn(c,"Mapa de Aurora",func():open_panel("mapa"))
-	btn(c,"Mochila & loja",func():open_panel("loja"))
-	btn(c,"Genética & incubadora",func():open_panel("breeding"))
-	btn(c,"Mercado global",func():open_panel("mercado"))
-	btn(c,"Treino automático",func():open_panel("treino"))
-	btn(c,"Profissão & culinária",func():open_panel("profissao"))
-	btn(c,"Ranking & saguão",func():open_panel("ranking"))
-	btn(c,"Interagir · E",interact)
-	for child in c.get_children():
-		if child is Button:child.custom_minimum_size.y=32;child.add_theme_font_size_override("font_size",14)
-	c.add_theme_constant_override("separation",6)
-	label(c,"WASD mover · E interagir\nB captura · Q especial · Espaço esquiva",11,Color("90a8a1"))
-
-func combat_sidebar(c:Control):
-	combat_labels.clear()
-	var b=data.battle
-	label(c,"ENCONTRO EM TEMPO REAL",12,ACCENT)
-	for f in b.fighters:
-		var card=column(panel(c),5);label(card,mon_name(f.mon),21);label(card,f.name+" · Nv. "+str(int(f.mon.level)),13,ACCENT)
-		combat_labels[f.owner]=label(card,"",15)
-		label(card,"%.1f kg · %.2f m"%[f.physique.mass,f.physique.height],12)
-	var mine:Dictionary={}
-	for f in b.fighters:
-		if f.owner==data.player.id:mine=f
-	var kind=data.species[str(int(mine.mon.species))].type
-	var skill={"Planta":"Raio Solar","Fogo":"Explosão de Fogo","Água":"Hidro Bomba","Elétrico":"Choque do Trovão"}.get(kind,"Impacto elemental")
-	if int(mine.mon.species)==131:skill="Raio de Gelo"
-	btn(c,"Ataque · clique",func():send({"type":"attack"}))
-	btn(c,"Q · "+skill,func():send({"type":"special"}))
-	btn(c,"Espaço · esquivar",func():send({"type":"dash"}))
-	if b.kind in ["capture","event"]:btn(c,"B · Poké Bola (%d)"%data.player.balls,func():send({"type":"ball"}))
-	else:btn(c,"Alternar automático",func():send({"type":"auto"}))
-	btn(c,"V · evoluir",func():send({"type":"evolve","ids":[mine.mon.id]}))
-	btn(c,"F · deixar encontro",func():send({"type":"flee"}))
-	var help=label(c,"WASD para se mover.\nMire no campo com o mouse.\nDesvie das áreas marcadas.",14,Color("a1b4ad"));help.autowrap_mode=TextServer.AUTOWRAP_WORD_SMART
-	update_combat_labels()
-
-func update_combat_labels():
-	if data.get("battle")==null:return
-	for f in data.battle.fighters:
-		if combat_labels.has(f.owner) and is_instance_valid(combat_labels[f.owner]):combat_labels[f.owner].text="HP %d/%d  ·  Energia %d"%[max(0,int(f.hp)),int(f.max_hp),int(f.energy)]
+	if hud and not data.is_empty():hud.refresh()
 
 func team_mon(index:int)->Dictionary:
 	if data.is_empty() or index>=data.player.team.size():return {}
@@ -250,24 +189,34 @@ func mon_name(m:Dictionary)->String:
 	return str(data.get("species",{}).get(str(int(m.species)),{}).get("name","Pokémon"))
 
 func mon_card(parent:Node,m:Dictionary,choose:bool=false):
-	var card=panel(parent);card.custom_minimum_size.x=300
-	var c=column(card,8);var top=row(c);var image=TextureRect.new();image.texture=view.mon_texture(m);image.custom_minimum_size=Vector2(96,96);image.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;image.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;image.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;top.add_child(image)
-	var details=column(top,4);label(details,mon_name(m),21);label(details,"Nv. %d · %s · Geração %d"%[m.level,m.sex,m.genes.generation],13,ACCENT);label(details,m.look.pattern+" · "+m.look.mark,13)
-	label(c,"Afinidade %d/100"%m.get("affinity",50),13,ACCENT);label(c,"IVs  %s"%stat_numbers(m.iv),14);label(c,"EVs  %s"%stat_numbers(m.ev),14,Color("a7bab2"))
+	var card=panel(parent,Color("17273b") if selected.has(m.id) else Color("131f32"));card.custom_minimum_size.x=300
+	var c=column(card,9)
+	var top=row(c);var index=label(top,"#%03d"%int(m.species),12,ACCENT);index.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	label(top,"NV. %d"%m.level,13,Color("eac57d"))
+	var image=TextureRect.new();image.texture=view.mon_texture(m);image.custom_minimum_size=Vector2(260,100);image.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;image.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;image.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;c.add_child(image)
+	label(c,mon_name(m),24)
+	label(c,"%s  /  Geração %d  /  %s"%[m.sex,m.genes.generation,m.look.pattern],12,Color("a6b6ce"))
+	var affinity=row(c);label(affinity,"VÍNCULO",10,ACCENT);label(affinity,"%d / 100"%m.get("affinity",50),12)
+	var stats=row(c,8)
+	var names=["HP","ATQ","DEF","A.E","D.E","VEL"]
+	for i in 6:
+		var cell=column(stats,3);cell.custom_minimum_size.x=38;label(cell,names[i],10,Color("9aaec8"));label(cell,str(int(m.iv[i])),18)
+	label(c,"EVs  "+stat_numbers(m.ev),11,Color("a7bab2"))
 	var gene=row(c,8)
 	for key in ["body","detail","eye","mouth"]:
-		var swatch=ColorRect.new();swatch.custom_minimum_size=Vector2(24,12);swatch.color=Color(m.look[key]) if m.look[key]!="original" else Color("96bda4");swatch.tooltip_text=key+": "+m.look[key];gene.add_child(swatch)
+		var swatch=ColorRect.new();swatch.custom_minimum_size=Vector2(24,6);swatch.color=Color(m.look[key]) if m.look[key]!="original" else Color("96bda4");swatch.tooltip_text={"body":"Corpo","detail":"Detalhes","eye":"Olhos","mouth":"Boca"}[key]+": "+m.look[key];gene.add_child(swatch)
 	if choose:
-		btn(c,("✓ Selecionado" if selected.has(m.id) else "Selecionar parceiro"),func():
+		var select=btn(c,("Selecionado  ✓" if selected.has(m.id) else "Selecionar parceiro"),func():
 			if selected.has(m.id):selected.erase(m.id)
 			else:selected.append(m.id)
 			open_panel(screen))
-	else:btn(c,"Ver genes & pedigree",func():genome_panel(m))
+		if selected.has(m.id):select.add_theme_stylebox_override("normal",box(Color("15566b")))
+	else:btn(c,"Ver genes e linhagem",func():genome_panel(m))
 
 func open_panel(which:String):
 	if data.is_empty():return
 	screen=which
-	var titles={"equipe":["Seus parceiros","Uma equipe, muitas histórias. Escolha até seis Pokémon."],"mapa":["Explore Aurora","Novos caminhos se abrem ao longo da sua jornada."],"loja":["Pequenas coisas, grandes jornadas","Suprimentos e objetos para deixar sua casa com a sua cara."],"breeding":["Ateliê de linhagens","Observe os genes. Escolha os pais. Descubra novas possibilidades."],"mercado":["Mercado de treinadores","Exemplares com história, genética e potencial."],"treino":["Um passo mais forte","Seus parceiros treinam enquanto você cuida do resto."],"profissao":["Uma vida em Aurora","Escolha seu ofício e prepare refeições."],"ranking":["Liga de Aurora","Batalhas reais, conquistas compartilhadas."],"casa":["Do seu jeito","Seu quarto, seu refúgio."],"vila":["Gente de Alvorada","Pequenos encontros constroem grandes amizades."],"jardim":["Cultive seu cantinho","Plante, regue, espere 90 segundos e colha."],"pc":["Aurora Arcade","30 segundos. Seu parceiro. Um novo recorde."]}
+	var titles={"equipe":["Seus parceiros","Uma equipe, muitas histórias. Escolha até seis Pokémon."],"mapa":["Explore Aurora","Novos caminhos se abrem ao longo da sua jornada."],"loja":["Mochila e suprimentos","Prepare a próxima saída e encontre objetos para sua casa."],"breeding":["Laboratório de linhagens","Observe os genes. Escolha os pais. Descubra novas possibilidades."],"mercado":["Mercado de treinadores","Exemplares com história, genética e potencial."],"treino":["Centro de treinamento","Escolha os parceiros, a rota e o atributo que deseja desenvolver."],"profissao":["Uma vida em Aurora","Escolha seu ofício e prepare refeições."],"ranking":["Liga de Aurora","Batalhas reais, conquistas compartilhadas."],"casa":["Minha casa","Aparência do treinador, decoração e computador."],"vila":["Gente de Alvorada","Pequenos encontros constroem grandes amizades."],"jardim":["Cultive seu cantinho","Plante, regue, espere 90 segundos e colha."],"pc":["Aurora Arcade","30 segundos. Seu parceiro. Um novo recorde."]}
 	var title=titles.get(which,[which,""]);modal(title[0],title[1]);screen=which
 	var p:Dictionary=data.player
 	match which:
@@ -425,11 +374,12 @@ func _unhandled_input(event:InputEvent):
 			if screen!="":close_panel()
 			elif spectate!="":spectate=""
 			elif not data.is_empty() and data.player.arcade!=null:send({"type":"arcade_stop"})
+			elif not data.is_empty():open_panel("equipe")
 			return
 		if screen!="":return
 		if event.keycode==KEY_E:interact()
 		if event.keycode==KEY_M:open_panel("mapa")
-		if event.keycode==KEY_T:send({"type":"transport","value":"walk" if data.player.get("transport","")=="bike" else "bike"})
+		if event.keycode==KEY_T and not data.is_empty():send({"type":"transport","value":"walk" if data.player.get("transport","")=="bike" else "bike"})
 		if not data.is_empty() and data.player.battle!="":
 			if event.keycode==KEY_SPACE:send({"type":"dash"})
 			if event.keycode==KEY_Q:send({"type":"special"})
