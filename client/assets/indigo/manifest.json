@@ -1,0 +1,4727 @@
+{
+  "source": "C:\\dev\\Pokemon Anil V4.13",
+  "files": {
+    "source_atlases/Interior1.png": {
+      "source": "Graphics/Tilesets/Interior1.png",
+      "sha256": "6d6aaea38580850c692273fe59252f6a28944c0ea4631d23556015bc70fed905",
+      "size": [
+        256,
+        20029
+      ]
+    },
+    "source_atlases/Exterior1.png": {
+      "source": "Graphics/Tilesets/Exterior1.png",
+      "sha256": "4de3f627f018a5f4ea552f3800bd26c23a720837425b91dc03f733e6ce0dee3f",
+      "size": [
+        256,
+        23370
+      ]
+    },
+    "source_atlases/Cueva1.png": {
+      "source": "Graphics/Tilesets/Cueva1.png",
+      "sha256": "3da4dfe79f2b451760b8db33ce7f20bca1300d193161f9923bb2b1f21c405745",
+      "size": [
+        256,
+        20836
+      ]
+    },
+    "source_atlases/ExteriorSafari.png": {
+      "source": "Graphics/Tilesets/ExteriorSafari.png",
+      "sha256": "4be321d1a2308e91aa20775231d0ccc5c5f75b71cccd42a27ef358eaac95ee79",
+      "size": [
+        256,
+        22450
+      ]
+    },
+    "source_atlases/InteriorLiga.png": {
+      "source": "Graphics/Tilesets/InteriorLiga.png",
+      "sha256": "be734e70785ef71180f45358ba008404bb12f3347efc1760f21d5884784e4feb",
+      "size": [
+        256,
+        20029
+      ]
+    },
+    "tilesets/Creditos.png": {
+      "source": "Graphics/Tilesets/Creditos.png",
+      "sha256": "5c4b10db6c0587311729382a897774de82fe4f5e198f101e423912cfa0c85076",
+      "size": [
+        256,
+        20836
+      ]
+    },
+    "autotiles/agua.png": {
+      "source": "Graphics/Autotiles/agua.png",
+      "sha256": "b1d6ea7be5f9391c009f1e989fb6b5f74766cc49563275b613c60a71df01ec79",
+      "size": [
+        3072,
+        128
+      ]
+    },
+    "autotiles/Agua cueva.png": {
+      "source": "Graphics/Autotiles/Agua cueva.png",
+      "sha256": "6c4af73f18c9c6e0a485d95053e5e2be30ed0633d7b2d98bc70826c3f9c7d5a9",
+      "size": [
+        384,
+        128
+      ]
+    },
+    "autotiles/florAmarilla.png": {
+      "source": "Graphics/Autotiles/florAmarilla.png",
+      "sha256": "c8cdb4a57458641af3ac87be5baf1d336ca7d65d7a6a04c0e31725792e2560e3",
+      "size": [
+        128,
+        32
+      ]
+    },
+    "pokemon/1-front.png": {
+      "source": "Graphics/Pokemon/Front/BULBASAUR.png",
+      "sha256": "443740ff125d12478fb9c3ce4d4c19b4634fe12c15e4f27747513ee8fe8593b5",
+      "size": [
+        3762,
+        38
+      ]
+    },
+    "pokemon/1-back.png": {
+      "source": "Graphics/Pokemon/Back/BULBASAUR.png",
+      "sha256": "36a3b60ef5513bb7bddc8d227d265cec5e33229d616e8009e255a82ec8e2c76a",
+      "size": [
+        3762,
+        38
+      ]
+    },
+    "pokemon/1-follower.png": {
+      "source": "Graphics/Characters/Followers/BULBASAUR.png",
+      "sha256": "7dd1a2bc50ab4816f86465b5195fcf4a2588e97cf41f43e0151ea0c6b9eb6d6f",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/2-front.png": {
+      "source": "Graphics/Pokemon/Front/IVYSAUR.png",
+      "sha256": "88b2939d146d272372e21ab3937c7182a2f1c2c2275c4e6f5f4060735dbc08e2",
+      "size": [
+        6438,
+        58
+      ]
+    },
+    "pokemon/2-back.png": {
+      "source": "Graphics/Pokemon/Back/IVYSAUR.png",
+      "sha256": "f18916268b82cdc87807608e922ba13a3ea2e47cfe209cf33fa5420be0bb8966",
+      "size": [
+        6327,
+        57
+      ]
+    },
+    "pokemon/2-follower.png": {
+      "source": "Graphics/Characters/Followers/IVYSAUR.png",
+      "sha256": "070efb050e245570b1b891a9d9e0dbb5d45eb899f09bde2603f7b0dbac6737ab",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/4-front.png": {
+      "source": "Graphics/Pokemon/Front/CHARMANDER.png",
+      "sha256": "2f5e0ae37bac74561ff24fce08c959ee579f6dd2cef116b0d15d62159b0ec1b0",
+      "size": [
+        4494,
+        42
+      ]
+    },
+    "pokemon/4-back.png": {
+      "source": "Graphics/Pokemon/Back/CHARMANDER.png",
+      "sha256": "c310ea17041f5f868ead7a0dcf648571828aa315f852ef30e54dc5b7d340f052",
+      "size": [
+        4708,
+        44
+      ]
+    },
+    "pokemon/4-follower.png": {
+      "source": "Graphics/Characters/Followers/CHARMANDER.png",
+      "sha256": "b37b13836b33ea976afba02dfc7fcd2726f44014d5725b2145820a1e5410658f",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/5-front.png": {
+      "source": "Graphics/Pokemon/Front/CHARMELEON.png",
+      "sha256": "c9c048b3fbc44e5c8727b68876320025156d8422f6a4447dc70aa6223bcb7b1c",
+      "size": [
+        6141,
+        69
+      ]
+    },
+    "pokemon/5-back.png": {
+      "source": "Graphics/Pokemon/Back/CHARMELEON.png",
+      "sha256": "aa0032788228f22d44e83f14a93d6bd2d9a178b8e05fd8ac6197619b27f6d2b1",
+      "size": [
+        5963,
+        67
+      ]
+    },
+    "pokemon/5-follower.png": {
+      "source": "Graphics/Characters/Followers/CHARMELEON.png",
+      "sha256": "d8893241cb94747012a37a0a43bee96d94a0f5eab9d8c742c55c4954baf6c9d3",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/7-front.png": {
+      "source": "Graphics/Pokemon/Front/SQUIRTLE.png",
+      "sha256": "dac915f5f022c09ddf99ae86b02846304e873586de15387c81f1243b4d28d244",
+      "size": [
+        2193,
+        43
+      ]
+    },
+    "pokemon/7-back.png": {
+      "source": "Graphics/Pokemon/Back/SQUIRTLE.png",
+      "sha256": "53da82e9a3d62bd76962d3b84bb08292aea27179169e3d3352b4a54cd34e2c3e",
+      "size": [
+        2295,
+        45
+      ]
+    },
+    "pokemon/7-follower.png": {
+      "source": "Graphics/Characters/Followers/SQUIRTLE.png",
+      "sha256": "7c12ffeea8a7193b5cbdccb35eed8420d914e53d654ff50b0aba9ff9c52e3654",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/8-front.png": {
+      "source": "Graphics/Pokemon/Front/WARTORTLE.png",
+      "sha256": "3fde79285358bde518f399320ac56678dc94230766e1799cc734d4c06afba21e",
+      "size": [
+        5307,
+        61
+      ]
+    },
+    "pokemon/8-back.png": {
+      "source": "Graphics/Pokemon/Back/WARTORTLE.png",
+      "sha256": "dbb7dfe98311cb29ab7d099e55acdcf931afdf4c6ec3457735b90a1209572a44",
+      "size": [
+        5394,
+        62
+      ]
+    },
+    "pokemon/8-follower.png": {
+      "source": "Graphics/Characters/Followers/WARTORTLE.png",
+      "sha256": "743bdfc5ec9dffec4f1905b7cd7bf65332c81758e54440212909b37500031025",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/16-front.png": {
+      "source": "Graphics/Pokemon/Front/PIDGEY.png",
+      "sha256": "6a83944453735d47dd9b94f6c9f2a7873045263ef8e18c81f64ec2687e473774",
+      "size": [
+        1968,
+        48
+      ]
+    },
+    "pokemon/16-back.png": {
+      "source": "Graphics/Pokemon/Back/PIDGEY.png",
+      "sha256": "2aa8fe00eb44564a2dddb6f4897c7c4b67ca15119348bcd78aba2118bb3a618c",
+      "size": [
+        1927,
+        47
+      ]
+    },
+    "pokemon/16-follower.png": {
+      "source": "Graphics/Characters/Followers/PIDGEY.png",
+      "sha256": "abf8d92e12ab9b6b1b139bfafe2c9a855d4ee8fd02edec5549804774944f05b8",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/19-front.png": {
+      "source": "Graphics/Pokemon/Front/RATTATA.png",
+      "sha256": "0e6edd33856981234e171c4d3f86c2d74f9e1f3638ddabd6db7bdd5794cfef12",
+      "size": [
+        4343,
+        43
+      ]
+    },
+    "pokemon/19-back.png": {
+      "source": "Graphics/Pokemon/Back/RATTATA.png",
+      "sha256": "00d0326e9e2fc4789ab31916f2de07656f4fbed8acbed84b03cbedf6514a1708",
+      "size": [
+        5742,
+        58
+      ]
+    },
+    "pokemon/19-follower.png": {
+      "source": "Graphics/Characters/Followers/RATTATA.png",
+      "sha256": "6fd2a5cbe39b138701904853b34147eb370fac944727d00fc86b04dd621f6196",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/25-front.png": {
+      "source": "Graphics/Pokemon/Front/PIKACHU.png",
+      "sha256": "dbe60bd81c3d6e3ff1230945a6a2057dbf2528b36f2a190de3d8f87a44f9e807",
+      "size": [
+        5600,
+        50
+      ]
+    },
+    "pokemon/25-back.png": {
+      "source": "Graphics/Pokemon/Back/PIKACHU.png",
+      "sha256": "18b9a4e3f528a14f7c5f6f57d0db1422461cead4bc33950f9ba42c99b45c95e8",
+      "size": [
+        5311,
+        47
+      ]
+    },
+    "pokemon/25-follower.png": {
+      "source": "Graphics/Characters/Followers/PIKACHU.png",
+      "sha256": "3005fe9b754ae5f89587ccd6fdc6773eba6156d9e74735f68904b2c73ef3e741",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/26-front.png": {
+      "source": "Graphics/Pokemon/Front/RAICHU.png",
+      "sha256": "f1e39d6d8855689d33e17d173991892ed65ab31945025651545de928f94c1e24",
+      "size": [
+        7140,
+        85
+      ]
+    },
+    "pokemon/26-back.png": {
+      "source": "Graphics/Pokemon/Back/RAICHU.png",
+      "sha256": "21cf2a464a00ee57e42e89674d456bbe9496036bd26a95edc3c12966e7e8b209",
+      "size": [
+        13182,
+        78
+      ]
+    },
+    "pokemon/26-follower.png": {
+      "source": "Graphics/Characters/Followers/RAICHU.png",
+      "sha256": "eeae6da9addae23ab4309b044585a9134db4c915bf577863b795df2b34c90260",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/41-front.png": {
+      "source": "Graphics/Pokemon/Front/ZUBAT.png",
+      "sha256": "afbe6459b3d465f2a6dc45691ce88dd55bb880bf5a1d812e9107cb843dbb5aed",
+      "size": [
+        9810,
+        90
+      ]
+    },
+    "pokemon/41-back.png": {
+      "source": "Graphics/Pokemon/Back/ZUBAT.png",
+      "sha256": "8af9fabc988afc610c7297f13751095f0725b69d03a284cc34f63623f5603e3d",
+      "size": [
+        3186,
+        59
+      ]
+    },
+    "pokemon/41-follower.png": {
+      "source": "Graphics/Characters/Followers/ZUBAT.png",
+      "sha256": "4410a4b6d36ad050b34bf4e2c9c4660d0a515322706c1910edb81bff1bd577c3",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/74-front.png": {
+      "source": "Graphics/Pokemon/Front/GEODUDE.png",
+      "sha256": "59c5a4325c573b33166907be1c0d37996de82e90998b8f30c7bdf9bc4b294c61",
+      "size": [
+        6283,
+        61
+      ]
+    },
+    "pokemon/74-back.png": {
+      "source": "Graphics/Pokemon/Back/GEODUDE.png",
+      "sha256": "0e0ef6957f107601c53c708213122527c7dadfa69bd92b36bc35f0d641db898d",
+      "size": [
+        6148,
+        58
+      ]
+    },
+    "pokemon/74-follower.png": {
+      "source": "Graphics/Characters/Followers/GEODUDE.png",
+      "sha256": "690f6df6c7a97808f38999377c28b9c075575f09dd6b056f4e65acbd7bddcb08",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/95-front.png": {
+      "source": "Graphics/Pokemon/Front/ONIX.png",
+      "sha256": "1f0049e51d0763c883b990f3a6ac7fff959dd3b74f50643c30f4fc3f7f8aa507",
+      "size": [
+        7326,
+        74
+      ]
+    },
+    "pokemon/95-back.png": {
+      "source": "Graphics/Pokemon/Back/ONIX.png",
+      "sha256": "77d4addf824fdd3b36378104a673532e5c673815f1c227c2feec59e297f12c80",
+      "size": [
+        14014,
+        98
+      ]
+    },
+    "pokemon/95-follower.png": {
+      "source": "Graphics/Characters/Followers/ONIX.png",
+      "sha256": "40973b4c319667296972e3bb4eb6e9ee6e509912935146ce1b4c6f7e0660c9ca",
+      "size": [
+        700,
+        700
+      ]
+    },
+    "pokemon/129-front.png": {
+      "source": "Graphics/Pokemon/Front/MAGIKARP.png",
+      "sha256": "5df547a29aeea14a5f48ce080461e1c3ea12608430315518dacbcc17ac1c44f4",
+      "size": [
+        7560,
+        63
+      ]
+    },
+    "pokemon/129-back.png": {
+      "source": "Graphics/Pokemon/Back/MAGIKARP.png",
+      "sha256": "8b952654feee6233c39474e59d6c0d406326541abf51cc4a844083b4a2a9a237",
+      "size": [
+        7722,
+        66
+      ]
+    },
+    "pokemon/129-follower.png": {
+      "source": "Graphics/Characters/Followers/MAGIKARP.png",
+      "sha256": "aefb1689a315f602b50250785782152fe8fd40aad712829917155b776673275c",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/130-front.png": {
+      "source": "Graphics/Pokemon/Front/GYARADOS.png",
+      "sha256": "ca70ac514e8cd34782d49bc0c74a3ac4b29dfaeaf5743816d73ac106c513ffbd",
+      "size": [
+        8874,
+        102
+      ]
+    },
+    "pokemon/130-back.png": {
+      "source": "Graphics/Pokemon/Back/GYARADOS.png",
+      "sha256": "e79a466f8e4b56de88f8e73220b70d3618f162268840fde0dd68485bc187482c",
+      "size": [
+        9396,
+        108
+      ]
+    },
+    "pokemon/130-follower.png": {
+      "source": "Graphics/Characters/Followers/GYARADOS.png",
+      "sha256": "40dfa2244728770744c875d011d5035d587f871726533141d3706af80b60a129",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/131-front.png": {
+      "source": "Graphics/Pokemon/Front/LAPRAS.png",
+      "sha256": "0074bc38e588925dbd6816cb891e0ca555776de507f956684cf0e8d46c237b45",
+      "size": [
+        4615,
+        71
+      ]
+    },
+    "pokemon/131-back.png": {
+      "source": "Graphics/Pokemon/Back/LAPRAS.png",
+      "sha256": "ce1d72a066f2f479e18b6718ce028dd93a73f07c4efd5b8b96071c2dfba2198e",
+      "size": [
+        4940,
+        76
+      ]
+    },
+    "pokemon/131-follower.png": {
+      "source": "Graphics/Characters/Followers/LAPRAS.png",
+      "sha256": "19c019e748eb05dd8b89f275b75f6e1a3f61ee2c92ac6f7f43cf655b0fd8cfb6",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/133-front.png": {
+      "source": "Graphics/Pokemon/Front/EEVEE.png",
+      "sha256": "d28e175246183689bb9076602f7251e0fa2563642ff49ca812c6a73a61bd9a82",
+      "size": [
+        6125,
+        49
+      ]
+    },
+    "pokemon/133-back.png": {
+      "source": "Graphics/Pokemon/Back/EEVEE.png",
+      "sha256": "98dbeffd5c3f2e37dcd36f7e39a8bfb454cff6ddc1f7d8556ab8cdb8fa46406c",
+      "size": [
+        6650,
+        50
+      ]
+    },
+    "pokemon/133-follower.png": {
+      "source": "Graphics/Characters/Followers/EEVEE.png",
+      "sha256": "af43bb581100d34cc88383af47ae35db7aaeb06699f7e2b34c26efcf4d514d58",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/134-front.png": {
+      "source": "Graphics/Pokemon/Front/VAPOREON.png",
+      "sha256": "9940e065de8b1ab9a26c712dbe55a8fac695664a2e2f7ee48294ebb3119850d1",
+      "size": [
+        5959,
+        59
+      ]
+    },
+    "pokemon/134-back.png": {
+      "source": "Graphics/Pokemon/Back/VAPOREON.png",
+      "sha256": "12d3bb3e2af0ea4dfd72cb9091ae8cac91760599f28f03d37ae3c68298e6ff8b",
+      "size": [
+        5992,
+        56
+      ]
+    },
+    "pokemon/134-follower.png": {
+      "source": "Graphics/Characters/Followers/VAPOREON.png",
+      "sha256": "25f36a3d0eda15e6743558845557819719ea1fcddd0dda709adda401948ff6bd",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/135-front.png": {
+      "source": "Graphics/Pokemon/Front/JOLTEON.png",
+      "sha256": "fce6b35f460cfbbb9f057512c00ffbeca7f5db6ae1abbe4488926cffe401799b",
+      "size": [
+        4851,
+        49
+      ]
+    },
+    "pokemon/135-back.png": {
+      "source": "Graphics/Pokemon/Back/JOLTEON.png",
+      "sha256": "82eabc43a30fa180869c6153e03c156ccd8e3d6e06d1af4feb4cfd7ea9a864ae",
+      "size": [
+        4851,
+        49
+      ]
+    },
+    "pokemon/135-follower.png": {
+      "source": "Graphics/Characters/Followers/JOLTEON.png",
+      "sha256": "61fc60279632a92d1a26bf76ec2679417546add81bd6bd815f05d7aa78e6c9d1",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/136-front.png": {
+      "source": "Graphics/Pokemon/Front/FLAREON.png",
+      "sha256": "1e34ffe235e5c9274698eab2f3d7bec2d67b8d401f263cd29498284bdc95ae79",
+      "size": [
+        7854,
+        66
+      ]
+    },
+    "pokemon/136-back.png": {
+      "source": "Graphics/Pokemon/Back/FLAREON.png",
+      "sha256": "6ca5e19ff153c487c0781a771f436648d66643ce809eab330849c4883b4a53f3",
+      "size": [
+        8330,
+        70
+      ]
+    },
+    "pokemon/136-follower.png": {
+      "source": "Graphics/Characters/Followers/FLAREON.png",
+      "sha256": "7226c270289ef4c0f77242f5ff791766bd5981bb5dbcab336cde758d6bcd87b0",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/151-front.png": {
+      "source": "Graphics/Pokemon/Front/MEW.png",
+      "sha256": "bb3e756526ca7698b44d936b138e2853962ee5f114378dbd9e659ccfd1fabe4a",
+      "size": [
+        9282,
+        78
+      ]
+    },
+    "pokemon/151-back.png": {
+      "source": "Graphics/Pokemon/Back/MEW.png",
+      "sha256": "9ebc89f24ee58257f33a889f4066c80cc2e45330c94dfa0c18735086890ba471",
+      "size": [
+        7140,
+        60
+      ]
+    },
+    "pokemon/151-follower.png": {
+      "source": "Graphics/Characters/Followers/MEW.png",
+      "sha256": "d0a0544430dd7dc61e04257ffc797e8165987aed4b3d6e0fe4f55067e70aa3e0",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "effects/015-Fire01.png": {
+      "source": "Graphics/Animations/015-Fire01.png",
+      "sha256": "0ff123226869756246c221f4eafd515431496287fdb5656499a5c667f5e43263",
+      "size": [
+        960,
+        384
+      ]
+    },
+    "effects/016-Ice01.png": {
+      "source": "Graphics/Animations/016-Ice01.png",
+      "sha256": "4fa3e770cca12f5e51e80fd841f4a355117c9d38b6e6a85ba32ace36be62500a",
+      "size": [
+        957,
+        960
+      ]
+    },
+    "effects/017-Thunder01.png": {
+      "source": "Graphics/Animations/017-Thunder01.png",
+      "sha256": "b0d077db043d110f102e6a72021bd5fc039e484d38d666a315ec143983a503f3",
+      "size": [
+        960,
+        384
+      ]
+    },
+    "effects/018-Water01.png": {
+      "source": "Graphics/Animations/018-Water01.png",
+      "sha256": "3c785d3aeac5a0c07f853ad07d9fd95d166b7f1bc2678d89c6709a3d392b1d61",
+      "size": [
+        960,
+        576
+      ]
+    },
+    "effects/fire blast.png": {
+      "source": "Graphics/Animations/fire blast.png",
+      "sha256": "aca7a1773d0a6366bb56363dd1f47b5eeb4fa25ec258699a9323a0aecf67e7f0",
+      "size": [
+        960,
+        576
+      ]
+    },
+    "effects/PRAS- Hydro Pump.png": {
+      "source": "Graphics/Animations/PRAS- Hydro Pump.png",
+      "sha256": "94e12fa8aab9d6a824cef870932ce4cc9b39f34bdadaa0af2c528279a9fc55d5",
+      "size": [
+        960,
+        192
+      ]
+    },
+    "effects/PRAS- Ice.png": {
+      "source": "Graphics/Animations/PRAS- Ice.png",
+      "sha256": "35d5b23e65d89393a57ae5bdb36e236da05a7d654d3120ff9da4378ae474587c",
+      "size": [
+        960,
+        1920
+      ]
+    },
+    "items/POKEBALL.png": {
+      "source": "Graphics/Items/POKEBALL.png",
+      "sha256": "b4676355a357d63c1cd40d8c320048576de64ee672d5a51c4f5266edb7470a9a",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "items/POTION.png": {
+      "source": "Graphics/Items/POTION.png",
+      "sha256": "71f68d8de94e30b66a4186d938c549bcdb535c82a33edfe6feab74a9895107e8",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "items/FIRESTONE.png": {
+      "source": "Graphics/Items/FIRESTONE.png",
+      "sha256": "7124067637bfdf93904b8af237d191407dcad0f362f406db67ee8e055bf455b0",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "items/WATERSTONE.png": {
+      "source": "Graphics/Items/WATERSTONE.png",
+      "sha256": "2d9941980b878ca48c6a250baba5d5529dac046d585adaff0557df0a7bb8573f",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "items/THUNDERSTONE.png": {
+      "source": "Graphics/Items/THUNDERSTONE.png",
+      "sha256": "adce4bbba28c3a5d37f2545554adecb8eadb0ffd7cab7c4d34fa34d22ebf0c3f",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "items/MOONSTONE.png": {
+      "source": "Graphics/Items/MOONSTONE.png",
+      "sha256": "ca92d784df3ac94606d293834e5bf562e5750f49f2b09ac4c7636cdfcdc4cea9",
+      "size": [
+        48,
+        48
+      ]
+    },
+    "items/ORANBERRY.png": {
+      "source": "Graphics/Items/ORANBERRY.png",
+      "sha256": "e22d8b72f95f90697ebf4c60300f360e78cd10b04ea203b8899ccb68d573cda1",
+      "size": [
+        48,
+        48
+      ]
+    }
+  },
+  "pokemon": {
+    "1": {
+      "name": "BULBASAUR",
+      "front": {
+        "file": "pokemon/1-front.png",
+        "size": [
+          3762,
+          38
+        ],
+        "frame": 38,
+        "frames": 99
+      },
+      "back": {
+        "file": "pokemon/1-back.png",
+        "size": [
+          3762,
+          38
+        ],
+        "frame": 38,
+        "frames": 99
+      },
+      "follower": {
+        "file": "pokemon/1-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              45.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              47.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              45.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              47.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              49.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              49.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          }
+        ]
+      }
+    },
+    "2": {
+      "name": "IVYSAUR",
+      "front": {
+        "file": "pokemon/2-front.png",
+        "size": [
+          6438,
+          58
+        ],
+        "frame": 58,
+        "frames": 111
+      },
+      "back": {
+        "file": "pokemon/2-back.png",
+        "size": [
+          6327,
+          57
+        ],
+        "frame": 57,
+        "frames": 111
+      },
+      "follower": {
+        "file": "pokemon/2-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              43.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              43.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              44.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              46.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              44.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              46.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              44.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              46.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              44.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              46.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              64
+            ]
+          }
+        ]
+      }
+    },
+    "4": {
+      "name": "CHARMANDER",
+      "front": {
+        "file": "pokemon/4-front.png",
+        "size": [
+          4494,
+          42
+        ],
+        "frame": 42,
+        "frames": 107
+      },
+      "back": {
+        "file": "pokemon/4-back.png",
+        "size": [
+          4708,
+          44
+        ],
+        "frame": 44,
+        "frames": 107
+      },
+      "follower": {
+        "file": "pokemon/4-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              44.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              46.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              44.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              46.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              44.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              46.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              44.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              46.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              43.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              43.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "5": {
+      "name": "CHARMELEON",
+      "front": {
+        "file": "pokemon/5-front.png",
+        "size": [
+          6141,
+          69
+        ],
+        "frame": 69,
+        "frames": 89
+      },
+      "back": {
+        "file": "pokemon/5-back.png",
+        "size": [
+          5963,
+          67
+        ],
+        "frame": 67,
+        "frames": 89
+      },
+      "follower": {
+        "file": "pokemon/5-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              33.0,
+              39.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              41.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              39.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              41.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              40.0
+            ],
+            "feet": [
+              34.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              42.0
+            ],
+            "feet": [
+              34.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              40.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              42.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              40.0
+            ],
+            "feet": [
+              30.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              42.0
+            ],
+            "feet": [
+              30.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              40.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              42.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              42.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              44.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              42.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              44.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "7": {
+      "name": "SQUIRTLE",
+      "front": {
+        "file": "pokemon/7-front.png",
+        "size": [
+          2193,
+          43
+        ],
+        "frame": 43,
+        "frames": 51
+      },
+      "back": {
+        "file": "pokemon/7-back.png",
+        "size": [
+          2295,
+          45
+        ],
+        "frame": 45,
+        "frames": 51
+      },
+      "follower": {
+        "file": "pokemon/7-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              45.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              47.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              45.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              47.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              45.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              47.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              45.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              47.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "8": {
+      "name": "WARTORTLE",
+      "front": {
+        "file": "pokemon/8-front.png",
+        "size": [
+          5307,
+          61
+        ],
+        "frame": 61,
+        "frames": 87
+      },
+      "back": {
+        "file": "pokemon/8-back.png",
+        "size": [
+          5394,
+          62
+        ],
+        "frame": 62,
+        "frames": 87
+      },
+      "follower": {
+        "file": "pokemon/8-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              32.0,
+              43.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              45.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              43.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              45.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              41.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              43.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              41.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              43.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              41.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              43.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              41.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              43.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "16": {
+      "name": "PIDGEY",
+      "front": {
+        "file": "pokemon/16-front.png",
+        "size": [
+          1968,
+          48
+        ],
+        "frame": 48,
+        "frames": 41
+      },
+      "back": {
+        "file": "pokemon/16-back.png",
+        "size": [
+          1927,
+          47
+        ],
+        "frame": 47,
+        "frames": 41
+      },
+      "follower": {
+        "file": "pokemon/16-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              47.0
+            ],
+            "feet": [
+              34.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              49.0
+            ],
+            "feet": [
+              34.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              47.0
+            ],
+            "feet": [
+              34.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              49.0
+            ],
+            "feet": [
+              34.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              47.0
+            ],
+            "feet": [
+              30.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              49.0
+            ],
+            "feet": [
+              30.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              47.0
+            ],
+            "feet": [
+              30.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              49.0
+            ],
+            "feet": [
+              30.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "19": {
+      "name": "RATTATA",
+      "front": {
+        "file": "pokemon/19-front.png",
+        "size": [
+          4343,
+          43
+        ],
+        "frame": 43,
+        "frames": 101
+      },
+      "back": {
+        "file": "pokemon/19-back.png",
+        "size": [
+          5742,
+          58
+        ],
+        "frame": 58,
+        "frames": 99
+      },
+      "follower": {
+        "file": "pokemon/19-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              32.0,
+              41.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              43.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              41.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              43.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              47.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              49.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              47.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              49.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              48.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              50.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              46.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              48.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              47.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              49.0
+            ],
+            "feet": [
+              32.0,
+              64
+            ]
+          }
+        ]
+      }
+    },
+    "25": {
+      "name": "PIKACHU",
+      "front": {
+        "file": "pokemon/25-front.png",
+        "size": [
+          5600,
+          50
+        ],
+        "frame": 50,
+        "frames": 112
+      },
+      "back": {
+        "file": "pokemon/25-back.png",
+        "size": [
+          5311,
+          47
+        ],
+        "frame": 47,
+        "frames": 113
+      },
+      "follower": {
+        "file": "pokemon/25-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              44.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              44.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              43.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              45.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              43.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              45.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              43.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              43.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              45.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              44.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              46.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              44.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              46.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "26": {
+      "name": "RAICHU",
+      "front": {
+        "file": "pokemon/26-front.png",
+        "size": [
+          7140,
+          85
+        ],
+        "frame": 85,
+        "frames": 84
+      },
+      "back": {
+        "file": "pokemon/26-back.png",
+        "size": [
+          13182,
+          78
+        ],
+        "frame": 78,
+        "frames": 169
+      },
+      "follower": {
+        "file": "pokemon/26-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              26.0,
+              38.0
+            ],
+            "feet": [
+              26.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              40.0
+            ],
+            "feet": [
+              26.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              38.0
+            ],
+            "feet": [
+              26.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              40.0
+            ],
+            "feet": [
+              26.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              37.0,
+              41.0
+            ],
+            "feet": [
+              37.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              37.0,
+              43.0
+            ],
+            "feet": [
+              37.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              41.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              43.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              27.0,
+              41.0
+            ],
+            "feet": [
+              27.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              27.0,
+              43.0
+            ],
+            "feet": [
+              27.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              41.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              43.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              38.0
+            ],
+            "feet": [
+              38.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              40.0
+            ],
+            "feet": [
+              38.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              38.0
+            ],
+            "feet": [
+              38.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              40.0
+            ],
+            "feet": [
+              38.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "41": {
+      "name": "ZUBAT",
+      "front": {
+        "file": "pokemon/41-front.png",
+        "size": [
+          9810,
+          90
+        ],
+        "frame": 90,
+        "frames": 109
+      },
+      "back": {
+        "file": "pokemon/41-back.png",
+        "size": [
+          3186,
+          59
+        ],
+        "frame": 59,
+        "frames": 54
+      },
+      "follower": {
+        "file": "pokemon/41-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              24.0
+            ],
+            "feet": [
+              31.0,
+              38
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              26.0
+            ],
+            "feet": [
+              31.0,
+              40
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              26.0
+            ],
+            "feet": [
+              31.0,
+              42
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              28.0
+            ],
+            "feet": [
+              31.0,
+              44
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              22.0
+            ],
+            "feet": [
+              34.0,
+              40
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              24.0
+            ],
+            "feet": [
+              34.0,
+              42
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              24.0
+            ],
+            "feet": [
+              30.0,
+              44
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              26.0
+            ],
+            "feet": [
+              30.0,
+              46
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              22.0
+            ],
+            "feet": [
+              30.0,
+              40
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              24.0
+            ],
+            "feet": [
+              30.0,
+              42
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              24.0
+            ],
+            "feet": [
+              34.0,
+              44
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              26.0
+            ],
+            "feet": [
+              34.0,
+              46
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              24.0
+            ],
+            "feet": [
+              31.0,
+              38
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              26.0
+            ],
+            "feet": [
+              31.0,
+              40
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              27.0
+            ],
+            "feet": [
+              31.0,
+              44
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              29.0
+            ],
+            "feet": [
+              31.0,
+              46
+            ]
+          }
+        ]
+      }
+    },
+    "74": {
+      "name": "GEODUDE",
+      "front": {
+        "file": "pokemon/74-front.png",
+        "size": [
+          6283,
+          61
+        ],
+        "frame": 61,
+        "frames": 103
+      },
+      "back": {
+        "file": "pokemon/74-back.png",
+        "size": [
+          6148,
+          58
+        ],
+        "frame": 58,
+        "frames": 106
+      },
+      "follower": {
+        "file": "pokemon/74-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              52.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              52.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              48.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              48.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              50.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              48.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              50.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              52.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              50.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              52.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "95": {
+      "name": "ONIX",
+      "front": {
+        "file": "pokemon/95-front.png",
+        "size": [
+          7326,
+          74
+        ],
+        "frame": 74,
+        "frames": 99
+      },
+      "back": {
+        "file": "pokemon/95-back.png",
+        "size": [
+          14014,
+          98
+        ],
+        "frame": 98,
+        "frames": 143
+      },
+      "follower": {
+        "file": "pokemon/95-follower.png",
+        "size": [
+          700,
+          700
+        ],
+        "frame": 175,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              89.0,
+              94.0
+            ],
+            "feet": [
+              89.0,
+              172
+            ]
+          },
+          {
+            "center": [
+              89.0,
+              92.0
+            ],
+            "feet": [
+              89.0,
+              170
+            ]
+          },
+          {
+            "center": [
+              89.0,
+              96.0
+            ],
+            "feet": [
+              89.0,
+              172
+            ]
+          },
+          {
+            "center": [
+              89.0,
+              94.0
+            ],
+            "feet": [
+              89.0,
+              170
+            ]
+          },
+          {
+            "center": [
+              106.0,
+              89.0
+            ],
+            "feet": [
+              106.0,
+              171
+            ]
+          },
+          {
+            "center": [
+              106.0,
+              88.0
+            ],
+            "feet": [
+              106.0,
+              169
+            ]
+          },
+          {
+            "center": [
+              104.0,
+              89.0
+            ],
+            "feet": [
+              104.0,
+              171
+            ]
+          },
+          {
+            "center": [
+              104.0,
+              87.0
+            ],
+            "feet": [
+              104.0,
+              169
+            ]
+          },
+          {
+            "center": [
+              71.0,
+              88.0
+            ],
+            "feet": [
+              71.0,
+              170
+            ]
+          },
+          {
+            "center": [
+              71.0,
+              86.0
+            ],
+            "feet": [
+              71.0,
+              168
+            ]
+          },
+          {
+            "center": [
+              69.0,
+              88.0
+            ],
+            "feet": [
+              69.0,
+              170
+            ]
+          },
+          {
+            "center": [
+              69.0,
+              86.0
+            ],
+            "feet": [
+              69.0,
+              168
+            ]
+          },
+          {
+            "center": [
+              93.0,
+              94.0
+            ],
+            "feet": [
+              93.0,
+              173
+            ]
+          },
+          {
+            "center": [
+              93.0,
+              92.0
+            ],
+            "feet": [
+              93.0,
+              171
+            ]
+          },
+          {
+            "center": [
+              93.0,
+              95.0
+            ],
+            "feet": [
+              93.0,
+              173
+            ]
+          },
+          {
+            "center": [
+              93.0,
+              93.0
+            ],
+            "feet": [
+              93.0,
+              171
+            ]
+          }
+        ]
+      }
+    },
+    "129": {
+      "name": "MAGIKARP",
+      "front": {
+        "file": "pokemon/129-front.png",
+        "size": [
+          7560,
+          63
+        ],
+        "frame": 63,
+        "frames": 120
+      },
+      "back": {
+        "file": "pokemon/129-back.png",
+        "size": [
+          7722,
+          66
+        ],
+        "frame": 66,
+        "frames": 117
+      },
+      "follower": {
+        "file": "pokemon/129-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              33.0,
+              40.0
+            ],
+            "feet": [
+              33.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              42.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              40.0
+            ],
+            "feet": [
+              33.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              42.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              40.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              40.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              40.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              40.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              38.0
+            ],
+            "feet": [
+              30.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              40.0
+            ],
+            "feet": [
+              30.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              37.0
+            ],
+            "feet": [
+              30.0,
+              56
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              39.0
+            ],
+            "feet": [
+              30.0,
+              58
+            ]
+          }
+        ]
+      }
+    },
+    "130": {
+      "name": "GYARADOS",
+      "front": {
+        "file": "pokemon/130-front.png",
+        "size": [
+          8874,
+          102
+        ],
+        "frame": 102,
+        "frames": 87
+      },
+      "back": {
+        "file": "pokemon/130-back.png",
+        "size": [
+          9396,
+          108
+        ],
+        "frame": 108,
+        "frames": 87
+      },
+      "follower": {
+        "file": "pokemon/130-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              32.0,
+              32.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              34.0
+            ],
+            "feet": [
+              32.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              32.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              34.0
+            ],
+            "feet": [
+              32.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              32.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              34.0
+            ],
+            "feet": [
+              35.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              33.0
+            ],
+            "feet": [
+              34.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              35.0
+            ],
+            "feet": [
+              34.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              32.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              34.0
+            ],
+            "feet": [
+              29.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              33.0
+            ],
+            "feet": [
+              30.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              35.0
+            ],
+            "feet": [
+              30.0,
+              64
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              31.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              33.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              31.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              33.0
+            ],
+            "feet": [
+              32.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "131": {
+      "name": "LAPRAS",
+      "front": {
+        "file": "pokemon/131-front.png",
+        "size": [
+          4615,
+          71
+        ],
+        "frame": 71,
+        "frames": 65
+      },
+      "back": {
+        "file": "pokemon/131-back.png",
+        "size": [
+          4940,
+          76
+        ],
+        "frame": 76,
+        "frames": 65
+      },
+      "follower": {
+        "file": "pokemon/131-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              33.0,
+              37.0
+            ],
+            "feet": [
+              33.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              39.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              36.0
+            ],
+            "feet": [
+              33.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              38.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              40.0,
+              37.0
+            ],
+            "feet": [
+              40.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              40.0,
+              39.0
+            ],
+            "feet": [
+              40.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              39.0,
+              37.0
+            ],
+            "feet": [
+              39.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              39.0,
+              39.0
+            ],
+            "feet": [
+              39.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              24.0,
+              37.0
+            ],
+            "feet": [
+              24.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              24.0,
+              39.0
+            ],
+            "feet": [
+              24.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              25.0,
+              37.0
+            ],
+            "feet": [
+              25.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              25.0,
+              39.0
+            ],
+            "feet": [
+              25.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              36.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              38.0
+            ],
+            "feet": [
+              33.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              35.0
+            ],
+            "feet": [
+              33.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              37.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          }
+        ]
+      }
+    },
+    "133": {
+      "name": "EEVEE",
+      "front": {
+        "file": "pokemon/133-front.png",
+        "size": [
+          6125,
+          49
+        ],
+        "frame": 49,
+        "frames": 125
+      },
+      "back": {
+        "file": "pokemon/133-back.png",
+        "size": [
+          6650,
+          50
+        ],
+        "frame": 50,
+        "frames": 133
+      },
+      "follower": {
+        "file": "pokemon/133-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              44.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              46.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              44.0
+            ],
+            "feet": [
+              36.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              36.0,
+              46.0
+            ],
+            "feet": [
+              36.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              44.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              46.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              44.0
+            ],
+            "feet": [
+              28.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              28.0,
+              46.0
+            ],
+            "feet": [
+              28.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              44.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              46.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "134": {
+      "name": "VAPOREON",
+      "front": {
+        "file": "pokemon/134-front.png",
+        "size": [
+          5959,
+          59
+        ],
+        "frame": 59,
+        "frames": 101
+      },
+      "back": {
+        "file": "pokemon/134-back.png",
+        "size": [
+          5992,
+          56
+        ],
+        "frame": 56,
+        "frames": 107
+      },
+      "follower": {
+        "file": "pokemon/134-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              34.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              36.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              33.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              35.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              40.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              42.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              40.0
+            ],
+            "feet": [
+              35.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              35.0,
+              42.0
+            ],
+            "feet": [
+              35.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              40.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              42.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              40.0
+            ],
+            "feet": [
+              29.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              29.0,
+              42.0
+            ],
+            "feet": [
+              29.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              36.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              38.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              36.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              38.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "135": {
+      "name": "JOLTEON",
+      "front": {
+        "file": "pokemon/135-front.png",
+        "size": [
+          4851,
+          49
+        ],
+        "frame": 49,
+        "frames": 99
+      },
+      "back": {
+        "file": "pokemon/135-back.png",
+        "size": [
+          4851,
+          49
+        ],
+        "frame": 49,
+        "frames": 99
+      },
+      "follower": {
+        "file": "pokemon/135-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              38.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              40.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              38.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              40.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              42.0
+            ],
+            "feet": [
+              38.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              44.0
+            ],
+            "feet": [
+              38.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              42.0
+            ],
+            "feet": [
+              38.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              38.0,
+              44.0
+            ],
+            "feet": [
+              38.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              42.0
+            ],
+            "feet": [
+              26.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              44.0
+            ],
+            "feet": [
+              26.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              42.0
+            ],
+            "feet": [
+              26.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              26.0,
+              44.0
+            ],
+            "feet": [
+              26.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              38.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              40.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              38.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              40.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "136": {
+      "name": "FLAREON",
+      "front": {
+        "file": "pokemon/136-front.png",
+        "size": [
+          7854,
+          66
+        ],
+        "frame": 66,
+        "frames": 119
+      },
+      "back": {
+        "file": "pokemon/136-back.png",
+        "size": [
+          8330,
+          70
+        ],
+        "frame": 70,
+        "frames": 119
+      },
+      "follower": {
+        "file": "pokemon/136-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              31.0,
+              37.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              39.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              37.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              39.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              37.0,
+              41.0
+            ],
+            "feet": [
+              37.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              37.0,
+              43.0
+            ],
+            "feet": [
+              37.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              37.0,
+              41.0
+            ],
+            "feet": [
+              37.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              37.0,
+              43.0
+            ],
+            "feet": [
+              37.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              27.0,
+              41.0
+            ],
+            "feet": [
+              27.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              27.0,
+              43.0
+            ],
+            "feet": [
+              27.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              27.0,
+              41.0
+            ],
+            "feet": [
+              27.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              27.0,
+              43.0
+            ],
+            "feet": [
+              27.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              39.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              41.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              39.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              41.0
+            ],
+            "feet": [
+              31.0,
+              62
+            ]
+          }
+        ]
+      }
+    },
+    "151": {
+      "name": "MEW",
+      "front": {
+        "file": "pokemon/151-front.png",
+        "size": [
+          9282,
+          78
+        ],
+        "frame": 78,
+        "frames": 119
+      },
+      "back": {
+        "file": "pokemon/151-back.png",
+        "size": [
+          7140,
+          60
+        ],
+        "frame": 60,
+        "frames": 119
+      },
+      "follower": {
+        "file": "pokemon/151-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4,
+        "anchors": [
+          {
+            "center": [
+              32.0,
+              34.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              36.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              36.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              38.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              39.0
+            ],
+            "feet": [
+              30.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              30.0,
+              41.0
+            ],
+            "feet": [
+              30.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              39.0
+            ],
+            "feet": [
+              31.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              31.0,
+              41.0
+            ],
+            "feet": [
+              31.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              39.0
+            ],
+            "feet": [
+              34.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              34.0,
+              41.0
+            ],
+            "feet": [
+              34.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              39.0
+            ],
+            "feet": [
+              33.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              33.0,
+              41.0
+            ],
+            "feet": [
+              33.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              40.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              40.0
+            ],
+            "feet": [
+              32.0,
+              58
+            ]
+          },
+          {
+            "center": [
+              32.0,
+              42.0
+            ],
+            "feet": [
+              32.0,
+              60
+            ]
+          }
+        ]
+      }
+    }
+  }
+}
