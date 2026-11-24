@@ -25,3 +25,7 @@ Pokémon, personagens e designs pertencem a Nintendo / Creatures / GAME FREAK e 
 - [Godot Engine](https://godotengine.org/license/): motor sob licença MIT. O pacote local inclui o runtime oficial sem modificações.
 
 O protótipo inicial usou sprites externos do PokéAPI; eles foram substituídos pelos recursos da instalação indicada e não fazem parte da versão atual.
+
+## Arte de interface Aurora
+
+Moldura trainer-frame.png e cenário aurora-night.png em ui/ gerados com o gerador integrado de imagens do ChatGPT em 24/11/2026. Prompts e integração documentados em docs/GENERATED_UI.md. Não substituem os sprites e tilesets dos autores acima.

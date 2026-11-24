@@ -63,11 +63,11 @@ func fighter_card(f:Dictionary,right:bool):
 	var roster=game.row(self,6);roster.position=Vector2(876 if right else 32,142)
 	if f.owner==game.data.player.id:
 		for i in 6:
-			var slot=game.panel(roster);slot.custom_minimum_size=Vector2(42,36)
+			var slot=game.panel(roster,Color("172237"),false);slot.custom_minimum_size=Vector2(42,36)
 			if i<game.data.player.team.size():portrait(slot,game.team_mon(i),Vector2(30,26))
 			else:game.label(slot,"·",14,Color("67788d"))
 	else:
-		game.label(game.panel(roster),"ADVERSÁRIO  /  "+game.mon_name(f.mon),12,Color("dcc7ee"))
+		game.label(game.panel(roster,Color("172237"),false),"ADVERSÁRIO  /  "+game.mon_name(f.mon),12,Color("dcc7ee"))
 
 func arena(b:Dictionary):
 	fighter_card(b.fighters[0],false);fighter_card(b.fighters[1],true)

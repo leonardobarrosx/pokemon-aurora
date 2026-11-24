@@ -51,6 +51,7 @@ func _ready():
 	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.position=Vector2(128,32);view.scale=Vector2(2,2);add_child(view)
 	ui=Control.new();ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(ui)
 	ui.theme=preload("res://aurora_theme.gd").make(font)
+	ui.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
 	hud=Control.new();hud.set_script(load("res://aurora_hud.gd"));hud.game=self;ui.add_child(hud)
 	http=HTTPRequest.new();http.timeout=5;add_child(http);http.request_completed.connect(received)
 	if token!="":send({"type":"poll"})
@@ -67,8 +68,8 @@ func label(parent:Node,text:String,size:int=16,color:Color=Color("edf2fa"))->Lab
 func btn(parent:Node,text:String,callback:Callable,width:float=0)->Button:
 	var b=Button.new();b.text=text;b.custom_minimum_size=Vector2(width,40);b.pressed.connect(callback);parent.add_child(b);return b
 
-func panel(parent:Node,color:Color=Color("172237"))->PanelContainer:
-	var p=PanelContainer.new();p.add_theme_stylebox_override("panel",box(color));parent.add_child(p);return p
+func panel(parent:Node,color:Color=Color("172237"),illustrated:bool=true)->PanelContainer:
+	var p=PanelContainer.new();p.add_theme_stylebox_override("panel",preload("res://aurora_theme.gd").illustrated_panel(color.lerp(Color.WHITE,.85)) if illustrated else box(color));parent.add_child(p);return p
 
 func column(parent:Node,gap:int=10)->VBoxContainer:
 	var c=VBoxContainer.new();c.add_theme_constant_override("separation",gap);parent.add_child(c);return c
@@ -148,7 +149,8 @@ func modal(title:String,subtitle:String):
 	else:overlay.queue_free()
 	hud.visible=false
 	overlay=Control.new();overlay.size=Vector2(1280,832);ui.add_child(overlay)
-	var shade=ColorRect.new();shade.color=Color("0a1020");shade.color.a=.94;shade.size=Vector2(1280,832);overlay.add_child(shade)
+	var backdrop=TextureRect.new();backdrop.texture=load("res://assets/ui/aurora-night.png");backdrop.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;backdrop.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;backdrop.size=Vector2(1280,832);backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE;overlay.add_child(backdrop)
+	var shade=ColorRect.new();shade.color=Color("0a1020");shade.color.a=.35;shade.size=Vector2(1280,832);overlay.add_child(shade)
 	var brand=label(overlay,"A U R O R A   /   CENTRAL DO TREINADOR",13,ACCENT);brand.position=Vector2(28,20)
 	var heading=label(overlay,title,30);heading.position=Vector2(240,52)
 	var sub=label(overlay,subtitle,14,Color("9eaec5"));sub.position=Vector2(240,94)

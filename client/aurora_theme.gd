@@ -1,5 +1,20 @@
 extends RefCounted
 
+static var frame_texture:ImageTexture
+
+static func illustrated_panel(tint:Color=Color.WHITE)->StyleBoxTexture:
+	if frame_texture==null:
+		var source=load("res://assets/ui/trainer-frame.png") as Texture2D
+		var pixels=source.get_image().get_region(Rect2i(20,20,1496,984))
+		# Sample the generated master onto the game's 2x pixel grid once.
+		pixels.resize(96,64,Image.INTERPOLATE_NEAREST)
+		pixels.resize(192,128,Image.INTERPOLATE_NEAREST)
+		frame_texture=ImageTexture.create_from_image(pixels)
+	var s=StyleBoxTexture.new();s.texture=frame_texture;s.set_texture_margin_all(18)
+	s.modulate_color=tint
+	s.content_margin_left=14;s.content_margin_right=14;s.content_margin_top=10;s.content_margin_bottom=10
+	return s
+
 static func surface(color:Color,radius:int=4)->StyleBoxFlat:
 	var s=StyleBoxFlat.new()
 	s.bg_color=color;s.set_corner_radius_all(radius);s.set_border_width_all(2)
