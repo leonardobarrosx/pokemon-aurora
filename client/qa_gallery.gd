@@ -61,6 +61,23 @@ func run():
 			await shot("menus","hud-jornada")
 			quit(1 if failed else 0)
 			return
+	if args.size()>2 and args[2]=="estadio":
+		game.login()
+		for gid in ["kanto_1","kanto_2","kanto_7","hoenn_4","johto_4","sinnoh_2"]:
+			var fight=combat.duplicate(true)
+			if not fight.has("regions"):fight.regions=home.regions
+			var b=fight.battle;b.kind="gym";b.gym=gid
+			var info={}
+			for r in fight.regions:
+				for g in r.badges:
+					if g.id==gid:info=g
+			b.fighters[1].name=info.get("leader","Líder");b.fighters[1].owner="npc";b.fighters[1].art=info.get("art","")
+			b.fighters[1].hp=b.fighters[1].max_hp*.7
+			b.cutins=[]
+			load_state(fight)
+			await shot("arena","estadio-"+gid)
+		quit(1 if failed else 0)
+		return
 	if args.size()>2 and args[2]=="mato":
 		game.login()
 		var source=home.duplicate(true);source.player.area="kt_route1"

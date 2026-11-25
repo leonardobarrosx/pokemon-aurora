@@ -284,6 +284,8 @@ func battle(b:Dictionary):
 		draw_set_transform(shake)
 		var p=game.data.player;var tr=Vector2(b.get("trainer",{}).get("x",60),b.get("trainer",{}).get("y",300))
 		if str(b.fighters[0].owner)==str(p.get("id","")):trainer(tr+Vector2(0,24),p.color,"",p.get("look",{}),p.get("colors",{}),"walk",int(p.get("facing",0)))
+	elif str(b.get("kind",""))=="gym" and stadium(b,shake):
+		pass
 	else:
 		draw_set_transform(shake)
 		maps.v=self;maps.arena()
@@ -417,6 +419,63 @@ func trainer_art(f:Dictionary,kind:String,age:float)->Dictionary:
 
 # Marcações do campo e treinadores na beira da arena (como nas arenas
 # ranqueadas): cada treinador fica fora da área de luta, atrás do parceiro.
+# Estádio do ginásio, como transmissão de campeonato: o piso é o do próprio
+# ginásio (pedras e terra em Pewter, piscina em Cerulean...), com torcida,
+# refletores, placar e a moldura da câmera "ao vivo".
+func stadium(b:Dictionary,shake:Vector2)->bool:
+	var g=game.gym_info(str(b.get("gym","")))
+	var gm=map_for(str(g.get("area",""))) if not g.is_empty() else {}
+	if gm.is_empty():return false
+	var now=game.server_time()
+	var size=Vector2(float(gm.w),float(gm.h))*float(gm.cell)
+	var center=size/2+Vector2(0,float(gm.cell))
+	draw_set_transform(shake)
+	draw_rect(Rect2(0,0,512,384),Color("101820"))
+	# Piso do ginásio esticado para preencher o campo.
+	var zoom=maxf(512.0/size.x,276.0/maxf(size.y-float(gm.cell)*4,1))
+	zoom=clampf(zoom,1,2.2)
+	draw_set_transform(shake+Vector2(256,222)-center*zoom,0,Vector2(zoom,zoom))
+	draw_map_layer(gm,"tiles")
+	draw_set_transform(shake)
+	var line=Color(1,1,1,.6)
+	draw_rect(Rect2(18,94,476,256),line,false,2)
+	draw_line(Vector2(256,94),Vector2(256,350),line,2)
+	draw_arc(Vector2(256,222),38,0,TAU,40,line,2)
+	# Arquibancadas em cima e embaixo, com a torcida pulando.
+	var cheer=0.0
+	for c in b.get("cutins",[]):
+		if now-float(c.at)>=0 and now-float(c.at)<1.4:cheer=1.0
+	for band in [[Rect2(0,0,512,92),0],[Rect2(0,352,512,32),1]]:
+		var r:Rect2=band[0]
+		draw_rect(r,Color("1b2733"))
+		for row in int(r.size.y/10):
+			var y=r.position.y+6+row*10
+			draw_line(Vector2(0,y+4),Vector2(512,y+4),Color("26394a"),1)
+			for k in 52:
+				var seed=(k*37+row*91+int(band[1])*13)%97
+				var hop=absf(sin(now*(5+seed%4)+seed))*(1.5+cheer*3.5)
+				var col=[Color("e2553b"),Color("e7b443"),Color("2f8fd0"),Color("90debe"),Color("efe5d1"),Color("b77ad1")][seed%6]
+				draw_circle(Vector2(k*10+(row%2)*5,y-hop),3,col.darkened(.15+row*.04))
+	# Refletores.
+	for x in [40,472]:
+		draw_colored_polygon(PackedVector2Array([Vector2(x-10,0),Vector2(x+10,0),Vector2(256+(x-256)*.3+60,350),Vector2(256+(x-256)*.3-60,350)]),Color(1,1,.85,.05))
+		draw_rect(Rect2(x-12,2,24,8),Color("f6f0c8"))
+	# Placar da transmissão.
+	var plate=Rect2(156,20,200,40)
+	draw_rect(plate,Color(0.04,0.07,0.12,.92));draw_rect(plate,Color("e7b443"),false,2)
+	txt(Vector2(plate.position.x+10,plate.position.y+16),("Ginásio de "+str(g.get("town",""))).to_upper(),9,Color("e7b443"))
+	txt(Vector2(plate.position.x+10,plate.position.y+32),str(g.get("badge","")),11)
+	# Ao vivo + cantos da câmera.
+	var blink=int(now*2)%2==0
+	draw_rect(Rect2(14,14,62,16),Color(0.06,0.08,0.12,.85))
+	draw_circle(Vector2(24,22),4,Color("e2553b") if blink else Color("7a2a1e"))
+	txt(Vector2(32,26),"AO VIVO",9)
+	for corner in [Vector2(8,8),Vector2(504,8),Vector2(8,376),Vector2(504,376)]:
+		var dx=12.0 if corner.x<256 else -12.0;var dy=12.0 if corner.y<192 else -12.0
+		draw_line(corner,corner+Vector2(dx,0),Color(1,1,1,.8),2);draw_line(corner,corner+Vector2(0,dy),Color(1,1,1,.8),2)
+	arena_trainers(b)
+	return true
+
 func arena_field(b:Dictionary):
 	var line=Color(1,1,1,.55)
 	var field=Rect2(18,94,476,256)
@@ -428,6 +487,9 @@ func arena_field(b:Dictionary):
 		var x=18 if side==0 else 494
 		var box=Rect2(x-(0 if side==0 else 48),172,48,100)
 		draw_rect(box,line,false,2)
+	arena_trainers(b)
+
+func arena_trainers(b:Dictionary):
 	var spots=[Vector2(36,378),Vector2(476,96)]
 	for i in b.fighters.size():
 		var f=b.fighters[i]
@@ -439,7 +501,7 @@ func arena_field(b:Dictionary):
 		elif str(f.owner)=="npc":
 			if b.kind=="gym":
 				var sprite=str(game.gym_info(str(b.get("gym",""))).get("sprite",""))
-				trainer(at,"green",sprite if sprite!="" else "ds/hg_gsleader12",{},{},"walk",facing)
+				if sprite!="":trainer(at,"green",sprite,{},{},"walk",facing)
 		else:
 			for other in game.data.get("players",[]):
 				if str(other.get("id",""))==str(f.owner):trainer(at,other.get("color","green"),"",other.get("look",{}),other.get("colors",{}),"walk",facing)
