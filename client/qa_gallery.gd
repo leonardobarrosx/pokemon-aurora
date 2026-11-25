@@ -67,7 +67,7 @@ func run():
 		if scroll and scroll.get_v_scroll_bar().max_value>scroll.size.y+4:
 			scroll.scroll_vertical=roundi(scroll.get_v_scroll_bar().max_value)
 			await shot("menus",page+"-rodape")
-	for area in game.AREAS.keys()+["kt_pallet_town","kt_route1","kt_viridian_city","kt_pallet_town_players_house_1f","kt_mt_moon_1f","kt_cerulean_city"]:
+	for area in game.AREAS.keys()+["kt_pallet_town","kt_route1","kt_viridian_city","kt_pallet_town_players_house_1f","kt_mt_moon_1f","kt_cerulean_city","hn_littleroot_town","hn_route101","hn_petalburg_city","hn_rustboro_city"]:
 		load_state(home)
 		game.data.player.area=area
 		var area_map=game.view.map_for(area)

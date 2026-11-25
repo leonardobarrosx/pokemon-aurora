@@ -78,3 +78,29 @@ func TestKantoConnectionsAndDoors(t *testing.T) {
 		t.Fatal("viagem para Aurora falhou")
 	}
 }
+
+func TestHoennLittlerootToRoute101AndTravel(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "A", 1)
+	if err := w.action(p, Command{Type: "travel", Area: "hoenn"}, 900); err != nil {
+		t.Fatal(err)
+	}
+	if p.Area != hoennStart || regionOf(p.Area) != "hoenn" {
+		t.Fatalf("viagem para Hoenn deveria chegar em Littleroot, foi para %s", p.Area)
+	}
+	w.enterAt(p, hoennStart, Vec{10.5 * 32, 1.5 * 32}, 1000)
+	for i := 0; i < 40 && p.Area == hoennStart; i++ {
+		p.Input = Vec{0, -1}
+		p.InputAt = 1001 + float64(i)*.05
+		w.tick(.05, 1001+float64(i)*.05)
+	}
+	if p.Area != "hn_route101" {
+		t.Fatalf("Littleroot deveria levar à Rota 101, ficou em %s %v", p.Area, p.Pos)
+	}
+	if err := w.action(p, Command{Type: "travel", Area: "kanto"}, 2000); err != nil {
+		t.Fatal(err)
+	}
+	if p.Area != kantoStart {
+		t.Fatal("viagem de Hoenn para Kanto falhou")
+	}
+}

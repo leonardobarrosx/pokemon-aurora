@@ -48,14 +48,25 @@ type AreaMap struct {
 	Name        string                `json:"name"`
 }
 
-// Regiões: Aurora (mapas originais) e Kanto (mapas do FireRed).
+// Regiões: Aurora (mapas originais), Kanto (FireRed) e Hoenn (Emerald).
 const kantoStart = "kt_pallet_town"
+const hoennStart = "hn_littleroot_town"
+
+// regionStarts diz onde cada região recebe quem chega viajando.
+var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart}
 
 func isKanto(area string) bool { return strings.HasPrefix(area, "kt_") }
+func isHoenn(area string) bool { return strings.HasPrefix(area, "hn_") }
+
+// isImported indica mapas importados dos jogos do GBA, livres desde o início.
+func isImported(area string) bool { return isKanto(area) || isHoenn(area) }
 
 func regionOf(area string) string {
-	if isKanto(area) {
+	switch {
+	case isKanto(area):
 		return "kanto"
+	case isHoenn(area):
+		return "hoenn"
 	}
 	return "aurora"
 }
@@ -158,7 +169,7 @@ func arrival(area, from string) Vec {
 }
 
 func canEnter(p *Player, area string) bool {
-	if isKanto(area) {
+	if isImported(area) {
 		return areaMaps[area] != nil
 	}
 	need, ok := areaNeed[area]

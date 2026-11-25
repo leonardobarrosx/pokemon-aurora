@@ -82,13 +82,10 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		}
 		p.Transport = c.Value
 	case "travel":
-		// Viagem entre regiões levando a equipe: Kanto chega em Pallet Town,
-		// Aurora chega na vila.
-		if c.Area == "kanto" {
-			c.Area = kantoStart
-		}
-		if c.Area == "aurora" {
-			c.Area = "vila"
+		// Viagem entre regiões levando a equipe: cada região tem sua chegada
+		// (Aurora na vila, Kanto em Pallet Town, Hoenn em Littleroot).
+		if start, ok := regionStarts[c.Area]; ok {
+			c.Area = start
 		}
 		if !canEnter(p, c.Area) {
 			return errMsg("continue a história para liberar essa área")

@@ -2,6 +2,13 @@ extends Node2D
 
 var start_region:="aurora"
 
+const REGION_NAMES={"aurora":"Aurora","kanto":"Kanto","hoenn":"Hoenn"}
+
+func region_of(area:String)->String:
+	if area.begins_with("kt_"):return "kanto"
+	if area.begins_with("hn_"):return "hoenn"
+	return "aurora"
+
 func area_name(area:String)->String:
 	if AREAS.has(area):return AREAS[area]
 	var m=view.map_for(area) if view else {}
@@ -260,7 +267,7 @@ func login():
 	label(c,"REGIÃO INICIAL",13,ACCENT)
 	var regions=row(c,16)
 	var region_group=ButtonGroup.new()
-	for entry in [["aurora","Aurora · Vila Alvorada"],["kanto","Kanto · Pallet Town"]]:
+	for entry in [["aurora","Aurora · Vila Alvorada"],["kanto","Kanto · Pallet Town"],["hoenn","Hoenn · Littleroot"]]:
 		var pick=btn(regions,entry[1],func():start_region=entry[0],300)
 		pick.toggle_mode=true;pick.button_group=region_group;pick.button_pressed=start_region==entry[0]
 		for state in ["pressed","hover_pressed"]:
@@ -647,12 +654,14 @@ func open_panel(which:String):
 		"mapa":
 			var trip=panel(overlay_body);trip.custom_minimum_size.x=1500
 			var trip_row=row(trip,20)
-			var in_kanto=str(p.area).begins_with("kt_")
+			var here=region_of(str(p.area))
 			var trip_text=column(trip_row,4);trip_text.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 			label(trip_text,"VIAGEM ENTRE REGIÕES",13,ACCENT)
-			label(trip_text,"Você está em "+("Kanto" if in_kanto else "Aurora")+". Sua equipe viaja junto.",20)
-			var go=btn(trip_row,"Voltar para Aurora" if in_kanto else "Viajar para Kanto",func():send({"type":"travel","area":"aurora" if in_kanto else "kanto"});close_panel(),300,"mapa")
-			Design.primary(go)
+			label(trip_text,"Você está em "+REGION_NAMES[here]+". Sua equipe viaja junto.",20)
+			for dest in REGION_NAMES.keys():
+				if dest==here:continue
+				var go=btn(trip_row,"Viajar para "+REGION_NAMES[dest],func():send({"type":"travel","area":dest});close_panel(),240,"mapa")
+				Design.primary(go)
 			var grid=grid_cards(overlay_body,2)
 			var unlock={"casa":0,"vila":0,"jardim":0,"rota":1,"mina":2,"ginasio":2,"safari":3,"lago":3}
 			var stamps={"casa":["Interior1",Rect2(128,608,128,96)],"vila":["Exterior1",Rect2(0,3360,192,224)],"rota":["Exterior1",Rect2(128,32,32,32)],"jardim":["Exterior1",Rect2(160,160,32,64)],"mina":["Interior1",Rect2(0,1280,64,96)],"ginasio":["Interior1",Rect2(0,2048,128,128)],"safari":["Exterior1",Rect2(128,1312,64,96)],"lago":["Exterior1",Rect2(0,320,64,32)]}
