@@ -194,7 +194,18 @@ func (b *Battle) hit(i int, target *Fighter, dmg, push float64, dir Vec, kind st
 	}
 	target.HP = math.Max(0, target.HP-dmg)
 	b.Fighters[i].Damage += dmg
+	// Recuo pelo tipo (ideia do Pokémon Battle Advanced): super efetivo
+	// arremessa mais longe, pouco efetivo quase não empurra.
+	if eff := effectiveness(kind, species[target.Mon.Species].Type); eff > 1 {
+		push *= 1.5
+	} else if eff < 1 {
+		push *= .6
+	}
 	b.step(target, target.Pos.Add(dir.Unit().Mul(push)))
+	// Pausa de impacto: um instante parado ao levar o golpe.
+	if dmg > 0 {
+		target.StunUntil = math.Max(target.StunUntil, now+.06)
+	}
 	// Empurrões fortes atordoam; o porte reduz o tempo.
 	if push > 22 {
 		target.StunUntil = math.Max(target.StunUntil, now+math.Min(.6, push/90)/math.Sqrt(target.Physique.Scale))
