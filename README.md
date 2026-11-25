@@ -1,5 +1,7 @@
 # Pokémon Aurora Online — alfa desktop
 
+> Jogo próprio, separado do projeto de tradução Pokémon Indigo PT-BR. Este repositório nasceu da pasta `aurora-desktop/` daquele projeto, com o histórico preservado.
+
 Cliente **Godot 4 / GDScript**, servidor autoritativo **Go**. Região original Aurora, com assets reaproveitados do Pokémon Indigo / Añil instalado em `C:\dev\Pokemon Anil V4.13`. Este é um primeiro protótipo jogável, não um MMO terminado nem um serviço público já hospedado.
 
 ## Jogar no Windows
@@ -11,10 +13,10 @@ Progresso do launcher: `%LOCALAPPDATA%\PokemonAurora\server\world.json`. Chave d
 Para desenvolver:
 
 ```powershell
-cd aurora-desktop/server
+cd server
 go run .
-# Em outro terminal, na raiz do repositório:
-godot --path aurora-desktop/client
+# Em outro terminal, na raiz deste repositório:
+godot --path client
 ```
 
 Para recompilar: `./ferramentas/build.ps1 -Go caminho/go.exe -Godot caminho/Godot_console.exe`. O build local usa o runtime oficial Godot com um PCK; binários e saves ficam fora do Git. Go não depende de bibliotecas de terceiros.

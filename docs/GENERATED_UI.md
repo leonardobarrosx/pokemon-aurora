@@ -25,7 +25,7 @@ O botão `indigo-button.png` foi regenerado depois da auditoria de gameplay, com
 
 As 45 vistas anteriores foram capturadas no Godot com dados de teste locais. As cinco pranchas em `previews/atlas/pranchas/antes-*.jpg` serviram de referência ao gerador de imagens do ChatGPT. Os dois estudos de composição estão em `previews/atlas/conceito.png` e `previews/atlas/conceito-estados.png`. O cabeçalho usa `atlas-panorama.png` e a página de pesca usa `lago-celeste.png`. O cliente desenha os controles, textos, barras, retratos e estados em tempo de execução.
 
-Abra `previews/atlas/index.html` para comparar os 45 pares de imagens. Para recriar a galeria no Windows, execute estes comandos a partir de `aurora-desktop`, com Go, Godot e Python com Pillow disponíveis.
+Abra `previews/atlas/index.html` para comparar os 45 pares de imagens. Para recriar a galeria no Windows, execute estes comandos na raiz do repositório, com Go, Godot e Python com Pillow disponíveis.
 
 ```powershell
 $env:AURORA_PREVIEW_DIR = (Join-Path (Get-Location) 'build/ui-fixtures')
