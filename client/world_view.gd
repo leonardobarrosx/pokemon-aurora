@@ -289,6 +289,7 @@ func battle(b:Dictionary):
 
 	if float(b.get("pause_until",0))>game.server_time():
 		draw_rect(Rect2(0,72,512,280),Color(1,1,.8,.25))
+	cutin(b)
 	if game.data.player.battle!="":
 		var aim=get_local_mouse_position();draw_line(aim-Vector2(6,0),aim+Vector2(6,0),Color("fff6d5"),2);draw_line(aim-Vector2(0,6),aim+Vector2(0,6),Color("fff6d5"),2)
 		if Time.get_ticks_msec()<action_pulse_until:
@@ -299,6 +300,68 @@ func battle(b:Dictionary):
 				var origin=smooth_position(str(b.id)+":"+str(mine.owner),Vector2(mine.pos.x,mine.pos.y))
 				draw_arc(origin,16+(action_pulse_until-Time.get_ticks_msec())*.08,0,TAU,20,type_color(game.data.species[str(int(mine.mon.species))].type),2)
 	draw_set_transform(Vector2.ZERO)
+
+# Arte de batalha do treinador (estilo DS) por um instante ao lançar a
+# Pokébola, trocar de Pokémon ou dar um comando de ataque especial.
+const CUTIN_TIME=1.1
+func cutin(b:Dictionary):
+	var now=game.server_time();var show:Dictionary={}
+	for c in b.get("cutins",[]):
+		var age=now-float(c.at)
+		if age>=0 and age<CUTIN_TIME:show=c
+	if show.is_empty():return
+	var side=int(show.side);var age=now-float(show.at)
+	var f=b.fighters[side] if side<b.fighters.size() else {}
+	var slide=clampf(age/.14,0,1)*clampf((CUTIN_TIME-age)/.16,0,1)
+	var top=250.0 if side==0 else 92.0
+	var accent=Color("e8833a") if side==0 else Color("4f7fd8")
+	var dir=1.0 if side==0 else -1.0
+	var off=(1.0-slide)*520*-dir
+	# Faixa inclinada com linhas de velocidade.
+	var band=PackedVector2Array([Vector2(off-20,top+14),Vector2(off+532,top),Vector2(off+532,top+92),Vector2(off-20,top+106)])
+	draw_colored_polygon(band,Color(0.06,0.09,0.16,.88*slide))
+	draw_line(band[0],band[1],accent,3);draw_line(band[3],band[2],accent,3)
+	for k in 7:
+		var y=top+18+k*12;var x=fposmod(now*900*dir+k*137,560)-24
+		draw_line(Vector2(x,y),Vector2(x+40*dir,y),Color(1,1,1,.18*slide),2)
+	var art=trainer_art(f,str(show.kind),age)
+	var ax=(40.0 if side==0 else 330.0)+off
+	if art.tex:draw_texture_rect_region(art.tex,Rect2(ax,top-30,140,140),art.region)
+	var tx=(190.0 if side==0 else 40.0)+off
+	var who=str(f.get("name","")) if str(f.get("owner",""))=="npc" else trainer_name(str(f.get("owner","")))
+	txt(Vector2(tx,top+40),who.to_upper(),12,accent.lightened(.3))
+	txt(Vector2(tx,top+66),str(show.text),20)
+
+func trainer_name(owner:String)->String:
+	if owner==game.data.player.get("id",""):return str(game.data.player.get("name",""))
+	for other in game.data.get("players",[]):
+		if str(other.get("id",""))==owner:return str(other.get("name",""))
+	return ""
+
+# Textura e recorte da arte: artes do Platinum são tiras animadas de 80 px
+# (pose de lançar), com retrato para o ataque especial; as do Indigo e o
+# jogador (criador de personagem) são uma imagem só.
+func trainer_art(f:Dictionary,kind:String,age:float)->Dictionary:
+	var art=str(f.get("art",""))
+	if art!="":
+		if art.begins_with("pt_"):
+			var mug=texture("res://assets/trainers/%s_mug.png"%art) if kind=="special" and ResourceLoader.exists("res://assets/trainers/%s_mug.png"%art) else null
+			if mug:return {"tex":mug,"region":Rect2(Vector2.ZERO,mug.get_size())}
+			var strip=texture("res://assets/trainers/%s.png"%art)
+			if strip==null:return {"tex":null}
+			var n=int(strip.get_width()/80);var frame=clampi(int(age*12),0,n-1)
+			return {"tex":strip,"region":Rect2(frame*80,0,80,80)}
+		var t=texture("res://assets/trainers/%s.png"%art)
+		return {"tex":t,"region":Rect2(Vector2.ZERO,t.get_size()) if t else Rect2()}
+	var look:Dictionary={};var colors:Dictionary={}
+	var owner=str(f.get("owner",""))
+	if owner==game.data.player.get("id",""):
+		look=game.data.player.get("look",{});colors=game.data.player.get("colors",{})
+	else:
+		for other in game.data.get("players",[]):
+			if str(other.get("id",""))==owner:look=other.get("look",{});colors=other.get("colors",{})
+	var front=indigo.compose(look,colors,"front")
+	return {"tex":front,"region":Rect2(Vector2.ZERO,front.get_size()) if front else Rect2()}
 
 # Marcações do campo e treinadores na beira da arena (como nas arenas
 # ranqueadas): cada treinador fica fora da área de luta, atrás do parceiro.
@@ -322,7 +385,7 @@ func arena_field(b:Dictionary):
 			var p=game.data.player
 			trainer(at,p.color,"",p.get("look",{}),p.get("colors",{}),"walk",facing)
 		elif str(f.owner)=="npc":
-			if b.kind=="gym":trainer(at,"green","gardener",{},{},"walk",facing)
+			if b.kind=="gym":trainer(at,"green","ds/hg_gsleader12",{},{},"walk",facing)
 		else:
 			for other in game.data.get("players",[]):
 				if str(other.get("id",""))==str(f.owner):trainer(at,other.get("color","green"),"",other.get("look",{}),other.get("colors",{}),"walk",facing)

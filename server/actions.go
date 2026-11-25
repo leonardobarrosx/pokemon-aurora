@@ -178,9 +178,17 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		f, foe := b.Fighters[i], b.Fighters[1-i]
 		switch c.Type {
 		case "attack", "special":
-			return b.shoot(i, p.Aim, now, c.Type == "special")
+			err := b.shoot(i, p.Aim, now, c.Type == "special")
+			if err == nil && c.Type == "special" {
+				b.cutin(i, "special", f.Moves[3].Name+"!", now)
+			}
+			return err
 		case "move":
-			return b.useMove(i, c.Index, p.Aim, now)
+			err := b.useMove(i, c.Index, p.Aim, now)
+			if err == nil && c.Index == 3 {
+				b.cutin(i, "special", f.Moves[3].Name+"!", now)
+			}
+			return err
 		case "dash":
 			if now < f.DashAt || f.Energy < 20 {
 				return errMsg("esquiva recarregando")
@@ -204,6 +212,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			}
 			p.Balls--
 			f.SpecialAt = now + 1.5
+			b.cutin(i, "ball", "Pokébola, vai!", now)
 			chance := .15 + (1-foe.HP/foe.MaxHP)*.78
 			if mathrand.Float64() < chance {
 				p.Mons = append(p.Mons, foe.Mon)

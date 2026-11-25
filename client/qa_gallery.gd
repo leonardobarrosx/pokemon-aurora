@@ -46,6 +46,10 @@ func run():
 	root.add_child(game)
 	game.set_process(false)
 	game.commands.clear()
+	if args.size()>2 and args[2]=="cutins":
+		await cutin_states()
+		quit(1 if failed else 0)
+		return
 	if args.size()>2 and args[2]=="estados":
 		await extra_states()
 		quit(1 if failed else 0)
@@ -98,6 +102,7 @@ func run():
 		load_state(source)
 		if mode=="espectador":game.spectate=b.id;game.refresh_sidebar()
 		await shot("arena",mode)
+	await cutin_states()
 	for kind in ["arcade","Corrida","Voo","Natação"]:
 		var source=home.duplicate(true)
 		source.player.arcade={"kind":kind,"start":source.now-4,"score":40,"hp":3,"seed":2,"pos":{"x":240,"y":238}}
@@ -105,6 +110,19 @@ func run():
 		await shot("arena",kind.to_lower().replace("ç","c").replace("ã","a"))
 	await extra_states()
 	quit(1 if failed else 0)
+
+# Arte do treinador entrando na tela: pokébola, troca e ataque especial.
+func cutin_states():
+	for mode in [["ball","capture",0,"Pokébola, vai!",""],["switch","gym",1,"Vai, Tangela!","in_erika"],["special","pvp",0,"Hiper Raio!",""],["special","gym",1,"Raio Solar!","pt_leader_gardenia"]]:
+		var source=combat.duplicate(true)
+		var b=source.battle
+		b.kind=mode[1]
+		if b.kind=="gym":b.fighters[1].name="Flora";b.fighters[1].owner="npc";b.fighters[1].art=mode[4]
+		if b.kind=="pvp":b.fighters[1].name="Iara"
+		b.cutins=[{"side":mode[2],"kind":mode[0],"text":mode[3],"at":float(source.now)-.35}]
+		load_state(source)
+		for c in game.data.battle.cutins:c.at=game.server_time()+.28-.35
+		await shot("arena","cutin-%s-%s-%d"%[mode[0],mode[1],mode[2]])
 
 func extra_states():
 	root.gui_embed_subwindows=true

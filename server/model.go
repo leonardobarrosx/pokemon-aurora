@@ -190,6 +190,7 @@ type Fighter struct {
 	MealUntil   float64         `json:"meal_until"`
 	Owner       string          `json:"owner"`
 	Name        string          `json:"name"`
+	Art         string          `json:"art"`
 	Mon         Mon             `json:"mon"`
 	Pos         Vec             `json:"pos"`
 	HP          float64         `json:"hp"`
@@ -249,6 +250,15 @@ type Battle struct {
 	End         float64      `json:"end"`
 	Winner      string       `json:"winner"`
 	Log         string       `json:"log"`
+	// Cutins: arte de batalha do treinador ao lançar Pokébola, trocar de
+	// Pokémon ou dar um comando de ataque especial.
+	Cutins []Cutin `json:"cutins"`
+}
+type Cutin struct {
+	Side int     `json:"side"`
+	Kind string  `json:"kind"`
+	Text string  `json:"text"`
+	At   float64 `json:"at"`
 }
 type Message struct {
 	Name string  `json:"name"`

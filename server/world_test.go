@@ -436,3 +436,29 @@ func TestFishingTiming(t *testing.T) {
 		t.Fatal("timed fishing did not open manual capture")
 	}
 }
+func TestTrainerCutins(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Íris", 1)
+	p.Balls = 3
+	if err := w.startBattle(p, "gym", 1, nil, 1000); err != nil {
+		t.Fatal(err)
+	}
+	b := w.Battles[p.Battle]
+	if len(b.Cutins) != 2 || b.Cutins[0].Kind != "switch" || b.Cutins[1].Side != 1 || b.Fighters[1].Art == "" {
+		t.Fatalf("gym should open with both trainers sending out: %+v", b.Cutins)
+	}
+	if err := w.action(p, Command{Type: "special"}, 1005); err != nil {
+		t.Fatal(err)
+	}
+	last := b.Cutins[len(b.Cutins)-1]
+	if last.Kind != "special" || last.Side != 0 {
+		t.Fatalf("special command should show the trainer: %+v", last)
+	}
+	w.endBattle(b, p.ID, 1006)
+	_ = w.startBattle(p, "capture", 16, nil, 1010)
+	b = w.Battles[p.Battle]
+	_ = w.action(p, Command{Type: "ball"}, 1011)
+	if last := b.Cutins[len(b.Cutins)-1]; last.Kind != "ball" {
+		t.Fatalf("ball throw should show the trainer: %+v", last)
+	}
+}

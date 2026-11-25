@@ -33,6 +33,7 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 	b.Fighters[1] = makeFighter(nil, m, Vec{410, 200})
 	if kind == "gym" {
 		b.Fighters[1].Name = "Flora"
+		b.Fighters[1].Art = "in_erika"
 	}
 	if other != nil {
 		if other.Battle != "" {
@@ -46,8 +47,24 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 	}
 	p.Battle = b.ID
 	b.updateEff()
+	b.cutin(0, "switch", "Vai, "+monName(b.Fighters[0].Mon)+"!", now)
+	if kind == "gym" || kind == "pvp" {
+		b.cutin(1, "switch", "Vai, "+monName(b.Fighters[1].Mon)+"!", now+1.2)
+	}
 	w.Battles[b.ID] = b
 	return nil
+}
+
+// cutin guarda a arte do treinador para o cliente mostrar por um instante.
+func (b *Battle) cutin(side int, kind, text string, at float64) {
+	b.Cutins = append(b.Cutins, Cutin{Side: side, Kind: kind, Text: text, At: at})
+	if len(b.Cutins) > 4 {
+		b.Cutins = b.Cutins[len(b.Cutins)-4:]
+	}
+}
+
+func monName(m Mon) string {
+	return species[m.Species].Name
 }
 
 // shoot mantém os comandos antigos: ataque = golpe 1, especial = golpe 4.
@@ -126,6 +143,7 @@ func (w *World) nextMon(b *Battle, i int, now float64) bool {
 				next.Auto = f.Auto
 				b.Fighters[i] = next
 				b.updateEff()
+				b.cutin(i, "switch", "Vai, "+monName(next.Mon)+"!", now)
 				return true
 			}
 		}
