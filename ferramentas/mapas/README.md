@@ -19,3 +19,12 @@ entrada de caverna). Cada célula ocupa 32 px do mundo (pixels do GBA dobrados).
 
 `grid.py <jogo> <Layout> saída.png` desenha um layout original com coordenadas
 para escolher novos carimbos.
+
+## Johto e Sinnoh (DS)
+
+1. `ds/ds_region.py` e `ds/sinnoh.py` leem os mapas 3D do HeartGold e do Platinum.
+2. `pokecenters.py` troca os Centros Pokémon de Johto pelo interior do FireRed e os
+   de Sinnoh pelo do Emerald.
+3. `sinnoh_gba.py` repinta o mundo aberto de Sinnoh com o tileset do FireRed: lê o
+   terreno de cima (`ds/topdown.py`), aplica grama, areia, montanha, água, floresta
+   e calçada de Saffron, e coloca casas, Centros, lojas, ginásios e prédios nas portas.
