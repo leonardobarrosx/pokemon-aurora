@@ -129,6 +129,12 @@ def layout(game, name):
     raise KeyError(name)
 
 
-def tileset_dir(symbol):
-    # gTileset_PalletTown -> pallet_town
+def tileset_dir(symbol, game="frlg"):
+    # gTileset_PalletTown -> pallet_town (casando com as pastas existentes)
+    want = symbol.replace("gTileset_", "").replace("_", "").lower()
+    base = os.path.join(GAMES[game]["root"], "data/tilesets")
+    for kind in ("primary", "secondary"):
+        for d in os.listdir(os.path.join(base, kind)):
+            if d.replace("_", "").lower() == want:
+                return d
     return snake(symbol.replace("gTileset_", ""))

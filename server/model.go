@@ -163,6 +163,8 @@ type Player struct {
 	Arcade     *Arcade            `json:"arcade"`
 	Event      string             `json:"event"`
 	WarpAt     float64            `json:"-"`
+	ReturnArea string             `json:"return_area"`
+	ReturnPos  Vec                `json:"return_pos"`
 }
 
 func newPlayer(name string, starter int, now float64) *Player {

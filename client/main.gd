@@ -1,5 +1,12 @@
 extends Node2D
 
+var start_region:="aurora"
+
+func area_name(area:String)->String:
+	if AREAS.has(area):return AREAS[area]
+	var m=view.map_for(area) if view else {}
+	return str(m.get("name",area))
+
 const AREAS={"casa":"Meu cantinho","vila":"Vila Alvorada","rota":"Trilha das Folhas","jardim":"Jardim de berries","mina":"Mina da Lua","ginasio":"Ginásio Raiz","safari":"Reserva Orvalho","lago":"Lago Celeste"}
 const QUESTS=["Converse com Íris na vila","Capture um parceiro na rota","Plante, regue e colha uma berry","Encontre um cristal na mina","Vença Flora no Ginásio Raiz"]
 const Design=preload("res://aurora_theme.gd")
@@ -250,8 +257,18 @@ func login():
 		for state in ["pressed","hover_pressed"]:
 			pick.add_theme_stylebox_override(state,Design.surface(Design.CORAL,8,Design.CORAL))
 			pick.add_theme_color_override("font_"+state+"_color",Color.WHITE)
+	label(c,"REGIÃO INICIAL",13,ACCENT)
+	var regions=row(c,16)
+	var region_group=ButtonGroup.new()
+	for entry in [["aurora","Aurora · Vila Alvorada"],["kanto","Kanto · Pallet Town"]]:
+		var pick=btn(regions,entry[1],func():start_region=entry[0],300)
+		pick.toggle_mode=true;pick.button_group=region_group;pick.button_pressed=start_region==entry[0]
+		for state in ["pressed","hover_pressed"]:
+			pick.add_theme_stylebox_override(state,Design.surface(Design.CORAL,8,Design.CORAL))
+			pick.add_theme_color_override("font_"+state+"_color",Color.WHITE)
+	label(c,"Você pode viajar entre as regiões com sua equipe a qualquer momento pelo mapa.",13,Color("5d6763"))
 	label(c,"ENDEREÇO DO SERVIDOR",13,ACCENT);server_input=LineEdit.new();server_input.text=endpoint;c.add_child(server_input)
-	var start=btn(c,"Começar minha jornada",func():endpoint=server_input.text.strip_edges().trim_suffix("/");send({"type":"register","name":name_input.text,"starter":starter}),300)
+	var start=btn(c,"Começar minha jornada",func():endpoint=server_input.text.strip_edges().trim_suffix("/");send({"type":"register","name":name_input.text,"starter":starter,"area":start_region}),300)
 	start.size_flags_horizontal=Control.SIZE_SHRINK_BEGIN
 	Design.primary(start)
 	label(c,"O progresso fica no servidor. Esta instalação guarda sua chave de acesso.",14,Color("9eb2ad"))
@@ -628,6 +645,14 @@ func open_panel(which:String):
 	var p:Dictionary=data.player
 	match which:
 		"mapa":
+			var trip=panel(overlay_body);trip.custom_minimum_size.x=1500
+			var trip_row=row(trip,20)
+			var in_kanto=str(p.area).begins_with("kt_")
+			var trip_text=column(trip_row,4);trip_text.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			label(trip_text,"VIAGEM ENTRE REGIÕES",13,ACCENT)
+			label(trip_text,"Você está em "+("Kanto" if in_kanto else "Aurora")+". Sua equipe viaja junto.",20)
+			var go=btn(trip_row,"Voltar para Aurora" if in_kanto else "Viajar para Kanto",func():send({"type":"travel","area":"aurora" if in_kanto else "kanto"});close_panel(),300,"mapa")
+			Design.primary(go)
 			var grid=grid_cards(overlay_body,2)
 			var unlock={"casa":0,"vila":0,"jardim":0,"rota":1,"mina":2,"ginasio":2,"safari":3,"lago":3}
 			var stamps={"casa":["Interior1",Rect2(128,608,128,96)],"vila":["Exterior1",Rect2(0,3360,192,224)],"rota":["Exterior1",Rect2(128,32,32,32)],"jardim":["Exterior1",Rect2(160,160,32,64)],"mina":["Interior1",Rect2(0,1280,64,96)],"ginasio":["Interior1",Rect2(0,2048,128,128)],"safari":["Exterior1",Rect2(128,1312,64,96)],"lago":["Exterior1",Rect2(0,320,64,32)]}

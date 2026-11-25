@@ -16,21 +16,48 @@ import (
 var mapFiles embed.FS
 
 type Warp struct {
-	X  int    `json:"x"`
-	Y  int    `json:"y"`
-	W  int    `json:"w"`
-	H  int    `json:"h"`
-	To string `json:"to"`
+	X  int     `json:"x"`
+	Y  int     `json:"y"`
+	W  int     `json:"w"`
+	H  int     `json:"h"`
+	To string  `json:"to"`
+	TX float64 `json:"tx"`
+	TY float64 `json:"ty"`
+}
+
+// Connection liga a borda de um mapa a outro (como nas rotas do FireRed).
+type Connection struct {
+	Dir    string `json:"dir"`
+	Offset int    `json:"offset"`
+	To     string `json:"to"`
+	W      int    `json:"w"`
+	H      int    `json:"h"`
 }
 type AreaMap struct {
-	W       int                   `json:"w"`
-	H       int                   `json:"h"`
-	Cell    float64               `json:"cell"`
-	Cells   string                `json:"cells"`
-	Warps   []Warp                `json:"warps"`
-	Spawns  map[string][2]float64 `json:"spawns"`
-	Points  map[string][2]float64 `json:"points"`
-	Default [2]float64            `json:"default"`
+	W           int                   `json:"w"`
+	H           int                   `json:"h"`
+	Cell        float64               `json:"cell"`
+	Cells       string                `json:"cells"`
+	Warps       []Warp                `json:"warps"`
+	Spawns      map[string][2]float64 `json:"spawns"`
+	Points      map[string][2]float64 `json:"points"`
+	Default     [2]float64            `json:"default"`
+	Connections []Connection          `json:"connections"`
+	Encounters  []int                 `json:"encounters"`
+	Cave        bool                  `json:"cave"`
+	Name        string                `json:"name"`
+}
+
+// Regiões: Aurora (mapas originais) e Kanto (mapas do FireRed).
+const kantoStart = "kt_pallet_town"
+
+func isKanto(area string) bool { return strings.HasPrefix(area, "kt_") }
+
+func regionOf(area string) string {
+	if isKanto(area) {
+		return "kanto"
+	}
+	return "aurora"
 }
 
 var areaMaps = map[string]*AreaMap{}
@@ -69,18 +96,50 @@ func (m *AreaMap) solid(v Vec, dir Vec) bool {
 		return true
 	case 'v':
 		return dir.Y <= 0
+	case '^':
+		return dir.Y >= 0
+	case '>':
+		return dir.X <= 0
+	case '<':
+		return dir.X >= 0
 	}
 	return false
 }
 
-func (m *AreaMap) warpAt(v Vec) string {
+func (m *AreaMap) warpAt(v Vec) *Warp {
 	x, y := int(math.Floor(v.X/m.Cell)), int(math.Floor(v.Y/m.Cell))
-	for _, w := range m.Warps {
+	for i, w := range m.Warps {
 		if x >= w.X && x < w.X+w.W && y >= w.Y && y < w.Y+w.H {
-			return w.To
+			return &m.Warps[i]
 		}
 	}
-	return ""
+	return nil
+}
+
+// edge: se o jogador sai pela borda e há um mapa conectado ali, devolve a
+// área e a posição correspondente no outro mapa.
+func (m *AreaMap) edge(v Vec) (string, Vec, bool) {
+	size := Vec{float64(m.W) * m.Cell, float64(m.H) * m.Cell}
+	for _, c := range m.Connections {
+		off := float64(c.Offset) * m.Cell
+		var pos Vec
+		switch {
+		case c.Dir == "up" && v.Y < 4:
+			pos = Vec{v.X - off, float64(c.H)*m.Cell - 10}
+		case c.Dir == "down" && v.Y > size.Y-1:
+			pos = Vec{v.X - off, 12}
+		case c.Dir == "left" && v.X < 4:
+			pos = Vec{float64(c.W)*m.Cell - 10, v.Y - off}
+		case c.Dir == "right" && v.X > size.X-4:
+			pos = Vec{10, v.Y - off}
+		default:
+			continue
+		}
+		if pos.X > 0 && pos.Y > 0 && pos.X < float64(c.W)*m.Cell && pos.Y < float64(c.H)*m.Cell {
+			return c.To, pos, true
+		}
+	}
+	return "", Vec{}, false
 }
 
 // arrival: onde o jogador aparece ao entrar na área vindo de outra.
@@ -98,9 +157,16 @@ func arrival(area, from string) Vec {
 	return Vec{m.Default[0], m.Default[1]}
 }
 
-func (w *World) enter(p *Player, area string, now float64) bool {
+func canEnter(p *Player, area string) bool {
+	if isKanto(area) {
+		return areaMaps[area] != nil
+	}
 	need, ok := areaNeed[area]
-	if !ok || p.Quest < need {
+	return ok && p.Quest >= need
+}
+
+func (w *World) enter(p *Player, area string, now float64) bool {
+	if !canEnter(p, area) {
 		p.Notice = "Continue a história para liberar essa área."
 		return false
 	}
@@ -109,8 +175,18 @@ func (w *World) enter(p *Player, area string, now float64) bool {
 	p.Visits[area] = true
 	p.Pos = arrival(area, from)
 	p.Safari = nil
+	p.Fishing = 0
 	p.WarpAt = now
 	return true
+}
+
+func (w *World) enterAt(p *Player, area string, pos Vec, now float64) {
+	p.Area = area
+	p.Visits[area] = true
+	p.Pos = pos
+	p.Safari = nil
+	p.Fishing = 0
+	p.WarpAt = now
 }
 
 func (w *World) walkMap(p *Player, dt, now float64) {
@@ -128,16 +204,36 @@ func (w *World) walkMap(p *Player, dt, now float64) {
 		p.Pos = y
 	}
 	moved := distance(start, p.Pos)
-	if to := m.warpAt(p.Pos); to != "" && now-p.WarpAt > .6 {
-		if !w.enter(p, to, now) {
-			p.Pos = start.Add(p.Input.Mul(-6))
-			p.Pos = m.bounds(p.Pos)
+	if now-p.WarpAt > .5 && p.Input.Len() > 0 {
+		raw := start.Add(p.Input.Mul(speed * dt))
+		if to, pos, ok := m.edge(raw); ok {
+			w.enterAt(p, to, pos, now)
+			return
+		}
+	}
+	if warp := m.warpAt(p.Pos); warp != nil && now-p.WarpAt > .6 {
+		back := m.bounds(start.Add(p.Input.Mul(-8)))
+		switch {
+		case warp.To == "@voltar" && p.ReturnArea != "":
+			w.enterAt(p, p.ReturnArea, p.ReturnPos, now)
+		case warp.TX > 0 && areaMaps[warp.To] != nil:
+			p.ReturnArea, p.ReturnPos = p.Area, back
+			w.enterAt(p, warp.To, Vec{warp.TX, warp.TY}, now)
+		case warp.To != "@voltar":
+			if !w.enter(p, warp.To, now) {
+				p.Pos = back
+			}
+		default:
+			p.Pos = back
 		}
 		return
 	}
 	// Grama alta: encontros aleatórios enquanto o jogador anda nela.
-	if moved > 0 && m.at(p.Pos) == '"' && p.Battle == "" && len(p.Team) > 0 && p.Area != "safari" {
+	if moved > 0 && (m.at(p.Pos) == '"' || m.Cave) && p.Battle == "" && len(p.Team) > 0 && p.Area != "safari" {
 		pool := routePool[p.Area]
+		if len(m.Encounters) > 0 {
+			pool = m.Encounters
+		}
 		if len(pool) > 0 && mathrand.Float64() < moved/32*.09 {
 			_ = w.startBattle(p, "capture", pool[mathrand.IntN(len(pool))], nil, now)
 		}

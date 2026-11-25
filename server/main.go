@@ -115,6 +115,13 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		p := newPlayer(name, c.Starter, now)
+		if c.Area == "kanto" {
+			// Começa em Kanto: chega a Pallet Town já com a jornada liberada.
+			p.Area = kantoStart
+			p.Pos = arrival(kantoStart, "")
+			p.Visits[kantoStart] = true
+			p.Notice = "Bem-vindo a Kanto! Use o mapa para viajar até Aurora quando quiser."
+		}
 		token := uid()
 		s.world.Players[p.ID] = p
 		s.world.Sessions[token] = p.ID

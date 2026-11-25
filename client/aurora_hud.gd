@@ -165,8 +165,8 @@ func exploration(p:Dictionary):
 	if not p.team.is_empty():portrait(profile,game.team_mon(0),Vector2(50,52))
 	var identity=game.column(profile,2);game.label(identity,p.name,22);game.label(identity,"TREINADOR  /  NÍVEL %d"%(1+int(p.xp)/100),11,CYAN)
 	var location=game.column(floating(Vector2(720,22),Vector2(480,94)),3)
-	var area=game.label(location,game.AREAS.get(p.area,p.area),22);area.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
-	context_label=game.label(location,"REGIÃO AURORA",13,GOLD);context_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	var area=game.label(location,game.area_name(str(p.area)),22);area.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	context_label=game.label(location,"REGIÃO KANTO" if str(p.area).begins_with("kt_") else "REGIÃO AURORA",13,GOLD);context_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	var wallet=game.column(floating(Vector2(1560,22),Vector2(336,94)),4)
 	var money=game.row(wallet,8);money.add_child(Icons.make("moeda",GOLD,20));game.label(money,"%s moedas     %d fichas"%[game._thousands(int(p.coins)),p.points],17,GOLD)
 	game.label(wallet,"%d treinador(es) online"%(game.data.players.size()+1),11)
@@ -214,7 +214,7 @@ func update_values():
 	if is_instance_valid(context_label):
 		var bite=float(game.data.player.get("fishing",0))
 		var now=game.server_time()
-		if bite<=0:context_label.text="REGIÃO AURORA"
+		if bite<=0:context_label.text="REGIÃO KANTO" if str(game.data.player.area).begins_with("kt_") else "REGIÃO AURORA"
 		elif now<bite:context_label.text="Vara lançada · aguarde a fisgada"
 		elif now<=bite+2:context_label.text="Fisgou!   E   Puxar a linha"
 		else:context_label.text="E   Recolher a linha"

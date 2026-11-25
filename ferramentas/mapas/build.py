@@ -76,6 +76,27 @@ class Map:
             self.points["porta_" + to] = (dx, dy + 1)
         return door and (x + door[0], y + door[1])
 
+    def slice(self, x, y, w, h, src, sx, sy, sw, sh, b=1, mid=None):
+        """Copia um retângulo de um mapa original esticando o miolo:
+        as b primeiras e últimas linhas/colunas vêm das bordas da fonte."""
+        l, cells = layout("frlg", src)
+        lw = l["width"]
+        def pick(i, n, s0, sn):
+            if i < b:
+                return s0 + i
+            if i >= n - b:
+                return s0 + sn - (n - i)
+            return s0 + b + (i - b) % max(1, sn - 2 * b)
+        for j in range(h):
+            for i in range(w):
+                cy, cx = pick(j, h, sy, sh), pick(i, w, sx, sw)
+                if mid and b <= j < h - b:
+                    cy = mid[1]
+                if mid and b <= i < w - b:
+                    cx = mid[0]
+                c = cells[cy * lw + cx]
+                self.put(x + i, y + j, c & 0x3FF, WALL if (c >> 10) & 3 else FLOOR)
+
     def exit(self, side, a, b, to):
         """Saída pela borda do mapa: células a..b na borda indicada."""
         if side in ("n", "s"):
@@ -281,11 +302,45 @@ def safari():
     return m
 
 
+def mina():
+    m = Map("mina", 30, 24, secondary="cave", seed=13)
+    m.rect(0, 0, 30, 24, "fixed")
+    for y in range(24):
+        for x in range(30):
+            m.put(x, y, 641)
+    # Paredes da caverna e platôs de rocha tirados do Mt. Moon.
+    m.slice(0, 0, 30, 24, "MtMoon_1F", 0, 0, 48, 40, b=2, mid=(6, 10))
+    for y in range(2, 22):
+        for x in range(2, 28):
+            m.put(x, y, 641)
+    for (x, y, w, h) in [(7, 4, 5, 4), (18, 3, 3, 7), (5, 12, 8, 4), (16, 14, 3, 6), (22, 12, 4, 4), (9, 18, 4, 4)]:
+        m.slice(x, y, w, h, "MtMoon_1F", 20, 29, 4, 9)
+    for (x, y) in [(14, 6), (15, 7), (24, 6), (4, 18), (21, 19), (13, 10)]:
+        m.put(x, y, 642 + (x % 2), WALL)
+    m.put(4, 3, 645)
+    m.warps.append({"x": 4, "y": 3, "w": 1, "h": 1, "to": "rota"})
+    m.points["porta_rota"] = (4, 4)
+    for i, (x, y) in enumerate([(14, 4), (25, 18), (7, 10)]):
+        m.points["minerio%d" % i] = (x, y)
+    m.default = (4.5, 5)
+    return m
+
+
 def main():
-    maps = [vila(), rota(), lago(), jardim(), safari()]
-    secondary = "viridian_city"
-    learned = learn("frlg", secondary, ["Route1", "Route2", "Route22", "ViridianCity", "Route21_North"])
+    maps = [vila(), rota(), lago(), jardim(), safari(), mina()]
+    learned = learn("frlg", "viridian_city", ["Route1", "Route2", "Route22", "ViridianCity", "Route21_North"])
     learned["sand"] = {k: v for k, v in learned["sand"].items() if v in {211, 212, 213, 219, 220, 221, 227, 228, 229, 258, 259, 260, 261}}
+    groups = {}
+    for m in maps:
+        groups.setdefault(m.secondary, []).append(m)
+    for secondary, group in groups.items():
+        export(secondary, group, learned)
+
+
+ATLAS_NAMES = {"viridian_city": "kanto", "cave": "caverna"}
+
+
+def export(secondary, maps, learned):
     pair = Pair("frlg", "general", secondary)
     built = {m.name: m.build(learned) for m in maps}
     used = sorted({i for ids, _ in built.values() for row in ids for i in row})
@@ -303,11 +358,12 @@ def main():
             has_above.add(k)
     cdir = os.path.join(ROOT, "client/assets/maps"); os.makedirs(cdir, exist_ok=True)
     sdir = os.path.join(ROOT, "server/maps"); os.makedirs(sdir, exist_ok=True)
-    below.save(os.path.join(cdir, "kanto_below.png")); above.save(os.path.join(cdir, "kanto_above.png"))
+    atlas = ATLAS_NAMES[secondary]
+    below.save(os.path.join(cdir, atlas + "_below.png")); above.save(os.path.join(cdir, atlas + "_above.png"))
     for m in maps:
         ids, cell = built[m.name]
         tiles = [index[i] for row in ids for i in row]
-        client = {"w": m.w, "h": m.h, "cell": CELL, "atlas": "kanto", "columns": cols,
+        client = {"w": m.w, "h": m.h, "cell": CELL, "atlas": atlas, "columns": cols,
                   "tiles": tiles, "above": [t if t in has_above else -1 for t in tiles],
                   "npcs": [dict(n, x=(n["x"] + .5) * CELL, y=(n["y"] + .9) * CELL) for n in m.npcs],
                   "points": {k: [(v[0] + .5) * CELL, (v[1] + .5) * CELL] for k, v in m.points.items()},

@@ -38,6 +38,15 @@ func draw_map_layer(m:Dictionary,key:String):
 	var x0=maxi(0,int((camera.x-224)/cell));var y0=maxi(0,int((camera.y-78)/cell))
 	var x1=mini(w,x0+int(960/cell)+2);var y1=mini(h,y0+int(540/cell)+2)
 	var cells:Array=m[key]
+	var border:Array=m.get("border",[])
+	if key=="tiles" and border.size()==4:
+		# Fora do mapa, repete a borda do jogo original (árvores, água...).
+		var bx0=int(floor((camera.x-224)/cell));var by0=int(floor((camera.y-78)/cell))
+		for y in range(by0,by0+int(540/cell)+2):
+			for x in range(bx0,bx0+int(960/cell)+2):
+				if x>=0 and y>=0 and x<w and y<h:continue
+				var b=int(border[posmod(y,2)*2+posmod(x,2)])
+				draw_texture_rect_region(tex,Rect2(x*cell,y*cell,cell,cell),Rect2((b%cols)*16,(b/cols)*16,16,16))
 	for y in range(y0,y1):
 		for x in range(x0,x1):
 			var t=int(cells[y*w+x])
@@ -51,6 +60,9 @@ func map_scene(p:Dictionary,m:Dictionary):
 	var player_pos=smooth_position("trainer:"+str(p.id),Vector2(p.pos.x,p.pos.y),input_dir*speed)
 	var size=Vector2(float(m.w),float(m.h))*float(m.cell)
 	camera=(player_pos-Vector2(256,200)).clamp(Vector2(224,78),(size-Vector2(736,462)).max(Vector2(224,78))).round()
+	# Mapas menores que a tela (interiores) ficam centralizados.
+	if size.x<960:camera.x=round(size.x/2-256)
+	if size.y<540:camera.y=round(size.y/2-192)
 	draw_set_transform(-camera)
 	draw_map_layer(m,"tiles")
 	var points:Dictionary=m.get("points",{})
