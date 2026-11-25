@@ -67,7 +67,7 @@ func (s *Server) snapshot(p *Player, now float64) map[string]any {
 			live = append(live, b)
 		}
 	}
-	return map[string]any{"player": p, "players": others, "battle": s.world.Battles[p.Battle], "battles": live, "chat": s.world.Chat, "rankings": ranks, "now": now, "species": species, "market": s.world.Market}
+	return map[string]any{"player": p, "players": others, "battle": s.world.Battles[p.Battle], "battles": live, "chat": s.world.Chat, "rankings": ranks, "now": now, "species": species, "market": s.world.Market, "regions": regionStatus(p)}
 }
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")
@@ -115,6 +115,9 @@ func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		p := newPlayer(name, c.Starter, now)
+		if c.Area != "" && c.Area != "aurora" && c.Area != "kanto" {
+			c.Area = "kanto" // a jornada começa em Kanto; as outras regiões abrem em ordem
+		}
 		if start, ok := regionStarts[c.Area]; ok && c.Area != "aurora" {
 			// Começa em Kanto ou Hoenn, já com a jornada liberada nessa região.
 			p.Area = start

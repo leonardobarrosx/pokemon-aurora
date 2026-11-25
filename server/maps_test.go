@@ -55,6 +55,9 @@ func TestKantoConnectionsAndDoors(t *testing.T) {
 		p.InputAt = 1000 + float64(i)*.05
 		w.tick(.05, 1000+float64(i)*.05)
 	}
+	if !areaMaps[kantoStart].solid(Vec{3.5 * 32, 10.5 * 32}, Vec{}) {
+		t.Fatal("NPC de Pallet Town deveria bloquear a passagem")
+	}
 	if p.Area != "kt_route1" {
 		t.Fatalf("Pallet Town deveria levar à Rota 1, ficou em %s %v", p.Area, p.Pos)
 	}
@@ -82,6 +85,10 @@ func TestKantoConnectionsAndDoors(t *testing.T) {
 func TestHoennLittlerootToRoute101AndTravel(t *testing.T) {
 	w := newWorld()
 	p := testPlayer(w, "A", 1)
+	if err := w.action(p, Command{Type: "travel", Area: "hoenn"}, 800); err == nil {
+		t.Fatal("Hoenn deveria estar fechada antes de chegar ao Indigo Plateau")
+	}
+	p.Visits["kt_indigo_plateau_exterior"] = true
 	if err := w.action(p, Command{Type: "travel", Area: "hoenn"}, 900); err != nil {
 		t.Fatal(err)
 	}

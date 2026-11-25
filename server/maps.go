@@ -55,6 +55,51 @@ const hoennStart = "hn_littleroot_town"
 // regionStarts diz onde cada região recebe quem chega viajando.
 var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart}
 
+// A jornada segue a ordem dos jogos: Kanto (FireRed), Hoenn (Emerald),
+// Johto (HeartGold) e Sinnoh (Platinum). Cada região abre quando o treinador
+// chega à Liga da anterior. Aurora fica aberta o tempo todo.
+var regionOrder = []string{"kanto", "hoenn", "johto", "sinnoh"}
+var regionGoal = map[string]string{"kanto": "kt_indigo_plateau_exterior", "hoenn": "hn_ever_grande_city"}
+var regionGoalName = map[string]string{"kanto": "Indigo Plateau", "hoenn": "Ever Grande City"}
+
+func regionOpen(p *Player, region string) bool {
+	if region == "aurora" {
+		return true
+	}
+	if start, ok := regionStarts[region]; !ok || areaMaps[start] == nil {
+		return false
+	}
+	for i, r := range regionOrder {
+		if r != region {
+			continue
+		}
+		if i == 0 || p.Visits[regionStarts[region]] {
+			return true
+		}
+		prev := regionOrder[i-1]
+		return regionOpen(p, prev) && p.Visits[regionGoal[prev]]
+	}
+	return false
+}
+
+// regionStatus resume para o cliente quais regiões existem e estão abertas.
+func regionStatus(p *Player) []map[string]any {
+	out := []map[string]any{}
+	for i, r := range append([]string{"aurora"}, regionOrder...) {
+		start, ok := regionStarts[r]
+		if !ok || areaMaps[start] == nil && r != "aurora" {
+			continue
+		}
+		need := ""
+		if i > 1 {
+			prev := regionOrder[i-2]
+			need = "Chegue a " + regionGoalName[prev]
+		}
+		out = append(out, map[string]any{"id": r, "open": regionOpen(p, r), "need": need})
+	}
+	return out
+}
+
 func isKanto(area string) bool { return strings.HasPrefix(area, "kt_") }
 func isHoenn(area string) bool { return strings.HasPrefix(area, "hn_") }
 
@@ -170,7 +215,7 @@ func arrival(area, from string) Vec {
 
 func canEnter(p *Player, area string) bool {
 	if isImported(area) {
-		return areaMaps[area] != nil
+		return areaMaps[area] != nil && regionOpen(p, regionOf(area))
 	}
 	need, ok := areaNeed[area]
 	return ok && p.Quest >= need

@@ -87,7 +87,8 @@ func map_scene(p:Dictionary,m:Dictionary):
 	actors.sort_custom(func(a,b):return a.y<b.y)
 	for a in actors:
 		if a.has("npc"):
-			var n=a.npc;var pos=Vector2(n.x,n.y);trainer(pos,"green",n.sprite);txt(pos-Vector2(12,58),n.name,10)
+			var n=a.npc;var pos=Vector2(n.x,n.y);trainer(pos,"green",n.sprite,{},{},"walk",int(n.get("facing",0)))
+			if str(n.name)!="":txt(pos-Vector2(12,58),n.name,10)
 		elif a.has("other"):
 			var other=a.other;var other_pos=smooth_position("trainer:"+str(other.id),Vector2(other.pos.x,other.pos.y))
 			trainer(other_pos,other.color,"",other.get("look",{}),other.get("colors",{}));txt(other_pos-Vector2(20,58),other.name,10)

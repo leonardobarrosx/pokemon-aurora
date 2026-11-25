@@ -85,6 +85,9 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		// Viagem entre regiões levando a equipe: cada região tem sua chegada
 		// (Aurora na vila, Kanto em Pallet Town, Hoenn em Littleroot).
 		if start, ok := regionStarts[c.Area]; ok {
+			if !regionOpen(p, c.Area) {
+				return errMsg("essa região ainda não foi liberada: siga a jornada em ordem")
+			}
 			c.Area = start
 		}
 		if !canEnter(p, c.Area) {
