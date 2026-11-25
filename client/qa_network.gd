@@ -13,7 +13,7 @@ func wait_for(predicate:Callable)->bool:
 	return false
 
 func find_button(node:Node,text:String)->Button:
-	if node is Button and node.text==text:return node
+	if node is Button and node.text.to_upper()==text.to_upper():return node
 	for child in node.get_children():
 		var found=find_button(child,text)
 		if found:return found
