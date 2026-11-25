@@ -61,4 +61,28 @@ func TestExportPreview(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
+	// Campos dos estádios, com alguns golpes já mudando o terreno.
+	fields := map[string]*Field{}
+	for _, g := range gyms {
+		bt := &Battle{Field: newField(gymTheme[g.ID])}
+		bt.Fighters[0] = &Fighter{Pos: Vec{100, 230}}
+		bt.Fighters[1] = &Fighter{Pos: Vec{410, 200}}
+		switch g.ID {
+		case "kanto_2":
+			bt.shapeBeam(Vec{150, 120}, Vec{330, 120}, "Gelo", 1000)
+			bt.shapeField(Vec{300, 300}, 40, "Elétrico", 1000)
+		case "kanto_4":
+			bt.shapeField(Vec{240, 240}, 50, "Fogo", 1000)
+		case "kanto_7":
+			bt.shapeField(Vec{230, 180}, 40, "Água", 1000)
+		case "kanto_1":
+			bt.Fighters[0].Pos = Vec{60, 330}
+			bt.shapeField(Vec{256, 224}, 48, "Pedra", 1000)
+		}
+		fields[g.ID] = bt.Field
+	}
+	raw, _ := json.Marshal(fields)
+	if err := os.WriteFile(filepath.Join(dir, "fields.json"), raw, 0600); err != nil {
+		t.Fatal(err)
+	}
 }

@@ -103,7 +103,7 @@ func journey(p *Player, region string) map[string]any {
 		if g.Region != region {
 			continue
 		}
-		badges = append(badges, map[string]any{"id": g.ID, "leader": g.Leader, "badge": g.Badge, "town": g.Town, "art": g.Art, "sprite": g.Sprite, "area": g.Area, "done": p.Badges[g.ID], "ready": areaMaps[g.Area] != nil || g.Region == "aurora"})
+		badges = append(badges, map[string]any{"id": g.ID, "leader": g.Leader, "badge": g.Badge, "town": g.Town, "art": g.Art, "sprite": g.Sprite, "area": g.Area, "species": g.Species, "theme": gymTheme[g.ID], "done": p.Badges[g.ID], "ready": areaMaps[g.Area] != nil || g.Region == "aurora"})
 	}
 	return map[string]any{"visited": visited, "areas": regionAreas(region), "badges": badges, "goal": regionGoalName[region]}
 }

@@ -212,6 +212,7 @@ type Fighter struct {
 	LastMoveAt  float64         `json:"last_move_at"`
 	StunUntil   float64         `json:"stun_until"`
 	ChargeUntil float64         `json:"charge_until"`
+	Terrain     string          `json:"terrain"`
 	ChargeDir   Vec             `json:"-"`
 	ChargeSpeed float64         `json:"-"`
 	ChargeSlot  int             `json:"-"`
@@ -246,6 +247,7 @@ type Battle struct {
 	ID          string       `json:"id"`
 	Kind        string       `json:"kind"`
 	Gym         string       `json:"gym"`
+	Field       *Field       `json:"field,omitempty"`
 	Area        string       `json:"area"`
 	Origin      Vec          `json:"origin"`
 	Trainer     Vec          `json:"trainer"`

@@ -34,6 +34,7 @@ func (b *Battle) tickBeams(now float64) {
 				}
 			}
 			beam.Done = true
+			b.shapeBeam(beam.From, beam.To, beam.Type, now)
 		}
 		if now < beam.End {
 			active = append(active, beam)

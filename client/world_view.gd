@@ -308,8 +308,23 @@ func battle(b:Dictionary):
 	for f in b.fighters:
 		var velocity=Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0))
 		var v=smooth_position(str(b.id)+":"+str(f.owner),Vector2(f.pos.x,f.pos.y),velocity)
-		draw_rect(Rect2(v-Vector2(18,-14),Vector2(36,8)),Color(0.2,0.3,0.25,.4))
+		var ground=str(f.get("terrain",""))
+		var in_water=ground=="w" or ground=="z"
+		if not in_water:draw_rect(Rect2(v-Vector2(18,-14),Vector2(36,8)),Color(0.2,0.3,0.25,.4))
 		follower(f.mon,v,int(f.get("facing",0)),f.auto or Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0)).length()>1,float(f.get("physique",{}).get("scale",1)),true)
+		if in_water:
+			# Metade do corpo dentro da água, com marolas em volta.
+			var sp=game.data.species.get(str(int(f.mon.species)),{})
+			var swimmer=str(sp.get("type",""))=="Água" or str(sp.get("ride",""))=="Natação"
+			draw_rect(Rect2(v+Vector2(-22,4),Vector2(44,14)),Color(.25,.5,.85,.55))
+			for k in 2:
+				var g=fposmod(now*1.5+k*.5,1.0)
+				draw_arc(v+Vector2(0,10),18+g*14,0,TAU,24,Color(1,1,1,.45*(1-g)),1.5)
+			if not swimmer:
+				draw_rect(Rect2(v+Vector2(-24,-40),Vector2(48,13)),Color(0.05,0.12,0.25,.85))
+				txt(v+Vector2(-20,-30),"Molhado",8,Color("9fd3ff"))
+		elif ground=="l" or ground=="x" or ground=="f":
+			draw_circle(v+Vector2(0,14),16,Color(1,.4,.1,.18) if ground!="x" else Color(.6,.2,.8,.18))
 		if Time.get_ticks_msec()<int(flash_until.get(str(f.owner),0)):draw_circle(v,26,Color(1,1,1,.3))
 		rect(v.x-24,v.y-24,48,6,"354842");rect(v.x-22,v.y-22,44*float(f.hp)/float(f.max_hp),2,"9ce2a8")
 		if float(f.invincible)>now:draw_arc(v,24,0,TAU,24,Color("f6e3ae"),2)
@@ -425,27 +440,29 @@ func trainer_art(f:Dictionary,kind:String,age:float)->Dictionary:
 func stadium(b:Dictionary,shake:Vector2)->bool:
 	var g=game.gym_info(str(b.get("gym","")))
 	var gm=map_for(str(g.get("area",""))) if not g.is_empty() else {}
-	if gm.is_empty():return false
+	if gm.is_empty() and b.get("field",{}).is_empty():return false
 	var now=game.server_time()
-	var size=Vector2(float(gm.w),float(gm.h))*float(gm.cell)
-	var center=size/2+Vector2(0,float(gm.cell))
 	draw_set_transform(shake)
 	draw_rect(Rect2(0,0,512,384),Color("101820"))
-	# Piso do ginásio esticado para preencher o campo.
-	var zoom=maxf(512.0/size.x,276.0/maxf(size.y-float(gm.cell)*4,1))
-	zoom=clampf(zoom,1,2.2)
-	draw_set_transform(shake+Vector2(256,222)-center*zoom,0,Vector2(zoom,zoom))
-	draw_map_layer(gm,"tiles")
-	draw_set_transform(shake)
-	var line=Color(1,1,1,.6)
-	draw_rect(Rect2(18,94,476,256),line,false,2)
-	draw_line(Vector2(256,94),Vector2(256,350),line,2)
-	draw_arc(Vector2(256,222),38,0,TAU,40,line,2)
+	var fd:Dictionary=b.get("field",{})
+	if fd.is_empty():
+		# Sem campo do servidor: piso do ginásio esticado.
+		var size=Vector2(float(gm.w),float(gm.h))*float(gm.cell)
+		var center=size/2+Vector2(0,float(gm.cell))
+		var zoom=clampf(maxf(512.0/size.x,276.0/maxf(size.y-float(gm.cell)*4,1)),1,2.2)
+		draw_set_transform(shake+Vector2(256,222)-center*zoom,0,Vector2(zoom,zoom))
+		draw_map_layer(gm,"tiles")
+		draw_set_transform(shake)
+	else:
+		stadium_field(fd,str(b.get("gym","")),now)
+	var line=Color(1,1,1,.35)
+	draw_line(Vector2(256,96),Vector2(256,352),line,2)
+	draw_arc(Vector2(256,224),38,0,TAU,40,line,2)
 	# Arquibancadas em cima e embaixo, com a torcida pulando.
 	var cheer=0.0
 	for c in b.get("cutins",[]):
 		if now-float(c.at)>=0 and now-float(c.at)<1.4:cheer=1.0
-	for band in [[Rect2(0,0,512,92),0],[Rect2(0,352,512,32),1]]:
+	for band in [[Rect2(0,0,512,92),0],[Rect2(0,359,512,25),1]]:
 		var r:Rect2=band[0]
 		draw_rect(r,Color("1b2733"))
 		for row in int(r.size.y/10):
@@ -475,6 +492,57 @@ func stadium(b:Dictionary,shake:Vector2)->bool:
 		draw_line(corner,corner+Vector2(dx,0),Color(1,1,1,.8),2);draw_line(corner,corner+Vector2(0,dy),Color(1,1,1,.8),2)
 	arena_trainers(b)
 	return true
+
+const FIELD_ORDER=".wrpsglie x"
+# Campo do estádio: casas do servidor desenhadas com os tiles do próprio
+# ginásio (assets/stadiums/<id>.png) e animação de água, lava, choque e fogo.
+func stadium_field(fd:Dictionary,gym:String,now:float):
+	var tex=texture("res://assets/stadiums/%s.png"%gym)
+	var cols=int(fd.get("cols",15));var rows=int(fd.get("rows",8));var cs=float(fd.get("cell",32))
+	var o=Vector2(float(fd.get("x",16)),float(fd.get("y",96)))
+	var cells:String=str(fd.get("cells",""))
+	var order=FIELD_ORDER.replace(" ","")
+	# Borda do campo: muro baixo com a cor do chão do ginásio.
+	var frame=Rect2(o-Vector2(6,6),Vector2(cols*cs+12,rows*cs+12))
+	draw_rect(frame,Color("2a2f38"));draw_rect(frame,Color("e7b443"),false,2)
+	for i in cells.length():
+		var c=cells[i];var at=o+Vector2(i%cols,i/cols)*cs;var r=Rect2(at,Vector2(cs,cs))
+		var draw_as=c
+		if c=="z":draw_as="w"
+		if c=="f":draw_as="g"
+		var k=order.find(draw_as)
+		if tex!=null and k>=0:draw_texture_rect_region(tex,r,Rect2(k*32,0,32,32))
+		else:draw_rect(r,Color("7c8a6a"))
+		var seed=float((i*37)%17)
+		match c:
+			"w","z":
+				# Brilho correndo na água.
+				var y=at.y+fposmod(now*10+seed*3,cs)
+				draw_line(Vector2(at.x+4,y),Vector2(at.x+cs*.5,y),Color(1,1,1,.25),1)
+				if i>=cols and cells[i-cols]=="p":
+					draw_rect(Rect2(at,Vector2(cs,5)),Color(0,0,0,.28)) # sombra da plataforma
+				if c=="z" and int(now*12+seed)%3!=0:
+					var a=at+Vector2(6+fposmod(seed*5,20),4)
+					draw_polyline(PackedVector2Array([a,a+Vector2(6,8),a+Vector2(1,12),a+Vector2(8,22)]),Color("ffe85a"),2)
+					draw_rect(r,Color(1,.95,.3,.12))
+			"l":
+				draw_rect(r,Color(1,.6,.1,.12+.1*sin(now*3+seed)))
+				var bub=at+Vector2(8+fposmod(seed*7,16),cs-fposmod(now*14+seed*4,cs))
+				draw_circle(bub,2,Color("ffd060"))
+			"f":
+				for j in 3:
+					var fx=at.x+6+j*10;var h=10+6*absf(sin(now*9+j+seed))
+					draw_colored_polygon(PackedVector2Array([Vector2(fx-5,at.y+cs-2),Vector2(fx+5,at.y+cs-2),Vector2(fx,at.y+cs-2-h)]),Color("f4762b"))
+					draw_colored_polygon(PackedVector2Array([Vector2(fx-2,at.y+cs-2),Vector2(fx+2,at.y+cs-2),Vector2(fx,at.y+cs-2-h*.55)]),Color("ffe27a"))
+			"i":
+				if int(now*2+seed)%7==0:draw_circle(at+Vector2(10+seed,8),1.5,Color.WHITE)
+			"e":
+				draw_rect(r,Color(1,.95,.4,.08+.08*sin(now*6+seed)))
+			"x":
+				var bub=at+Vector2(6+fposmod(seed*5,20),10+6*sin(now*2+seed))
+				draw_circle(bub,2.5,Color(.85,.6,1,.6))
+			"r":
+				draw_rect(Rect2(at+Vector2(2,cs-4),Vector2(cs-4,4)),Color(0,0,0,.25))
 
 func arena_field(b:Dictionary):
 	var line=Color(1,1,1,.55)

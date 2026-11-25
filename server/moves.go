@@ -192,6 +192,7 @@ func (b *Battle) hit(i int, target *Fighter, dmg, push float64, dir Vec, kind st
 	if dmg <= 0 && push <= 0 {
 		return
 	}
+	dmg *= b.terrainPower(b.Fighters[i])
 	target.HP = math.Max(0, target.HP-dmg)
 	b.Fighters[i].Damage += dmg
 	// Recuo pelo tipo (ideia do Pokémon Battle Advanced): super efetivo
@@ -317,7 +318,7 @@ func (b *Battle) tickCharges(dt, now float64) {
 		if f.ChargeUntil <= now {
 			continue
 		}
-		b.step(f, f.Pos.Add(f.ChargeDir.Mul(f.ChargeSpeed * dt)))
+		b.step(f, f.Pos.Add(f.ChargeDir.Mul(f.ChargeSpeed*dt)))
 		target := b.Fighters[1-i]
 		if f.ChargeHit || target.Invincible >= now {
 			continue

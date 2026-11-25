@@ -39,6 +39,7 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 		b.Gym = g.ID
 		b.Fighters[1].Name = g.Leader
 		b.Fighters[1].Art = g.Art
+		b.Field = newField(gymTheme[g.ID])
 	}
 	if other != nil {
 		if other.Battle != "" {
@@ -238,10 +239,19 @@ func (w *World) tick(dt, now float64) {
 			if f.Auto {
 				delta := target.Pos.Add(f.Pos.Mul(-1))
 				f.Facing = facing(delta)
-				if delta.Len() > 160 {
-					b.step(f, f.Pos.Add(delta.Unit().Mul(dt * 60)))
+				pace := dt * 60 * b.terrainSpeed(f)
+				if b.cellCost(f, f.Pos) >= 3 {
+					// Caiu num lugar ruim: procura a casa certa para ficar.
+					if safe, ok := b.safeCell(f); ok {
+						b.autoStep(f, safe.Add(f.Pos.Mul(-1)), pace*1.4)
+					}
+				} else if delta.Len() > 160 {
+					b.autoStep(f, delta, pace)
 				}
-				b.step(f, f.Pos.Add(Vec{0, math.Sin(now*2+float64(i)) * dt * 35}))
+				wobble := Vec{0, math.Sin(now*2+float64(i)) * dt * 35}
+				if b.cellCost(f, f.Pos.Add(wobble.Unit().Mul(fieldCell*.6))) <= b.cellCost(f, f.Pos) {
+					b.step(f, f.Pos.Add(wobble))
+				}
 				if f.StunUntil < now && f.ChargeUntil < now {
 					b.autoMove(i, now)
 				}
@@ -250,6 +260,7 @@ func (w *World) tick(dt, now float64) {
 				if f.SlowUntil > now {
 					speed *= .65
 				}
+				speed *= b.terrainSpeed(f)
 				if f.Meal == "salada" && f.MealUntil > now {
 					speed *= 1.05
 				}
@@ -258,8 +269,11 @@ func (w *World) tick(dt, now float64) {
 				}
 				targetVel := p.Input.Mul(speed)
 				accel := clamp(dt*10/math.Pow(1+f.Physique.Mass/30, .3), 0, 1)
+				if b.slippery(f) {
+					accel *= .22 // derrapa no gelo
+				}
 				f.Velocity = f.Velocity.Add(targetVel.Add(f.Velocity.Mul(-1)).Mul(accel))
-				if next := bounds(f.Pos.Add(f.Velocity.Mul(dt))); !b.mapBlocked(f, next) {
+				if next := bounds(f.Pos.Add(f.Velocity.Mul(dt))); !b.mapBlocked(f, next) && !b.solid(f, next) {
 					f.Pos = next
 				} else {
 					f.Velocity = Vec{}
@@ -269,6 +283,7 @@ func (w *World) tick(dt, now float64) {
 		if b.End > 0 {
 			continue
 		}
+		b.tickTerrain(dt, now)
 		b.updateEff()
 		b.tickCharges(dt, now)
 		shots := b.Projectiles[:0]
@@ -281,8 +296,13 @@ func (w *World) tick(dt, now float64) {
 					s.Life = 0
 				}
 			}
+			if b.Field != nil && b.Field.at(s.Pos) == 'r' {
+				s.Life = 0 // a pedra segura o disparo
+			}
 			if s.Life > 0 && s.Pos.X > 0 && s.Pos.X < 512 && s.Pos.Y > 80 && s.Pos.Y < 364 {
 				shots = append(shots, s)
+			} else {
+				b.shapeField(s.Pos, s.Radius, s.Type, now)
 			}
 		}
 		b.Projectiles = shots
@@ -296,6 +316,7 @@ func (w *World) tick(dt, now float64) {
 					}
 				}
 				s.Done = true
+				b.shapeField(s.Pos, s.Radius, s.Type, now)
 			}
 			if now < s.At+.35 {
 				blasts = append(blasts, s)
