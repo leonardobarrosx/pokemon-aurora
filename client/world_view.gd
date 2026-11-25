@@ -129,10 +129,15 @@ func map_scene(p:Dictionary,m:Dictionary):
 			var other=a.other;var other_pos=lift(m,smooth_position("trainer:"+str(other.id),Vector2(other.pos.x,other.pos.y)))
 			trainer(other_pos,other.color,"",other.get("look",{}),other.get("colors",{}));txt(other_pos-Vector2(20,58),other.name,10)
 		else:
+			var ridden=game.mon_by_id(str(p.get("mount","")))
 			var partner=game.team_mon(0)
-			if not partner.is_empty():follower(partner,player_pos+Vector2(-30,-4),int(p.get("facing",0)),game.moving)
-			trainer(player_pos,p.color,"",p.get("look",{}),p.get("colors",{}),mode,int(p.get("facing",0)))
+			if not partner.is_empty() and partner.get("id","")!=ridden.get("id","-"):follower(partner,player_pos+Vector2(-30,-4),int(p.get("facing",0)),game.moving)
+			if ridden.is_empty():trainer(player_pos,p.color,"",p.get("look",{}),p.get("colors",{}),mode,int(p.get("facing",0)))
+			else:rider(ridden,player_pos,p.get("look",{}),p.get("colors",{}),int(p.get("facing",0)),str(p.get("transport","")))
 	draw_map_layer(m,"above")
+	# Fundo do mar: luz azulada por cima de tudo.
+	if str(p.get("transport",""))=="dive":
+		draw_rect(Rect2(camera,Vector2(512,384)),Color(0.05,0.25,0.55,.28))
 	draw_set_transform(Vector2.ZERO)
 
 func rect(x: float,y: float,w: float,h: float,c: String):
@@ -197,6 +202,30 @@ func follower(m:Dictionary,pos:Vector2,direction:int=0,walking:bool=true,body_sc
 		offset=Vector2(round(offset.x/2)*2,round(offset.y/2)*2)
 	pos=Vector2(round(pos.x/2)*2,round(pos.y/2)*2)
 	draw_texture_rect_region(t,Rect2(pos-offset,Vector2(cell,cell)),Rect2(frame*cell,direction*cell,cell,cell))
+
+# Treinador montado: o Pokémon (Natação na água, Corrida em terra) por baixo,
+# maior que o normal, e o treinador sentado nas costas dele.
+func rider(m:Dictionary,pos:Vector2,look:Dictionary,colors:Dictionary,facing:int,kind:String):
+	var entry=source_manifest.pokemon.get(str(int(m.get("species",1))),{})
+	if not entry.has("follower"):
+		trainer(pos,"green","",look,colors,"surf",facing);return
+	var cell=float(entry.follower.frame)
+	var scale=clampf(96.0/cell,.5,1.8)
+	var bob=sin(Time.get_ticks_msec()/260.0)*2 if kind in ["surf","dive"] else 0.0
+	if kind=="surf":
+		draw_arc(pos+Vector2(0,2),30+sin(Time.get_ticks_msec()/300.0)*3,PI*.1,PI*.9,18,Color(1,1,1,.55),2)
+	var walking=game.moving or kind in ["surf","dive"]
+	follower(m,pos+Vector2(0,bob),facing,walking,scale,false)
+	var anchors=entry.follower.get("anchors",[])
+	var frame=int(Time.get_ticks_msec()/150)%4 if walking else 0
+	var back=40.0*scale*cell/64.0*.55
+	if not anchors.is_empty():
+		var a=anchors[facing*4+frame];back=(float(a.feet[1])-float(a.center[1]))*scale+10
+	var seat=pos+Vector2(0,bob-back)
+	var tex=indigo.compose(look,colors,"ride")
+	if tex:
+		var c=int(tex.get_width()/4);var f=int(Time.get_ticks_msec()/180)%4 if walking else 0
+		draw_texture_rect_region(tex,Rect2(seat-Vector2(c/2,c-20),Vector2(c,c)),Rect2(f*c,facing*c,c,c))
 
 func trainer(pos:Vector2,color:String="green",npc:String="",look:Dictionary={},colors:Dictionary={},mode:String="walk",facing:int=0):
 	var path="res://assets/characters/trainer-%s.png"%color

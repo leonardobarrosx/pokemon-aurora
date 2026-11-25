@@ -10,6 +10,7 @@ func _init():
 
 func compose(look:Dictionary,colors:Dictionary,mode:String="walk")->Texture2D:
 	var cache_key=mode+JSON.stringify(look)+JSON.stringify(colors)
+	if mode=="ride":cache_key="ride"+cache_key
 	if cache.has(cache_key):return cache[cache_key]
 	var size=Vector2i(256,256)
 	if mode=="front":size=Vector2i(160,160)
@@ -17,7 +18,11 @@ func compose(look:Dictionary,colors:Dictionary,mode:String="walk")->Texture2D:
 	if mode=="fish":size=Vector2i(512,512)
 	var output=Image.create(size.x,size.y,false,Image.FORMAT_RGBA8)
 	var gender=str(look.get("gender","m"))
-	if mode in ["surf","fishsurf"] and catalog.parts.has("mount"):
+	# "ride": só o treinador sentado (pose do Surf), sem a boia; o Pokémon
+	# montado é desenhado por baixo pelo mapa.
+	var riding=mode=="ride"
+	if riding:mode="surf"
+	if mode in ["surf","fishsurf"] and not riding and catalog.parts.has("mount"):
 		var mount=catalog.parts.mount
 		if mount.modes.has("layer"):
 			var mount_image:Image=load("res://assets/indigo/character/"+mount.modes.layer).get_image();mount_image.convert(Image.FORMAT_RGBA8);output.blend_rect(mount_image,Rect2i(Vector2i.ZERO,size),Vector2i.ZERO)

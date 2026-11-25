@@ -61,6 +61,24 @@ func run():
 			await shot("menus","hud-jornada")
 			quit(1 if failed else 0)
 			return
+	if args.size()>2 and args[2]=="montaria":
+		game.login()
+		for setup in [["surf","hn_route126",131,"~"],["dive","hn_underwater_route126",131,"."],["mount","kt_route1",95,"."],["mount","hn_route101",19,"."]]:
+			var source=home.duplicate(true)
+			var mon=source.player.mons[0].duplicate(true);mon.id="montaria";mon.species=setup[2]
+			source.player.mons.append(mon)
+			source.player.transport=setup[0];source.player.mount="montaria";source.player.area=setup[1]
+			load_state(source)
+			var m=game.view.map_for(setup[1]);var pos=Vector2(m.default[0],m.default[1])
+			var cells=FileAccess.get_file_as_string("res://../server/maps/%s.json"%setup[1])
+			if setup[3]=="~" and cells!="":
+				var sm=JSON.parse_string(cells);var i=str(sm.cells).find("~",int(sm.w)*12)
+				if i>=0:pos=Vector2((i%int(sm.w)+.5)*32,(i/int(sm.w)+.5)*32)
+			game.data.player.pos={"x":pos.x,"y":pos.y};game.data.player.facing=[0,2,1,3][randi()%4] if setup[0]!="surf" else 2
+			game.refresh_sidebar()
+			await shot("mundo","montaria-%s-%s"%[setup[0],setup[1]])
+		quit(1 if failed else 0)
+		return
 	if args.size()>2 and args[2]=="cutins":
 		await cutin_states()
 		quit(1 if failed else 0)

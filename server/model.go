@@ -114,6 +114,7 @@ type Arcade struct {
 type Player struct {
 	Facing     int                `json:"facing"`
 	Transport  string             `json:"transport"`
+	Mount      string             `json:"mount"`
 	Look       map[string]string  `json:"look"`
 	Colors     map[string]string  `json:"colors"`
 	Meal       string             `json:"meal"`

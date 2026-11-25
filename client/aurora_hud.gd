@@ -196,6 +196,9 @@ func exploration(p:Dictionary):
 	var verbs={"casa":"Minha casa","vila":"Conversar","jardim":"Canteiros","rota":"Explorar","ginasio":"Saguão","safari":"Procurar","mina":"Minerar","lago":"Pescar"}
 	var leader=game.gym_info_at(str(p.area))
 	var verb=verbs.get(p.area,"Desafiar "+str(leader.leader) if leader.size()>0 and p.area!="ginasio" else "Interagir")
+	if str(p.get("transport",""))=="surf":verb="Mergulhar"
+	elif str(p.get("transport",""))=="dive":verb="Subir"
+	elif game.ferry_ports(str(p.area)).size()>0:verb="Barco"
 	var act=game.btn(dock,verb+" · E",game.interact,220,"brilho")
 	act.custom_minimum_size.y=60
 	Design.primary(act)

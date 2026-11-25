@@ -77,10 +77,21 @@ func (w *World) action(p *Player, c Command, now float64) error {
 	}
 	switch c.Type {
 	case "transport":
-		if c.Value != "walk" && c.Value != "bike" {
+		if c.Value != "walk" && c.Value != "bike" && c.Value != "mount" {
 			return errMsg("transporte inválido")
 		}
+		if p.Transport == "surf" || p.Transport == "dive" {
+			return errMsg("saia da água primeiro")
+		}
+		p.Mount = ""
+		if c.Value == "mount" {
+			if p.Mount = rideMon(p, "Corrida"); p.Mount == "" {
+				return errMsg("a montaria precisa de um Pokémon de Corrida na equipe")
+			}
+		}
 		p.Transport = c.Value
+	case "dive":
+		return w.dive(p, now)
 	case "travel":
 		// Viagem entre regiões levando a equipe: cada região tem sua chegada
 		// (Aurora na vila, Kanto em Pallet Town, Hoenn em Littleroot).

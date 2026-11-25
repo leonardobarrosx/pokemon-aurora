@@ -32,6 +32,8 @@ type Connection struct {
 	To     string `json:"to"`
 	W      int    `json:"w"`
 	H      int    `json:"h"`
+	X      int    `json:"x"`
+	Y      int    `json:"y"`
 }
 type AreaMap struct {
 	W           int                   `json:"w"`
@@ -44,6 +46,7 @@ type AreaMap struct {
 	Default     [2]float64            `json:"default"`
 	Connections []Connection          `json:"connections"`
 	Encounters  []int                 `json:"encounters"`
+	Water       []int                 `json:"water"`
 	// Mundo aberto de DS: cada chunk (Chunk x Chunk células) pertence a uma zona
 	// com nome e encontros próprios.
 	Zones    []int      `json:"zones"`
@@ -290,22 +293,31 @@ func (w *World) walkMap(p *Player, dt, now float64) {
 	if p.Running {
 		speed = 112 // correr com Shift em qualquer mapa (ideia do Emerald Legacy)
 	}
-	if p.Transport == "bike" {
+	switch p.Transport {
+	case "bike":
 		speed = 120
+	case "mount":
+		speed = 136
+	case "surf":
+		speed = 100
+	case "dive":
+		speed = 72
 	}
 	start := p.Pos
 	desired := m.bounds(p.Pos.Add(p.Input.Mul(speed * dt)))
-	if x := (Vec{desired.X, p.Pos.Y}); !m.solid(x, p.Input) {
+	if x := (Vec{desired.X, p.Pos.Y}); !w.blocks(p, m, x, p.Input) {
 		p.Pos = x
 	}
-	if y := (Vec{p.Pos.X, desired.Y}); !m.solid(y, p.Input) {
+	if y := (Vec{p.Pos.X, desired.Y}); !w.blocks(p, m, y, p.Input) {
 		p.Pos = y
 	}
+	updateRide(p, m)
 	moved := distance(start, p.Pos)
 	if now-p.WarpAt > .5 && p.Input.Len() > 0 {
 		raw := start.Add(p.Input.Mul(speed * dt))
 		if to, pos, ok := m.edge(raw); ok {
 			w.enterAt(p, to, pos, now)
+			updateRide(p, areaMaps[to])
 			return
 		}
 	}
@@ -327,9 +339,12 @@ func (w *World) walkMap(p *Player, dt, now float64) {
 		return
 	}
 	// Grama alta: encontros aleatórios enquanto o jogador anda nela.
-	if moved > 0 && (m.at(p.Pos) == '"' || m.Cave) && p.Battle == "" && len(p.Team) > 0 && p.Area != "safari" {
+	surfing := p.Transport == "surf" && len(m.Water) > 0
+	if moved > 0 && (m.at(p.Pos) == '"' || m.Cave || surfing) && p.Battle == "" && len(p.Team) > 0 && p.Area != "safari" {
 		pool := routePool[p.Area]
-		if z := m.zone(p.Pos); z != nil {
+		if surfing {
+			pool = m.Water
+		} else if z := m.zone(p.Pos); z != nil {
 			pool = z.Encounters
 		} else if len(m.Encounters) > 0 {
 			pool = m.Encounters

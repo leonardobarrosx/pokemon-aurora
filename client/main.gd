@@ -450,6 +450,12 @@ func refresh_sidebar():
 	if screen=="ranking":update_lobby()
 	if screen=="mercado":update_offers()
 
+func mon_by_id(id:String)->Dictionary:
+	if id=="" or data.is_empty():return {}
+	for m in data.player.mons:
+		if str(m.id)==id:return m
+	return {}
+
 func team_mon(index:int)->Dictionary:
 	if data.is_empty() or index>=data.player.team.size():return {}
 	var id=data.player.team[index]
@@ -1244,7 +1250,34 @@ func interact():
 		"lago":
 			lake_menu()
 		_:
-			if gym_info_at(str(p.area)).size()>0:send({"type":"gym"})
+			if str(p.get("transport","")) in ["surf","dive"]:send({"type":"dive"})
+			elif gym_info_at(str(p.area)).size()>0:send({"type":"gym"})
+			elif ferry_ports(str(p.area)).size()>0:ferry_menu()
+
+var ferry_index:Dictionary={}
+
+# Portos dos barcos (Seagallop em Kanto, S.S. Tidal em Hoenn): de um porto
+# dá para ir a qualquer outro da mesma região.
+func ferry_ports(area:String)->Array:
+	if ferry_index.is_empty():
+		for r in ["kanto","hoenn"]:
+			var path="res://assets/maps/%s_index.json"%r
+			if FileAccess.file_exists(path):ferry_index[r]=JSON.parse_string(FileAccess.get_file_as_string(path))
+	for r in ferry_index:
+		var ports:Array=ferry_index[r].get("ferries",[])
+		if area in ports:return ports
+	return []
+
+func ferry_menu():
+	var here=str(data.player.area)
+	screen="barco"
+	modal("Barco","Escolha o porto de destino. Sua equipe viaja junto.")
+	var grid=grid_cards(overlay_body,3)
+	for port in ferry_ports(here):
+		if port==here:continue
+		var card=panel(grid);var c=column(card,8);c.custom_minimum_size.x=460
+		label(c,area_name(port),22)
+		Design.primary(btn(c,"Embarcar",func():send({"type":"travel","area":port});close_panel(),0,"mapa"))
 
 # Ginásio cujo líder fica nesta área (ou numa sala do mesmo ginásio).
 func gym_info_at(area:String)->Dictionary:
@@ -1360,7 +1393,7 @@ func _unhandled_input(event:InputEvent):
 		if not data.is_empty() and (data.player.arcade!=null or spectate!=""):return
 		if event.keycode==KEY_E:interact()
 		if event.keycode==KEY_M:open_panel("mapa")
-		if event.keycode==KEY_T and not data.is_empty():send({"type":"transport","value":"walk" if data.player.get("transport","")=="bike" else "bike"})
+		if event.keycode==KEY_T and not data.is_empty():send({"type":"transport","value":{"walk":"bike","":"bike","bike":"mount"}.get(str(data.player.get("transport","")),"walk")})
 		if not data.is_empty() and data.player.battle!="":
 			if event.keycode==KEY_SPACE:view.local_action("dash");send({"type":"dash"})
 			if event.keycode==KEY_Q:view.local_action("special");send({"type":"special"})

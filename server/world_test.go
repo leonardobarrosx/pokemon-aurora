@@ -492,3 +492,54 @@ func TestGymBadgesAndJourney(t *testing.T) {
 		t.Fatalf("painel de Kanto incompleto: %v", kanto)
 	}
 }
+
+func TestSurfDiveAndMount(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Nadadora", 1)
+	m := areaMaps["hn_route126"]
+	if m == nil || m.connection("dive") == nil {
+		t.Fatal("Route 126 deveria ter Dive")
+	}
+	// Ponto de água qualquer.
+	var water Vec
+	for i, c := range m.Cells {
+		if c == '~' {
+			water = Vec{(float64(i%m.W) + .5) * m.Cell, (float64(i/m.W) + .5) * m.Cell}
+			break
+		}
+	}
+	p.Area, p.Pos = "hn_route126", water
+	if !w.blocks(p, m, water, Vec{}) {
+		t.Fatal("sem Pokémon de Natação a água deve bloquear")
+	}
+	lapras := newMon(131)
+	p.Mons = append(p.Mons, lapras)
+	p.Team = append(p.Team, lapras.ID)
+	if w.blocks(p, m, water, Vec{}) {
+		t.Fatal("com Lapras dá para surfar")
+	}
+	updateRide(p, m)
+	if p.Transport != "surf" || p.Mount != lapras.ID {
+		t.Fatalf("deveria estar surfando no Lapras: %s %s", p.Transport, p.Mount)
+	}
+	if err := w.dive(p, 10); err != nil || p.Area != "hn_underwater_route126" || p.Transport != "dive" {
+		t.Fatalf("mergulho falhou: %v %s %s", err, p.Area, p.Transport)
+	}
+	if err := w.dive(p, 11); err != nil || p.Area != "hn_route126" {
+		t.Fatalf("subida falhou: %v %s", err, p.Area)
+	}
+	if c := areaMaps["hn_underwater_sootopolis_city"].connection("emerge"); c == nil || c.To != "hn_sootopolis_city" {
+		t.Fatalf("Sootopolis só se alcança emergindo: %+v", c)
+	}
+	p.Area, p.Pos = kantoStart, Vec{areaMaps[kantoStart].Default[0], areaMaps[kantoStart].Default[1]}
+	updateRide(p, areaMaps[kantoStart])
+	if err := w.action(p, Command{Type: "transport", Value: "mount"}, 12); err == nil {
+		t.Fatal("montaria sem Pokémon de Corrida não deveria funcionar")
+	}
+	onix := newMon(95)
+	p.Mons = append(p.Mons, onix)
+	p.Team = append(p.Team, onix.ID)
+	if err := w.action(p, Command{Type: "transport", Value: "mount"}, 13); err != nil || p.Mount != onix.ID {
+		t.Fatalf("montaria no Onix: %v %s", err, p.Mount)
+	}
+}
