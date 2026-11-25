@@ -145,7 +145,7 @@ func battle(b:Dictionary):
 		else:draw_line(a,z,color,float(beam.width)*2);draw_line(a,z,Color("f7f2d3"),float(beam.width));effect(beam.type,z,float(beam.at))
 
 	if float(b.get("pause_until",0))>game.server_time():
-		draw_rect(Rect2(0,72,512,280),Color(1,1,.8,.25));txt(Vector2(174,60),"Um novo poder desperta!",16)
+		draw_rect(Rect2(0,72,512,280),Color(1,1,.8,.25))
 	if game.data.player.battle!="":
 		var aim=get_local_mouse_position();draw_line(aim-Vector2(6,0),aim+Vector2(6,0),Color("fff6d5"),2);draw_line(aim-Vector2(0,6),aim+Vector2(0,6),Color("fff6d5"),2)
 		if Time.get_ticks_msec()<action_pulse_until:
@@ -181,8 +181,6 @@ func arcade(a:Dictionary,p:Dictionary):
 		for i in 10:rect(center-4,posmod(int(t*150)+i*48,384),8,20,"eee0af")
 	var m=game.team_mon(0)
 	mon(m,Vector2(a.pos.x,a.pos.y),64)
-	txt(Vector2(24,44),"%s  ·  %d pontos  ·  %d vidas"%[a.kind,a.score,a.hp],16)
-	txt(Vector2(380,44),"%ds"%max(0,30-int(t)),16)
 
 func _draw():
 	if game==null or game.data.is_empty():
@@ -207,6 +205,3 @@ func _draw():
 	trainer(player_pos,p.color,"",p.get("look",{}),p.get("colors",{}),mode,int(p.get("facing",0)))
 	var partner=game.team_mon(0)
 	if not partner.is_empty():follower(partner,player_pos+Vector2(-44,2),int(p.get("facing",0)),game.moving)
-	if float(p.get("fishing",0))>0:
-		var bite=float(p.fishing)
-		txt(Vector2(150,54),"FISGOU! PRESSIONE E" if game.server_time()>=bite and game.server_time()<=bite+2 else "Aguardando uma fisgada…",16)

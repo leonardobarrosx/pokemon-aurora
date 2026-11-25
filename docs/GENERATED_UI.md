@@ -21,3 +21,16 @@ Prévias `previews/art-*.png` renderizadas pelo Godot com fixtures. Testes de fl
 ## Revisão Full HD e resposta
 
 O botão `indigo-button.png` foi regenerado depois da auditoria de gameplay, com tab de entrada à esquerda e trilha de recarga na base. Prompt final: botão horizontal vazio para UI 1920×1080, centro navy uniforme, moldura Indigo/DS mais discreta, linha ciano, cantos recortados, tab de estado, marca dourada de habilidade pronta e trilha de cooldown, pixel art rígida sem texto ou efeitos suaves.
+## Galeria comparativa Full HD
+
+As 45 vistas anteriores foram capturadas no Godot com dados de teste locais. As cinco pranchas em `previews/atlas/pranchas/antes-*.jpg` serviram de referência ao gerador de imagens do ChatGPT. Os dois estudos de composição estão em `previews/atlas/conceito.png` e `previews/atlas/conceito-estados.png`. O cabeçalho usa `atlas-panorama.png` e a página de pesca usa `lago-celeste.png`. O cliente desenha os controles, textos, barras, retratos e estados em tempo de execução.
+
+Abra `previews/atlas/index.html` para comparar os 45 pares de imagens. Para recriar a galeria no Windows, execute estes comandos a partir de `aurora-desktop`, com Go, Godot e Python com Pillow disponíveis.
+
+```powershell
+$env:AURORA_PREVIEW_DIR = (Join-Path (Get-Location) 'build/ui-fixtures')
+go -C server test -run '^TestExportPreview$' -count=1
+godot --headless --editor --path client --import --quit
+godot --path client --resolution 1920x1080 --script qa_gallery.gd -- $env:AURORA_PREVIEW_DIR (Join-Path (Get-Location) 'previews/atlas/depois')
+python tools/ui_gallery.py depois
+```

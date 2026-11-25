@@ -1,54 +1,55 @@
 extends RefCounted
 
-static var frame_texture:ImageTexture
-static var button_texture:ImageTexture
+const PAPER = Color("#f5edde")
+const CARD = Color("#fff9ed")
+const INK = Color("#112d38")
+const PETROL = Color("#153a44")
+const TEAL = Color("#116759")
+const CORAL = Color("#b64229")
+const MINT = Color("#90debe")
 
-static func illustrated_panel(tint:Color=Color.WHITE)->StyleBoxTexture:
-	if frame_texture==null:
-		var source=load("res://assets/ui/trainer-frame.png") as Texture2D
-		var pixels=source.get_image().get_region(Rect2i(20,20,1496,984))
-		# Sample the generated master onto the game's 2x pixel grid once.
-		pixels.resize(96,64,Image.INTERPOLATE_NEAREST)
-		pixels.resize(192,128,Image.INTERPOLATE_NEAREST)
-		frame_texture=ImageTexture.create_from_image(pixels)
-	var s=StyleBoxTexture.new();s.texture=frame_texture;s.set_texture_margin_all(18)
-	s.modulate_color=tint
-	s.content_margin_left=14;s.content_margin_right=14;s.content_margin_top=10;s.content_margin_bottom=10
-	return s
+static func surface(color:Color, radius:int=9, border:Color=Color("#315460")) -> StyleBoxFlat:
+	var style=StyleBoxFlat.new()
+	style.bg_color=color
+	style.set_corner_radius_all(radius)
+	style.set_border_width_all(1)
+	style.border_color=border
+	style.content_margin_left=18
+	style.content_margin_right=18
+	style.content_margin_top=10
+	style.content_margin_bottom=10
+	return style
 
-static func button_skin(tint:Color)->StyleBoxTexture:
-	if button_texture==null:
-		var source=load("res://assets/ui/indigo-button.png") as Texture2D
-		var pixels=source.get_image().get_region(Rect2i(20,108,1496,808))
-		pixels.resize(96,32,Image.INTERPOLATE_NEAREST);pixels.resize(192,64,Image.INTERPOLATE_NEAREST)
-		button_texture=ImageTexture.create_from_image(pixels)
-	var s=StyleBoxTexture.new();s.texture=button_texture;s.set_texture_margin_all(12);s.modulate_color=tint
-	s.content_margin_left=20;s.content_margin_right=20;s.content_margin_top=12;s.content_margin_bottom=12
-	return s
+static func primary(button:Button):
+	button.add_theme_stylebox_override("normal",surface(CORAL,8,CORAL))
+	button.add_theme_stylebox_override("hover",surface(Color("#963622"),8,CORAL))
+	button.add_theme_stylebox_override("pressed",surface(Color("#812e20"),8,CORAL))
+	for state in ["font_color","font_focus_color","font_hover_color","font_pressed_color"]:
+		button.add_theme_color_override(state,Color.WHITE)
 
-static func surface(color:Color,radius:int=4)->StyleBoxFlat:
-	var s=StyleBoxFlat.new()
-	s.bg_color=color;s.set_corner_radius_all(radius);s.set_border_width_all(2)
-	s.border_color=Color("30425b")
-	s.content_margin_left=14;s.content_margin_right=14;s.content_margin_top=10;s.content_margin_bottom=10
-	return s
-
-static func make(font:Font)->Theme:
-	var t=Theme.new();t.default_font=font;t.default_font_size=18
+static func make(font:Font, light:bool=false)->Theme:
+	var theme=Theme.new()
+	theme.default_font=font
+	theme.default_font_size=20
+	var text_color=INK if light else CARD
+	var border=Color("#a79e8a") if light else Color("#50727a")
 	for kind in ["Button","OptionButton"]:
-		for state in ["normal","hover","pressed","disabled","focus"]:
-			var colors={"normal":"1c2b42","hover":"304966","pressed":"126478","disabled":"151d2d","focus":"263d59"}
-			var style=surface(Color(colors[state]))
-			if state=="focus":style.border_color=Color("75e6ee");style.bg_color.a=0
-			t.set_stylebox(state,kind,style if state=="focus" else button_skin({"normal":Color("bccddc"),"hover":Color.WHITE,"pressed":Color("7dd1e2"),"disabled":Color("536477")}[state]))
-		t.set_color("font_color",kind,Color("edf2fa"));t.set_color("font_hover_color",kind,Color.WHITE)
-		t.set_color("font_disabled_color",kind,Color("75859c"))
+		theme.set_stylebox("normal",kind,surface(Color("#eee4d2") if light else PETROL,8,border))
+		theme.set_stylebox("hover",kind,surface(Color("#d0e9dd") if light else Color("#285661"),8,TEAL))
+		theme.set_stylebox("pressed",kind,surface(Color("#b8d6c9") if light else Color("#2b6063"),8,TEAL))
+		theme.set_stylebox("disabled",kind,surface(Color("#e6e0d3") if light else Color("#182f38"),8,border))
+		var focus=surface(Color.TRANSPARENT,8,TEAL if light else MINT)
+		focus.set_border_width_all(3)
+		theme.set_stylebox("focus",kind,focus)
+		for state in ["font_color","font_focus_color","font_hover_color","font_pressed_color","font_hover_pressed_color"]:
+			theme.set_color(state,kind,text_color)
+		theme.set_color("font_disabled_color",kind,Color("#66675e") if light else Color("#a0b6bd"))
 	for kind in ["LineEdit","TextEdit"]:
-		t.set_stylebox("normal",kind,surface(Color("0b1424")))
-		var focus=surface(Color("102139"));focus.border_color=Color("64d9e5");t.set_stylebox("focus",kind,focus)
-		t.set_color("font_color",kind,Color("edf2fa"))
-	t.set_color("font_color","Label",Color("edf2fa"))
-	t.set_stylebox("panel","PopupMenu",surface(Color("172237")))
-	t.set_stylebox("background","ProgressBar",surface(Color("08101f"),2))
-	var fill=surface(Color("71dca2"),2);fill.set_border_width_all(0);t.set_stylebox("fill","ProgressBar",fill)
-	return t
+		theme.set_stylebox("normal",kind,surface(CARD if light else INK,6,border))
+		theme.set_stylebox("focus",kind,surface(CARD if light else INK,6,TEAL))
+		theme.set_color("font_color",kind,text_color)
+		theme.set_color("caret_color",kind,text_color)
+		theme.set_color("font_placeholder_color",kind,Color("#5d6c69") if light else Color("#adc3c4"))
+	theme.set_color("font_color","Label",text_color)
+	theme.set_stylebox("panel","PopupMenu",surface(INK))
+	return theme

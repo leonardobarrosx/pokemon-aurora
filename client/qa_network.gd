@@ -70,6 +70,23 @@ func run():
 		game.open_panel(menu)
 		await process_frame
 		game.close_panel()
+	game.open_panel("mercado")
+	var price=game.overlay_body.find_children("*","SpinBox",true,false)[0]
+	price.value=720
+	game.toggle_partner(game.data.player.mons[0].id)
+	if not is_instance_valid(price) or price.value!=720 or game.selected.size()!=1:
+		push_error("Selecionar um exemplar descartou o preço do anúncio");quit(1);return
+	game.open_panel("equipe")
+	if game.selected!=game.data.player.team:
+		push_error("A seleção inicial precisa respeitar a ordem do time salvo");quit(1);return
+	game.open_panel("ranking")
+	var chat_input=game.message_input
+	chat_input.text="Rascunho local"
+	game.data.chat.append({"name":"QA","text":"Nova mensagem"})
+	game.update_lobby()
+	if chat_input!=game.message_input or chat_input.text!="Rascunho local":
+		push_error("Atualizar o saguão descartou o rascunho");quit(1);return
+	game.close_panel()
 	var config=ConfigFile.new()
 	if config.load("user://%s.cfg"%game.profile)!=OK or config.get_value("session","token","")=="":push_error("chave de sessão não foi salva");quit(1);return
 	DirAccess.remove_absolute("user://%s.cfg"%game.profile)
