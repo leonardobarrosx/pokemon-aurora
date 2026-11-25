@@ -21,11 +21,17 @@ from gba import GAMES, Pair, tileset_dir
 ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), "../.."))
 REGIONS = {
     "kanto": {"game": "frlg", "start": "MAP_PALLET_TOWN", "prefix": "kt_",
-              "skip": ("Island", "SeviiIsle", "Navel", "Birth", "Trainer_Tower", "TrainerTower", "Unused", "Prototype")},
+              "skip": ("Unused", "Prototype"),
+              "ferries": ("MAP_VERMILION_CITY", "MAP_ONE_ISLAND_HARBOR", "MAP_TWO_ISLAND_HARBOR", "MAP_THREE_ISLAND_HARBOR",
+                          "MAP_FOUR_ISLAND_HARBOR", "MAP_FIVE_ISLAND_HARBOR", "MAP_SIX_ISLAND_HARBOR", "MAP_SEVEN_ISLAND_HARBOR",
+                          "MAP_NAVEL_ROCK_HARBOR", "MAP_BIRTH_ISLAND_HARBOR"),
+              "links": {}},
     "hoenn": {"game": "rse", "start": "MAP_LITTLEROOT_TOWN", "prefix": "hn_",
-              "skip": ("BattleFrontier", "Battle_Frontier", "SouthernIsland", "FarawayIsland", "BirthIsland", "NavelRock",
-                       "MarineCave", "TerraCave", "ArtisanCave", "DesertUnderpass", "AlteringCave", "TrainerHill",
-                       "Unused", "Prototype", "SecretBase", "InsideOfTruck", "BattleColosseum", "TradeCenter", "RecordCorner", "UnionRoom")},
+              "skip": ("Unused", "Prototype"),
+              "ferries": ("MAP_SLATEPORT_CITY_HARBOR", "MAP_LILYCOVE_CITY_HARBOR", "MAP_BATTLE_FRONTIER_OUTSIDE_WEST",
+                          "MAP_SOUTHERN_ISLAND_EXTERIOR", "MAP_FARAWAY_ISLAND_ENTRANCE", "MAP_BIRTH_ISLAND_HARBOR", "MAP_NAVEL_ROCK_HARBOR"),
+              # Saídas feitas por script no jogo original (sem conexão no map.json).
+              "links": {"MAP_UNDERWATER_SOOTOPOLIS_CITY": [{"direction": "emerge", "map": "MAP_SOOTOPOLIS_CITY", "x": 29, "y": 53}]}},
 }
 CFG = REGIONS["kanto"]
 FR = GAMES["frlg"]["root"]
@@ -82,7 +88,11 @@ def main(region="kanto"):
             maps[d["id"]] = d
     layouts = {l["id"]: l for l in json.load(open(os.path.join(FR, "data/layouts/layouts.json")))["layouts"] if l}
     # Percorre Kanto a partir de Pallet Town.
-    seen, queue = set(), deque([CFG["start"]])
+    for mid, extra in CFG["links"].items():
+        if mid in maps:
+            maps[mid].setdefault("connections", None)
+            maps[mid]["connections"] = (maps[mid]["connections"] or []) + extra
+    seen, queue = set(), deque([CFG["start"]] + sorted(maps))
     while queue:
         mid = queue.popleft()
         if mid in seen or mid not in maps:
@@ -194,9 +204,12 @@ def main(region="kanto"):
             warps.append({"x": wv["x"], "y": wv["y"], "w": 1, "h": 1, "to": area_id(to), "tx": (tx + .5) * CELL, "ty": (ty + .7) * CELL})
         conns = []
         for c in d.get("connections") or []:
-            if c["map"] in loaded and c["direction"] in ("up", "down", "left", "right"):
+            if c["map"] in loaded and c["direction"] in ("up", "down", "left", "right", "dive", "emerge"):
                 ol = loaded[c["map"]][1]
-                conns.append({"dir": c["direction"], "offset": c["offset"], "to": area_id(c["map"]), "w": ol["width"], "h": ol["height"]})
+                conn = {"dir": c["direction"], "offset": c.get("offset", 0), "to": area_id(c["map"]), "w": ol["width"], "h": ol["height"]}
+                if "x" in c:
+                    conn["x"], conn["y"] = c["x"], c["y"]
+                conns.append(conn)
         enc = encounters.get(mid, {})
         land = enc.get("land_mons") or ([41, 74, 95] if cave else [16, 19, 25, 133] if enc else [])
         server = {"w": w, "h": h, "cell": CELL, "cells": codes[mid], "warps": warps, "connections": conns,
@@ -219,7 +232,8 @@ def main(region="kanto"):
                   "default": server["default"], "name": server["name"], "region": region}
         json.dump(client, open(os.path.join(cdir, area + ".json"), "w"), separators=(",", ":"))
     index = {area_id(m): loaded[m][0]["folder"] for m in loaded}
-    json.dump({"areas": sorted(index), "names": {a: nice_name(f) for a, f in index.items()}},
+    json.dump({"areas": sorted(index), "names": {a: nice_name(f) for a, f in index.items()},
+               "ferries": [area_id(m) for m in CFG["ferries"] if m in loaded]},
               open(os.path.join(cdir, region + "_index.json"), "w"), ensure_ascii=False, indent=0)
     print(len(pairs), "pares de tilesets")
 
