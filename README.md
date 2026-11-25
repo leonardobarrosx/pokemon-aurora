@@ -32,7 +32,7 @@ Comece conversando com Íris na vila, resgate a missão no diário e explore a r
 - Pokémon de campo também nas batalhas: sprites `Followers` com quatro direções; movimento, projéteis, áreas anunciadas, feixes, esquiva, energia e recargas. Peso/porte afetam aceleração, colisão e empurrão. Sprites frontais ficam nos cards de coleção.
 - Servidor de simulação a 20 Hz; snapshots HTTP a 10 Hz. Dois clientes compartilham presença, fila PvP, chat, espectadores e rankings. Não há jogadores falsos preenchendo as listas.
 - Captura, equipe de até seis, troca automática após desmaio, EVs, IVs, itens segurados, jardim, mineração, profissões, presentes e cinco missões de introdução.
-- Genética diploide: pigmentos intermediários, dominância/recessividade, padrões, sinais, porte, recombinação, pedigree, previsão amostral e três IVs herdados. Genes/IVs acompanham evolução e mercado.
+- Genética diploide: pigmentos intermediários, dominância/recessividade, regiões anatômicas por espécie, padrões e sinais discretos, porte, recombinação, pedigree, previsão amostral e três IVs herdados. Genes/IVs acompanham evolução e mercado.
 - Evoluções iniciais, Eevee com pedras, Raichu e Gyarados. Evolução durante combate por nível ou superação condicionada a vínculo, desempenho e vida baixa; proporção de HP é preservada.
 - Mercado compartilhado com reserva do Pokémon anunciado, compra/cancelamento e transferência atômica em memória protegida por mutex.
 - Pesca com janela de fisgada, minijogo de desvio de projéteis e circuitos de corrida/voo/natação; recompensas menores que PvP.
@@ -43,13 +43,13 @@ Comece conversando com Íris na vila, resgate a missão no diário e explore a r
 
 Não implementa todo o conteúdo de Essentials/CFRU, todas as espécies, todas as evoluções, todos os golpes, campanhas extensas ou um mundo contínuo completo. Ainda faltam matchmaking competitivo robusto, temporadas, moderação, recuperação de contas, migração de banco, otimização para muitos jogadores, testes em internet real e balanceamento. O JSON é um armazenamento de protótipo para um processo; não substitui banco transacional em produção.
 
-A fazenda com animais comuns, restaurante gerenciável e cadeia completa de ingredientes estão no design, não estão construídos como sistemas completos. Os circuitos são protótipos curtos. Safari ainda não calcula a curva física de um arremesso giratório. A máscara genética visual é uma primeira máscara de paleta/regiões normalizadas; deve ganhar máscaras manuais por espécie/direção para olhos, boca e manchas acompanharem perfeitamente todas as poses.
+A fazenda com animais comuns, restaurante gerenciável e cadeia completa de ingredientes estão no design, não estão construídos como sistemas completos. Os circuitos são protótipos curtos. Safari ainda não calcula a curva física de um arremesso giratório. A máscara genética visual cobre explicitamente as espécies disponíveis e as três poses importadas; novas espécies preservam o desenho original até receberem uma paleta anatômica verificada.
 
 ## Assets e preservação
 
 `tools/import_indigo.py` copia tilesets, seguidores, animações, retratos e itens da instalação indicada. `tools/export_indigo_character.rb` lê o catálogo Ruby e exporta as camadas sem executar o jogo. `client/assets/indigo/manifest.json` registra origem, dimensões e SHA-256. Atlas altos são divididos em faixas, sem suavizar ou redesenhar. O mundo usa coordenadas lógicas 512×384; os menus desktop usam uma camada de interface 1280×832.
 
-Não foram alterados os arquivos do jogo instalado, os `.rxdata`, os mapas ou o PBS. Layouts de Aurora estão em `client/indigo_maps.gd`. Referências e créditos: [CREDITS.md](client/assets/CREDITS.md). As imagens em `previews/` são capturas do cliente com uma fixture de QA, não prova de jogadores conectados em produção.
+Não foram alterados os arquivos do jogo instalado, os `.rxdata`, os mapas ou o PBS. Layouts de Aurora estão em `client/indigo_maps.gd`. O mundo permanece em coordenadas 512×384 e os menus usam uma camada Full HD de 1920×1080. Referências e créditos: [CREDITS.md](client/assets/CREDITS.md). As imagens em `previews/` são capturas do cliente com uma fixture de QA, não prova de jogadores conectados em produção.
 
 ## Validação
 

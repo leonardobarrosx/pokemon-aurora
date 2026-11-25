@@ -17,3 +17,7 @@ Use case: illustration-story. Asset type: full-screen decorative menu background
 ## Validação
 
 Prévias `previews/art-*.png` renderizadas pelo Godot com fixtures. Testes de fluxo do cliente e dois clientes TCP; build desktop. Referência técnica de recorte nine-slice: https://docs.godotengine.org/en/stable/classes/class_styleboxtexture.html
+
+## Revisão Full HD e resposta
+
+O botão `indigo-button.png` foi regenerado depois da auditoria de gameplay, com tab de entrada à esquerda e trilha de recarga na base. Prompt final: botão horizontal vazio para UI 1920×1080, centro navy uniforme, moldura Indigo/DS mais discreta, linha ciano, cantos recortados, tab de estado, marca dourada de habilidade pronta e trilha de cooldown, pixel art rígida sem texto ou efeitos suaves.

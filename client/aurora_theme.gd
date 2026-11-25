@@ -1,6 +1,7 @@
 extends RefCounted
 
 static var frame_texture:ImageTexture
+static var button_texture:ImageTexture
 
 static func illustrated_panel(tint:Color=Color.WHITE)->StyleBoxTexture:
 	if frame_texture==null:
@@ -15,6 +16,16 @@ static func illustrated_panel(tint:Color=Color.WHITE)->StyleBoxTexture:
 	s.content_margin_left=14;s.content_margin_right=14;s.content_margin_top=10;s.content_margin_bottom=10
 	return s
 
+static func button_skin(tint:Color)->StyleBoxTexture:
+	if button_texture==null:
+		var source=load("res://assets/ui/indigo-button.png") as Texture2D
+		var pixels=source.get_image().get_region(Rect2i(20,108,1496,808))
+		pixels.resize(96,32,Image.INTERPOLATE_NEAREST);pixels.resize(192,64,Image.INTERPOLATE_NEAREST)
+		button_texture=ImageTexture.create_from_image(pixels)
+	var s=StyleBoxTexture.new();s.texture=button_texture;s.set_texture_margin_all(12);s.modulate_color=tint
+	s.content_margin_left=20;s.content_margin_right=20;s.content_margin_top=12;s.content_margin_bottom=12
+	return s
+
 static func surface(color:Color,radius:int=4)->StyleBoxFlat:
 	var s=StyleBoxFlat.new()
 	s.bg_color=color;s.set_corner_radius_all(radius);s.set_border_width_all(2)
@@ -23,13 +34,13 @@ static func surface(color:Color,radius:int=4)->StyleBoxFlat:
 	return s
 
 static func make(font:Font)->Theme:
-	var t=Theme.new();t.default_font=font;t.default_font_size=15
+	var t=Theme.new();t.default_font=font;t.default_font_size=18
 	for kind in ["Button","OptionButton"]:
 		for state in ["normal","hover","pressed","disabled","focus"]:
 			var colors={"normal":"1c2b42","hover":"304966","pressed":"126478","disabled":"151d2d","focus":"263d59"}
 			var style=surface(Color(colors[state]))
 			if state=="focus":style.border_color=Color("75e6ee");style.bg_color.a=0
-			t.set_stylebox(state,kind,style)
+			t.set_stylebox(state,kind,style if state=="focus" else button_skin({"normal":Color("bccddc"),"hover":Color.WHITE,"pressed":Color("7dd1e2"),"disabled":Color("536477")}[state]))
 		t.set_color("font_color",kind,Color("edf2fa"));t.set_color("font_hover_color",kind,Color.WHITE)
 		t.set_color("font_disabled_color",kind,Color("75859c"))
 	for kind in ["LineEdit","TextEdit"]:

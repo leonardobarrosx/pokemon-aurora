@@ -49,6 +49,7 @@ var species = map[int]Species{
 	1: {"Bulbasaur", "Planta", "Monstro", 45, 49, ""}, 4: {"Charmander", "Fogo", "Monstro", 39, 52, ""}, 7: {"Squirtle", "Água", "Monstro", 44, 48, ""},
 	16: {"Pidgey", "Voador", "Voador", 40, 45, "Voo"}, 19: {"Rattata", "Normal", "Campo", 30, 56, "Corrida"}, 25: {"Pikachu", "Elétrico", "Campo", 35, 55, ""},
 	41: {"Zubat", "Voador", "Voador", 40, 45, "Voo"}, 74: {"Geodude", "Pedra", "Mineral", 40, 80, ""}, 95: {"Onix", "Pedra", "Mineral", 35, 45, "Corrida"},
+	94: {"Gengar", "Fantasma", "Amorfo", 60, 65, ""}, 197: {"Umbreon", "Noturno", "Campo", 95, 65, ""},
 	129: {"Magikarp", "Água", "Água", 20, 10, ""}, 131: {"Lapras", "Água", "Monstro", 130, 85, "Natação"}, 133: {"Eevee", "Normal", "Campo", 55, 55, ""}, 151: {"Mew", "Psíquico", "Lendário", 100, 100, "Voo"},
 }
 

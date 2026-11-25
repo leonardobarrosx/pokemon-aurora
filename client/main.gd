@@ -48,7 +48,7 @@ func _ready():
 			if arg.begins_with("--server="):override=true
 		if not override:endpoint=saved_endpoint
 		elif saved_endpoint!=endpoint:token=""
-	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.position=Vector2(128,32);view.scale=Vector2(2,2);add_child(view)
+	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.position=Vector2(448,156);view.scale=Vector2(2,2);add_child(view)
 	ui=Control.new();ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(ui)
 	ui.theme=preload("res://aurora_theme.gd").make(font)
 	ui.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST
@@ -63,10 +63,10 @@ func box(color:Color,radius:int=4)->StyleBoxFlat:
 	return preload("res://aurora_theme.gd").surface(color,mini(radius,4))
 
 func label(parent:Node,text:String,size:int=16,color:Color=Color("edf2fa"))->Label:
-	var l=Label.new();l.text=text;l.add_theme_font_size_override("font_size",size);l.add_theme_color_override("font_color",color);parent.add_child(l);return l
+	var l=Label.new();l.text=text;l.add_theme_font_size_override("font_size",int(size*1.2));l.add_theme_color_override("font_color",color);parent.add_child(l);return l
 
 func btn(parent:Node,text:String,callback:Callable,width:float=0)->Button:
-	var b=Button.new();b.text=text;b.custom_minimum_size=Vector2(width,40);b.pressed.connect(callback);parent.add_child(b);return b
+	var b=Button.new();b.text=text;b.custom_minimum_size=Vector2(width,54);b.pressed.connect(callback);parent.add_child(b);preload("res://ui_motion.gd").wire(b);return b
 
 func panel(parent:Node,color:Color=Color("172237"),illustrated:bool=true)->PanelContainer:
 	var p=PanelContainer.new();p.add_theme_stylebox_override("panel",preload("res://aurora_theme.gd").illustrated_panel(color.lerp(Color.WHITE,.85)) if illustrated else box(color));parent.add_child(p);return p
@@ -101,6 +101,7 @@ func received(_result:int,code:int,_headers:PackedStringArray,body:PackedByteArr
 		var config=ConfigFile.new();config.set_value("session","token",token);config.set_value("session","server",endpoint);config.save("user://%s.cfg"%profile)
 		close_panel()
 	if response.has("player"):
+		if view:view.observe_snapshot(response)
 		data=response;clock_offset=float(response.now)-Time.get_unix_time_from_system();refresh_sidebar()
 		if data.player.notice!=last_notice:last_notice=data.player.notice;notice(last_notice)
 		if refresh_pending and screen in ["equipe","breeding","treino","loja","casa","vila","jardim","pc","profissao","mercado","ranking","mapa"]:open_panel(screen)
@@ -111,7 +112,8 @@ func _process(delta:float):
 	timer+=delta
 	if view:view.queue_redraw()
 	if hud and not data.is_empty():hud.update_values()
-	if not data.is_empty() and token!="" and timer>=.1:
+	# Match the authoritative 20 Hz simulation when the connection can keep up.
+	if not data.is_empty() and token!="" and timer>=.05:
 		timer=0
 		if not request_busy and commands.is_empty():
 			var dir=Vector2.ZERO
@@ -124,7 +126,7 @@ func _process(delta:float):
 
 func notice(text:String):
 	if is_instance_valid(status):status.queue_free()
-	status=label(ui,text,14,Color("f2e3bd"));status.position=Vector2(250,740);status.size=Vector2(780,36)
+	status=label(ui,text,14,Color("f2e3bd"));status.position=Vector2(570,942);status.size=Vector2(840,40)
 	status.add_theme_stylebox_override("normal",box(Color("192239"),4));status.text_overrun_behavior=TextServer.OVERRUN_TRIM_ELLIPSIS
 	status.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	var current_id=status.get_instance_id()
@@ -138,7 +140,7 @@ func login():
 	label(c,"SEU PRIMEIRO PARCEIRO",13,ACCENT)
 	var starters=row(c,16)
 	for id in [1,4,7]:
-		var card=panel(starters);card.custom_minimum_size.x=250;var cc=column(card);var im=TextureRect.new();im.texture=view.mon_texture({"species":id});im.custom_minimum_size=Vector2(140,130);im.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;im.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;cc.add_child(im)
+		var card=panel(starters);card.custom_minimum_size.x=440;var cc=column(card);var im=TextureRect.new();im.texture=view.mon_texture({"species":id});im.custom_minimum_size=Vector2(140,130);im.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;im.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;cc.add_child(im)
 		btn(cc,{1:"Bulbasaur",4:"Charmander",7:"Squirtle"}[id],func():starter=id;notice("Parceiro escolhido: "+{1:"Bulbasaur",4:"Charmander",7:"Squirtle"}[id]))
 	label(c,"ENDEREÇO DO SERVIDOR",13,ACCENT);server_input=LineEdit.new();server_input.text=endpoint;c.add_child(server_input)
 	btn(c,"Começar minha jornada",func():endpoint=server_input.text.strip_edges().trim_suffix("/");send({"type":"register","name":name_input.text,"starter":starter}))
@@ -148,21 +150,22 @@ func modal(title:String,subtitle:String):
 	if not is_instance_valid(overlay):previous_focus=get_viewport().gui_get_focus_owner()
 	else:overlay.queue_free()
 	hud.visible=false
-	overlay=Control.new();overlay.size=Vector2(1280,832);ui.add_child(overlay)
-	var backdrop=TextureRect.new();backdrop.texture=load("res://assets/ui/aurora-night.png");backdrop.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;backdrop.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;backdrop.size=Vector2(1280,832);backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE;overlay.add_child(backdrop)
-	var shade=ColorRect.new();shade.color=Color("0a1020");shade.color.a=.35;shade.size=Vector2(1280,832);overlay.add_child(shade)
+	overlay=Control.new();overlay.size=Vector2(1920,1080);ui.add_child(overlay)
+	var backdrop=TextureRect.new();backdrop.texture=load("res://assets/ui/aurora-night.png");backdrop.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;backdrop.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_COVERED;backdrop.size=Vector2(1920,1080);backdrop.mouse_filter=Control.MOUSE_FILTER_IGNORE;overlay.add_child(backdrop)
+	var shade=ColorRect.new();shade.color=Color("0a1020");shade.color.a=.35;shade.size=Vector2(1920,1080);overlay.add_child(shade)
 	var brand=label(overlay,"A U R O R A   /   CENTRAL DO TREINADOR",13,ACCENT);brand.position=Vector2(28,20)
-	var heading=label(overlay,title,30);heading.position=Vector2(240,52)
-	var sub=label(overlay,subtitle,14,Color("9eaec5"));sub.position=Vector2(240,94)
-	var close=btn(overlay,"ESC  Fechar",close_panel,116);close.position=Vector2(1136,12)
-	var navigation=column(overlay,7);navigation.position=Vector2(24,138);navigation.size=Vector2(192,650)
+	var heading=label(overlay,title,30);heading.position=Vector2(352,66)
+	var sub=label(overlay,subtitle,14,Color("9eaec5"));sub.position=Vector2(352,116)
+	var close=btn(overlay,"ESC  Fechar",close_panel,116);close.position=Vector2(1732,24)
+	var navigation=column(overlay,12);navigation.position=Vector2(36,176);navigation.size=Vector2(280,820)
 	for entry in [["equipe","01   Equipe"],["mapa","02   Mapa"],["loja","03   Mochila e loja"],["breeding","04   Linhagens"],["treino","05   Treinamento"],["mercado","06   Mercado"],["casa","07   Minha casa"],["profissao","08   Profissão"],["ranking","09   Liga e saguão"]]:
-		var nav=btn(navigation,entry[1],func():open_panel(entry[0]),192)
+		var nav=btn(navigation,entry[1],func():open_panel(entry[0]),280)
 		nav.alignment=HORIZONTAL_ALIGNMENT_LEFT
 		if entry[0]==screen:nav.add_theme_stylebox_override("normal",box(Color("27475b")))
-	var shell=panel(overlay,Color("111b2c"));shell.position=Vector2(236,132);shell.size=Vector2(1020,676)
+	var shell=panel(overlay,Color("111b2c"));shell.position=Vector2(344,164);shell.size=Vector2(1540,872)
 	var scroll=ScrollContainer.new();scroll.horizontal_scroll_mode=ScrollContainer.SCROLL_MODE_AUTO;scroll.size_flags_vertical=Control.SIZE_EXPAND_FILL;shell.add_child(scroll)
 	overlay_body=column(scroll,16);overlay_body.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+	preload("res://ui_motion.gd").reveal(overlay)
 	close.grab_focus()
 	if data.is_empty():navigation.hide();brand.text="A U R O R A   /   UMA NOVA JORNADA"
 
@@ -191,11 +194,11 @@ func mon_name(m:Dictionary)->String:
 	return str(data.get("species",{}).get(str(int(m.species)),{}).get("name","Pokémon"))
 
 func mon_card(parent:Node,m:Dictionary,choose:bool=false):
-	var card=panel(parent,Color("17273b") if selected.has(m.id) else Color("131f32"));card.custom_minimum_size.x=300
+	var card=panel(parent,Color("17273b") if selected.has(m.id) else Color("131f32"));card.custom_minimum_size.x=440
 	var c=column(card,9)
 	var top=row(c);var index=label(top,"#%03d"%int(m.species),12,ACCENT);index.size_flags_horizontal=Control.SIZE_EXPAND_FILL
 	label(top,"NV. %d"%m.level,13,Color("eac57d"))
-	var image=TextureRect.new();image.texture=view.mon_texture(m);image.custom_minimum_size=Vector2(260,100);image.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;image.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;image.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;c.add_child(image)
+	var image=TextureRect.new();image.texture=view.mon_texture(m);image.custom_minimum_size=Vector2(380,180);image.expand_mode=TextureRect.EXPAND_IGNORE_SIZE;image.stretch_mode=TextureRect.STRETCH_KEEP_ASPECT_CENTERED;image.texture_filter=CanvasItem.TEXTURE_FILTER_NEAREST;c.add_child(image)
 	label(c,mon_name(m),24)
 	label(c,"%s  /  Geração %d  /  %s"%[m.sex,m.genes.generation,m.look.pattern],12,Color("a6b6ce"))
 	var affinity=row(c);label(affinity,"VÍNCULO",10,ACCENT);label(affinity,"%d / 100"%m.get("affinity",50),12)
@@ -213,6 +216,7 @@ func mon_card(parent:Node,m:Dictionary,choose:bool=false):
 			else:selected.append(m.id)
 			open_panel(screen))
 		if selected.has(m.id):select.add_theme_stylebox_override("normal",box(Color("15566b")))
+		btn(c,"Aparência e genes",func():genome_panel(m))
 	else:btn(c,"Ver genes e linhagem",func():genome_panel(m))
 
 func open_panel(which:String):
@@ -305,8 +309,13 @@ func wardrobe_menu():
 
 func genome_panel(m:Dictionary):
 	modal(mon_name(m)+" · mapa genético","Alelos recessivos podem ficar ocultos e reaparecer nos descendentes.");screen="genes"
-	var r=row(overlay_body,24);mon_card(r,m,true);var c=column(r,10)
-	var names={"body":"Cor base","detail":"Detalhes","pattern":"Padrão","eye":"Olhos","mouth":"Boca","mark":"Sinal","mark_color":"Cor do sinal","mark_place":"Local do sinal","size":"Porte"}
+	var r=row(overlay_body,24);mon_card(r,m,false);var c=column(r,10)
+	label(c,"REGIÕES DE APARÊNCIA",16,ACCENT)
+	var region_colors=preload("res://pokemon_regions.gd").colors(m.look)
+	for region in region_colors:
+		label(c,preload("res://pokemon_regions.gd").LABELS[region]+": "+("Original" if region_colors[region]=="original" else region_colors[region]),14)
+	label(c,"ALELOS HERDADOS",16,ACCENT)
+	var names={"skin":"Pele","fur":"Pelagem","flame":"Chama","effects":"Efeitos","nose":"Nariz","markings":"Desenhos naturais","accessory":"Características da espécie","body":"Cor base","detail":"Detalhes","pattern":"Padrão","eye":"Olhos","mouth":"Boca","mark":"Sinal","mark_color":"Cor do sinal","mark_place":"Local do sinal","size":"Porte"}
 	for key in m.genes.loci:
 		var pair=m.genes.loci[key];label(c,"%s   %d/%d  · dominância %d/%d"%[names.get(key,key),pair[0].value,pair[1].value,pair[0].dominance,pair[1].dominance],16)
 	label(overlay_body,"Pais: "+str(m.genes.parents),12);label(overlay_body,"Linhagem registrada: %d ancestrais"%m.genes.lineage.size(),15)
@@ -383,8 +392,8 @@ func _unhandled_input(event:InputEvent):
 		if event.keycode==KEY_M:open_panel("mapa")
 		if event.keycode==KEY_T and not data.is_empty():send({"type":"transport","value":"walk" if data.player.get("transport","")=="bike" else "bike"})
 		if not data.is_empty() and data.player.battle!="":
-			if event.keycode==KEY_SPACE:send({"type":"dash"})
-			if event.keycode==KEY_Q:send({"type":"special"})
+			if event.keycode==KEY_SPACE:view.local_action("dash");send({"type":"dash"})
+			if event.keycode==KEY_Q:view.local_action("special");send({"type":"special"})
 			if event.keycode==KEY_B:send({"type":"ball"})
 			if event.keycode==KEY_F:send({"type":"flee"})
 			if event.keycode==KEY_V:
@@ -393,7 +402,7 @@ func _unhandled_input(event:InputEvent):
 	if event is InputEventMouseButton and screen=="" and not data.is_empty() and event.button_index==MOUSE_BUTTON_LEFT:
 		var pos=view.get_local_mouse_position()
 		if pos.x<0 or pos.x>512 or pos.y<0 or pos.y>384:return
-		if event.pressed and data.player.battle!="":send({"type":"attack"})
+		if event.pressed and data.player.battle!="":view.local_action("attack");send({"type":"attack"})
 		elif event.pressed and placing!="":send({"type":"decorate","value":placing,"pos":{"x":pos.x,"y":pos.y}});placing=""
 		elif not event.pressed and data.player.area=="safari" and data.player.safari!=null:send({"type":"throw","pos":{"x":pos.x,"y":pos.y}})
 		elif event.pressed and data.player.area=="casa":

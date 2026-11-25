@@ -28,4 +28,4 @@ O protótipo inicial usou sprites externos do PokéAPI; eles foram substituídos
 
 ## Arte de interface Aurora
 
-Moldura trainer-frame.png e cenário aurora-night.png em ui/ gerados com o gerador integrado de imagens do ChatGPT em 24/11/2026. Prompts e integração documentados em docs/GENERATED_UI.md. Não substituem os sprites e tilesets dos autores acima.
+Moldura trainer-frame.png, cenário aurora-night.png e botão indigo-button.png em ui/ gerados com o gerador integrado de imagens do ChatGPT em 24/11/2026. Prompts e integração documentados em docs/GENERATED_UI.md. Não substituem os sprites e tilesets dos autores acima.

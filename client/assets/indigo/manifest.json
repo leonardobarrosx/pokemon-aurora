@@ -688,6 +688,54 @@
         48,
         48
       ]
+    },
+    "pokemon/94-front.png": {
+      "source": "Graphics/Pokemon/Front/GENGAR.png",
+      "sha256": "3157be4f9dd178ff9ae9bd7811e2e63fe24281aa61f1091f4d0b1e79334dd5d9",
+      "size": [
+        6952,
+        79
+      ]
+    },
+    "pokemon/94-back.png": {
+      "source": "Graphics/Pokemon/Back/GENGAR.png",
+      "sha256": "21caef34eb0007f9507fd18f83b00fd4a63f130d68cc64201d41b9001ba9c4fe",
+      "size": [
+        6424,
+        73
+      ]
+    },
+    "pokemon/94-follower.png": {
+      "source": "Graphics/Characters/Followers/GENGAR.png",
+      "sha256": "5ae65339eb7cf35bbb02528a724b78e3060b387013b4492c2b4a6c48c0c946a5",
+      "size": [
+        256,
+        256
+      ]
+    },
+    "pokemon/197-front.png": {
+      "source": "Graphics/Pokemon/Front/UMBREON.png",
+      "sha256": "28d11f535ce3e2ae6192bdae29d6a732318013322a7353fb9e516ee24c9a163e",
+      "size": [
+        3315,
+        51
+      ]
+    },
+    "pokemon/197-back.png": {
+      "source": "Graphics/Pokemon/Back/UMBREON.png",
+      "sha256": "e05a18291b4497170553c746b7ad1226f3d9c9b9ee0e1406acd1e3c2dbd94d1e",
+      "size": [
+        3315,
+        51
+      ]
+    },
+    "pokemon/197-follower.png": {
+      "source": "Graphics/Characters/Followers/UMBREON.png",
+      "sha256": "3eec0c45cfa22358b47838508acc1482fd9111589a523733b43514363b0a9344",
+      "size": [
+        256,
+        256
+      ]
     }
   },
   "pokemon": {
@@ -4721,6 +4769,66 @@
             ]
           }
         ]
+      }
+    },
+    "94": {
+      "name": "GENGAR",
+      "front": {
+        "file": "pokemon/94-front.png",
+        "size": [
+          6952,
+          79
+        ],
+        "frame": 79,
+        "frames": 88
+      },
+      "back": {
+        "file": "pokemon/94-back.png",
+        "size": [
+          6424,
+          73
+        ],
+        "frame": 73,
+        "frames": 88
+      },
+      "follower": {
+        "file": "pokemon/94-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4
+      }
+    },
+    "197": {
+      "name": "UMBREON",
+      "front": {
+        "file": "pokemon/197-front.png",
+        "size": [
+          3315,
+          51
+        ],
+        "frame": 51,
+        "frames": 65
+      },
+      "back": {
+        "file": "pokemon/197-back.png",
+        "size": [
+          3315,
+          51
+        ],
+        "frame": 51,
+        "frames": 65
+      },
+      "follower": {
+        "file": "pokemon/197-follower.png",
+        "size": [
+          256,
+          256
+        ],
+        "frame": 64,
+        "frames": 4
       }
     }
   }

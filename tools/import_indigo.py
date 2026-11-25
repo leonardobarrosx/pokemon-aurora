@@ -25,7 +25,7 @@ copy('Tilesets/Creditos.png','tilesets/Creditos.png')
 for name in ['agua','Agua cueva','florAmarilla']:
     p=source/'Graphics/Autotiles'/(name+'.png')
     if p.exists():copy('Autotiles/'+name+'.png','autotiles/'+name+'.png')
-mons={1:'BULBASAUR',2:'IVYSAUR',4:'CHARMANDER',5:'CHARMELEON',7:'SQUIRTLE',8:'WARTORTLE',16:'PIDGEY',19:'RATTATA',25:'PIKACHU',26:'RAICHU',41:'ZUBAT',74:'GEODUDE',95:'ONIX',129:'MAGIKARP',130:'GYARADOS',131:'LAPRAS',133:'EEVEE',134:'VAPOREON',135:'JOLTEON',136:'FLAREON',151:'MEW'}
+mons={94:'GENGAR',197:'UMBREON',1:'BULBASAUR',2:'IVYSAUR',4:'CHARMANDER',5:'CHARMELEON',7:'SQUIRTLE',8:'WARTORTLE',16:'PIDGEY',19:'RATTATA',25:'PIKACHU',26:'RAICHU',41:'ZUBAT',74:'GEODUDE',95:'ONIX',129:'MAGIKARP',130:'GYARADOS',131:'LAPRAS',133:'EEVEE',134:'VAPOREON',135:'JOLTEON',136:'FLAREON',151:'MEW'}
 for sid,name in mons.items():
     entry={'name':name}
     for mode,folder in [('front','Pokemon/Front'),('back','Pokemon/Back'),('follower','Characters/Followers')]:

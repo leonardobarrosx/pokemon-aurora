@@ -8,6 +8,12 @@ var indigo=preload("res://indigo_character.gd").new()
 var maps=preload("res://indigo_maps.gd").new()
 var source_manifest:Dictionary=JSON.parse_string(FileAccess.get_file_as_string("res://assets/indigo/manifest.json"))
 var atlases:Dictionary={}
+var render_positions:Dictionary={}
+var previous_hp:Dictionary={}
+var flash_until:Dictionary={}
+var shake_until=0.0
+var action_pulse_until=0.0
+var action_pulse=""
 const INK = Color("273e42")
 
 func rect(x: float,y: float,w: float,h: float,c: String):
@@ -32,28 +38,7 @@ func mon_atlas(m:Dictionary,mode:String="front")->Texture2D:
 	var img:Image=texture("res://assets/indigo/"+entry[mode].file).get_image()
 	img.convert(Image.FORMAT_RGBA8)
 	var frame_width=int(entry[mode].frame)
-	# Original animated palettes are retained; variants change opaque color regions only.
-	for y in range(img.get_height()):
-		for x in range(img.get_width()):
-			var c=img.get_pixel(x,y)
-			if c.a<.5 or c.v<.25:continue
-			var local_x=x%frame_width
-			var local_y=y%frame_width
-			var region="body"
-			# Saturated red/pink pixels in the face are an explicit prototype palette mask.
-			if (c.h<.08 or c.h>.9) and c.s>.55 and local_y<float(frame_width)*.7:region="eye" if local_y<float(frame_width)*.47 else "mouth"
-			var pat=str(look.get("pattern","Liso"));var seed_value=int(look.get("seed",0))%997
-			if region=="body":
-				if pat=="Pintas" and posmod((local_x/4)*7+(local_y/4)*11+seed_value,17)<3:region="detail"
-				if pat=="Listras" and posmod(local_x+local_y/2+seed_value,10)<3:region="detail"
-				if pat=="Mosaico" and posmod(local_x/8+local_y/7+seed_value,3)==0:region="detail"
-				if look.get("mark","")=="Sinal":
-					var positions=[Vector2(.5,.24),Vector2(.3,.5),Vector2(.65,.5),Vector2(.5,.78),Vector2(.75,.3)]
-					var pos=positions[int(look.get("mark_place",0))%5]*Vector2(frame_width,frame_width)
-					if Vector2(local_x,local_y).distance_to(pos)<3:region="mark_color"
-			var chosen=str(look.get(region,"original"))
-			if chosen!="original":
-				var target=Color(chosen);var out=Color.from_hsv(target.h,target.s,clampf(c.v*target.v,0,1));out.a=c.a;img.set_pixel(x,y,out)
+	img=preload("res://pokemon_regions.gd").apply(img,sid,mode,frame_width,look)
 	var tex=ImageTexture.create_from_image(img);atlases[key]=tex;return tex
 
 func mon_texture(m:Dictionary)->Texture2D:
@@ -110,20 +95,49 @@ func room(p:Dictionary):
 func outdoors(p:Dictionary):
 	maps.v=self;maps.outdoors(p)
 
+func observe_snapshot(snapshot:Dictionary):
+	var battle=snapshot.get("battle")
+	if battle==null:return
+	for fighter in battle.fighters:
+		var owner=str(fighter.owner);var hp=float(fighter.hp)
+		if previous_hp.has(owner) and hp<float(previous_hp[owner]):
+			flash_until[owner]=Time.get_ticks_msec()+150
+			shake_until=Time.get_ticks_msec()+110
+		previous_hp[owner]=hp
+
+func local_action(kind:String):
+	action_pulse=kind;action_pulse_until=Time.get_ticks_msec()+120
+
+func smooth_position(key:String,target:Vector2,velocity:Vector2=Vector2.ZERO)->Vector2:
+	var age=clampf(game.server_time()-float(game.data.get("now",game.server_time())),0,.12)
+	var predicted=target+velocity*age
+	if not render_positions.has(key):render_positions[key]=target
+	var weight=1.0-exp(-18.0*get_process_delta_time())
+	render_positions[key]=(render_positions[key] as Vector2).lerp(predicted,weight)
+	if (render_positions[key] as Vector2).distance_to(target)>90:render_positions[key]=target
+	return render_positions[key]
+
 func battle(b:Dictionary):
+	var shake=Vector2.ZERO
+	if Time.get_ticks_msec()<shake_until:
+		var phase=float(Time.get_ticks_msec()%40)/40.0*TAU;shake=Vector2(cos(phase),sin(phase))*2
+	draw_set_transform(shake)
 	maps.v=self;maps.arena()
 	for blast in b.get("blasts",[]):
 		var v=Vector2(blast.pos.x,blast.pos.y);var col=type_color(blast.type)
 		if blast.done:effect(blast.type,v,float(blast.at))
 		else:draw_arc(v,blast.radius,0,TAU,32,col,2);draw_arc(v,blast.radius*clampf(1-(float(blast.at)-game.server_time())/.75,0,1),0,TAU,32,col,2)
 	for f in b.fighters:
-		var v=Vector2(f.pos.x,f.pos.y)
+		var velocity=Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0))
+		var v=smooth_position(str(b.id)+":"+str(f.owner),Vector2(f.pos.x,f.pos.y),velocity)
 		draw_rect(Rect2(v-Vector2(18,-14),Vector2(36,8)),Color(0.2,0.3,0.25,.4))
 		follower(f.mon,v,int(f.get("facing",0)),f.auto or Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0)).length()>1,float(f.get("physique",{}).get("scale",1)),true)
+		if Time.get_ticks_msec()<int(flash_until.get(str(f.owner),0)):draw_circle(v,26,Color(1,1,1,.3))
 		rect(v.x-24,v.y-24,48,6,"354842");rect(v.x-22,v.y-22,44*float(f.hp)/float(f.max_hp),2,"9ce2a8")
 		if float(f.invincible)>game.server_time():draw_arc(v,24,0,TAU,24,Color("f6e3ae"),2)
 	for shot in b.get("projectiles",[]):
-		var v=Vector2(shot.pos.x,shot.pos.y);var col=type_color(shot.type)
+		var age=clampf(game.server_time()-float(game.data.get("now",game.server_time())),0,.12)
+		var v=Vector2(shot.pos.x,shot.pos.y)+Vector2(shot.vel.x,shot.vel.y)*age;var col=type_color(shot.type)
 		draw_circle(v,shot.radius,col);draw_circle(v,shot.radius*.4,Color("fff2c6"))
 	for beam in b.get("beams",[]):
 		var a=Vector2(beam.from.x,beam.from.y);var z=Vector2(beam.to.x,beam.to.y);var color=type_color(beam.type)
@@ -134,6 +148,14 @@ func battle(b:Dictionary):
 		draw_rect(Rect2(0,72,512,280),Color(1,1,.8,.25));txt(Vector2(174,60),"Um novo poder desperta!",16)
 	if game.data.player.battle!="":
 		var aim=get_local_mouse_position();draw_line(aim-Vector2(6,0),aim+Vector2(6,0),Color("fff6d5"),2);draw_line(aim-Vector2(0,6),aim+Vector2(0,6),Color("fff6d5"),2)
+		if Time.get_ticks_msec()<action_pulse_until:
+			var mine:Dictionary={}
+			for fighter in b.fighters:
+				if fighter.owner==game.data.player.id:mine=fighter
+			if not mine.is_empty():
+				var origin=smooth_position(str(b.id)+":"+str(mine.owner),Vector2(mine.pos.x,mine.pos.y))
+				draw_arc(origin,16+(action_pulse_until-Time.get_ticks_msec())*.08,0,TAU,20,type_color(game.data.species[str(int(mine.mon.species))].type),2)
+	draw_set_transform(Vector2.ZERO)
 
 func effect(kind:String,pos:Vector2,at:float):
 	var file={"Fogo":"fire blast","Água":"018-Water01","Elétrico":"017-Thunder01","Gelo":"PRAS- Ice"}.get(kind,"015-Fire01")
@@ -174,11 +196,17 @@ func _draw():
 	if p.area=="casa":room(p)
 	else:outdoors(p)
 	for other in game.data.get("players",[]):
-		if other.area==p.area and p.area!="casa":trainer(Vector2(other.pos.x,other.pos.y),other.color,"",other.get("look",{}),other.get("colors",{}));txt(Vector2(other.pos.x-20,other.pos.y-48),other.name,10)
+		if other.area==p.area and p.area!="casa":
+			var other_pos=smooth_position("trainer:"+str(other.id),Vector2(other.pos.x,other.pos.y))
+			trainer(other_pos,other.color,"",other.get("look",{}),other.get("colors",{}));txt(other_pos-Vector2(20,48),other.name,10)
 	var mode="fish" if float(p.get("fishing",0))>0 else ("bike" if p.get("transport","")=="bike" and p.area!="casa" else "walk")
-	trainer(Vector2(p.pos.x,p.pos.y),p.color,"",p.get("look",{}),p.get("colors",{}),mode,int(p.get("facing",0)))
+	var player_target=Vector2(p.pos.x,p.pos.y)
+	var input_dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
+	var local_speed=120.0 if p.get("transport","")=="bike" and p.area!="casa" else 80.0
+	var player_pos=smooth_position("trainer:"+str(p.id),player_target,input_dir*local_speed)
+	trainer(player_pos,p.color,"",p.get("look",{}),p.get("colors",{}),mode,int(p.get("facing",0)))
 	var partner=game.team_mon(0)
-	if not partner.is_empty():follower(partner,Vector2(p.pos.x-44,p.pos.y+2),int(p.get("facing",0)),game.moving)
+	if not partner.is_empty():follower(partner,player_pos+Vector2(-44,2),int(p.get("facing",0)),game.moving)
 	if float(p.get("fishing",0))>0:
 		var bite=float(p.fishing)
 		txt(Vector2(150,54),"FISGOU! PRESSIONE E" if game.server_time()>=bite and game.server_time()<=bite+2 else "Aguardando uma fisgada…",16)

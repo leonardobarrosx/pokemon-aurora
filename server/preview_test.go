@@ -30,6 +30,10 @@ func TestExportPreview(t *testing.T) {
 	b.Genes.Loci["detail"] = Locus{{1, 2}, {1, 2}}
 	a.Genes.Loci["pattern"] = Locus{{1, 2}, {1, 2}}
 	b.Genes.Loci["pattern"] = a.Genes.Loci["pattern"]
+	for _, m := range []*Mon{&a, &b} {
+		m.Genes.Loci["fur"] = m.Genes.Loci["body"]
+		m.Genes.Loci["accessory"] = m.Genes.Loci["detail"]
+	}
 	a.Look = appearance(a.Genes)
 	b.Look = appearance(b.Genes)
 	p.Mons = append(p.Mons, a, b)

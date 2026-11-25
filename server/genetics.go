@@ -54,20 +54,21 @@ type Genome struct {
 	Lineage    []string         `json:"lineage"`
 }
 type Appearance struct {
-	Body      string `json:"body"`
-	Detail    string `json:"detail"`
-	Eye       string `json:"eye"`
-	Mouth     string `json:"mouth"`
-	Pattern   string `json:"pattern"`
-	Mark      string `json:"mark"`
-	MarkColor string `json:"mark_color"`
-	MarkPlace int    `json:"mark_place"`
-	Seed      uint32 `json:"seed"`
+	Regions   map[string]string `json:"regions,omitempty"`
+	Body      string            `json:"body"`
+	Detail    string            `json:"detail"`
+	Eye       string            `json:"eye"`
+	Mouth     string            `json:"mouth"`
+	Pattern   string            `json:"pattern"`
+	Mark      string            `json:"mark"`
+	MarkColor string            `json:"mark_color"`
+	MarkPlace int               `json:"mark_place"`
+	Seed      uint32            `json:"seed"`
 }
 
-var chromosome = [][]string{{"body", "detail", "pattern"}, {"eye", "mouth"}, {"mark", "mark_color", "mark_place"}, {"size"}}
+var chromosome = [][]string{{"skin", "fur", "flame", "effects"}, {"nose", "markings", "accessory"}, {"body", "detail", "pattern"}, {"eye", "mouth"}, {"mark", "mark_color", "mark_place"}, {"size"}}
 var pigmentRGB = [][3]int{{0, 0, 0}, {225, 74, 68}, {244, 204, 75}, {76, 113, 215}, {240, 239, 226}, {71, 163, 108}, {155, 102, 192}, {68, 60, 83}}
-var geneKeys = []string{"body", "detail", "pattern", "eye", "mouth", "mark", "mark_color", "mark_place", "size"}
+var geneKeys = []string{"body", "detail", "pattern", "eye", "mouth", "mark", "mark_color", "mark_place", "size", "skin", "fur", "flame", "effects", "nose", "markings", "accessory"}
 
 func randomGenome() Genome {
 	g := Genome{Loci: map[string]Locus{}, Seed: mathrand.Uint32(), Generation: 0, Lineage: []string{}}
@@ -78,10 +79,10 @@ func randomGenome() Genome {
 		if rare && key != "pattern" && key != "mark" && key != "mark_place" && key != "size" {
 			v = 1 + mathrand.IntN(7)
 		}
-		if key == "pattern" && mathrand.IntN(5) == 0 {
+		if key == "pattern" && mathrand.IntN(16) == 0 {
 			v = 1 + mathrand.IntN(3)
 		}
-		if key == "mark" && mathrand.IntN(4) == 0 {
+		if key == "mark" && mathrand.IntN(12) == 0 {
 			v = 1
 		}
 		if key == "size" {
@@ -137,7 +138,7 @@ func inherit(a, b Mon, rng func() float64) Genome {
 					hap = 1 - hap
 				}
 				pair := g.Loci[key]
-				pair[side] = parent.Genes.Loci[key][hap]
+				pair[side] = regionLocus(parent.Genes, key)[hap]
 				g.Loci[key] = pair
 			}
 		}
@@ -185,13 +186,32 @@ func pigment(l Locus) string {
 	}
 	return rgbHex(c)
 }
+
+// Legacy saves inherit the existing linked pigment until a dedicated locus exists.
+func regionLocus(g Genome, key string) Locus {
+	if locus, ok := g.Loci[key]; ok {
+		return locus
+	}
+	fallback := map[string]string{"skin": "body", "fur": "body", "flame": "detail", "effects": "detail", "markings": "detail", "accessory": "detail"}
+	if old, ok := fallback[key]; ok {
+		return g.Loci[old]
+	}
+	return Locus{}
+}
+func regionAppearance(g Genome) map[string]string {
+	result := map[string]string{}
+	for _, key := range []string{"skin", "fur", "flame", "effects", "eye", "mouth", "nose", "markings", "accessory"} {
+		result[key] = pigment(regionLocus(g, key))
+	}
+	return result
+}
 func appearance(g Genome) Appearance {
 	pattern := []string{"Liso", "Pintas", "Listras", "Mosaico"}[expressed(g.Loci["pattern"])%4]
 	mark := "Sem sinal"
 	if expressed(g.Loci["mark"]) > 0 {
 		mark = "Sinal"
 	}
-	return Appearance{Body: pigment(g.Loci["body"]), Detail: pigment(g.Loci["detail"]), Eye: pigment(g.Loci["eye"]), Mouth: pigment(g.Loci["mouth"]), Pattern: pattern, Mark: mark, MarkColor: pigment(g.Loci["mark_color"]), MarkPlace: expressed(g.Loci["mark_place"]) % 5, Seed: g.Seed}
+	return Appearance{Regions: regionAppearance(g), Body: pigment(g.Loci["body"]), Detail: pigment(g.Loci["detail"]), Eye: pigment(g.Loci["eye"]), Mouth: pigment(g.Loci["mouth"]), Pattern: pattern, Mark: mark, MarkColor: pigment(g.Loci["mark_color"]), MarkPlace: expressed(g.Loci["mark_place"]) % 5, Seed: g.Seed}
 }
 func breedMon(a, b Mon, rng func() float64) Mon {
 	mother := a
@@ -222,17 +242,24 @@ func breedMon(a, b Mon, rng func() float64) Mon {
 }
 
 type Prediction struct {
-	Looks           map[string]int `json:"looks"`
-	Samples         int            `json:"samples"`
-	SharedAncestors int            `json:"shared_ancestors"`
-	Note            string         `json:"note"`
+	Regions         map[string]map[string]int `json:"regions,omitempty"`
+	Looks           map[string]int            `json:"looks"`
+	Samples         int                       `json:"samples"`
+	SharedAncestors int                       `json:"shared_ancestors"`
+	Note            string                    `json:"note"`
 }
 
 func predict(a, b Mon) Prediction {
 	r := mathrand.New(mathrand.NewPCG(23, 91))
-	p := Prediction{Looks: map[string]int{}, Samples: 512, Note: "Estimativa de 512 combinações; não garante o resultado. Três IVs herdados, três sorteados de 0 a 31."}
+	p := Prediction{Regions: map[string]map[string]int{}, Looks: map[string]int{}, Samples: 512, Note: "Estimativa de 512 combinações; não garante o resultado. Três IVs herdados, três sorteados de 0 a 31."}
 	for i := 0; i < p.Samples; i++ {
 		look := appearance(inherit(a, b, r.Float64))
+		for region, color := range look.Regions {
+			if p.Regions[region] == nil {
+				p.Regions[region] = map[string]int{}
+			}
+			p.Regions[region][colorName(color)]++
+		}
 		p.Looks[colorName(look.Body)+" · detalhes "+colorName(look.Detail)+" · "+look.Pattern+" · "+look.Mark]++
 	}
 	anc := map[string]bool{a.ID: true}

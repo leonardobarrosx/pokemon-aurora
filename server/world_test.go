@@ -397,6 +397,24 @@ func TestProjectileCollisionAndDodge(t *testing.T) {
 		}
 	}
 }
+func TestDashIsImmediateFiniteAndHasFeedbackState(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Dash", 1)
+	_ = w.startBattle(p, "capture", 25, nil, 1000)
+	b := w.Battles[p.Battle]
+	f := b.Fighters[0]
+	before := f.Pos
+	p.Input = Vec{1, 0}
+	if err := w.action(p, Command{Type: "dash"}, 1000.2); err != nil {
+		t.Fatal(err)
+	}
+	if f.Pos.X <= before.X || f.Pos.X-before.X > 62.01 || f.Invincible != 1000.5 || f.Energy >= 100 || f.DashAt != 1002.2 {
+		t.Fatalf("dash state is not immediately observable: %+v", f)
+	}
+	if err := w.action(p, Command{Type: "dash"}, 1000.4); err == nil {
+		t.Fatal("dash ignored cooldown")
+	}
+}
 func TestMassChangesRadiusAndAcceleration(t *testing.T) {
 	small, big := newMon(16), newMon(95)
 	if physique(small).Mass >= physique(big).Mass || physique(small).Radius >= physique(big).Radius {
