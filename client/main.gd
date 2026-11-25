@@ -1238,6 +1238,8 @@ func _unhandled_input(event:InputEvent):
 		if not data.is_empty() and data.player.battle!="":
 			if event.keycode==KEY_SPACE:view.local_action("dash");send({"type":"dash"})
 			if event.keycode==KEY_Q:view.local_action("special");send({"type":"special"})
+			for k in 4:
+				if event.keycode==KEY_1+k or event.keycode==KEY_KP_1+k:view.local_action("move");send({"type":"move","index":k})
 			if event.keycode==KEY_B:send({"type":"ball"})
 			if event.keycode==KEY_F:send({"type":"flee"})
 			if event.keycode==KEY_V:

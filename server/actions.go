@@ -64,7 +64,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		return errMsg("aguarde um instante")
 	}
 	p.LastAction = now
-	if p.Battle != "" && !slices.Contains([]string{"attack", "special", "dash", "ball", "flee", "auto", "evolve"}, c.Type) {
+	if p.Battle != "" && !slices.Contains([]string{"attack", "special", "move", "dash", "ball", "flee", "auto", "evolve"}, c.Type) {
 		return errMsg("termine a batalha primeiro")
 	}
 	if p.Arcade != nil && c.Type != "arcade_stop" {
@@ -156,7 +156,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			return errMsg("vá ao ginásio")
 		}
 		return w.startBattle(p, "gym", 1, nil, now)
-	case "attack", "special", "dash", "ball", "flee":
+	case "attack", "special", "move", "dash", "ball", "flee":
 		b := w.Battles[p.Battle]
 		if b == nil || b.End > 0 {
 			return errMsg("nenhuma batalha ativa")
@@ -169,6 +169,8 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		switch c.Type {
 		case "attack", "special":
 			return b.shoot(i, p.Aim, now, c.Type == "special")
+		case "move":
+			return b.useMove(i, c.Index, p.Aim, now)
 		case "dash":
 			if now < f.DashAt || f.Energy < 20 {
 				return errMsg("esquiva recarregando")

@@ -178,26 +178,37 @@ func (p *Player) mon(id string) *Mon {
 }
 
 type Fighter struct {
-	Facing     int             `json:"facing"`
-	Physique   Physique        `json:"physique"`
-	Velocity   Vec             `json:"velocity"`
-	SlowUntil  float64         `json:"slow_until"`
-	Meal       string          `json:"meal"`
-	MealUntil  float64         `json:"meal_until"`
-	Owner      string          `json:"owner"`
-	Name       string          `json:"name"`
-	Mon        Mon             `json:"mon"`
-	Pos        Vec             `json:"pos"`
-	HP         float64         `json:"hp"`
-	MaxHP      float64         `json:"max_hp"`
-	Energy     float64         `json:"energy"`
-	ShotAt     float64         `json:"shot_at"`
-	SpecialAt  float64         `json:"special_at"`
-	DashAt     float64         `json:"dash_at"`
-	Invincible float64         `json:"invincible"`
-	Damage     float64         `json:"damage"`
-	Auto       bool            `json:"auto"`
-	Used       map[string]bool `json:"used"`
+	Facing      int             `json:"facing"`
+	Physique    Physique        `json:"physique"`
+	Velocity    Vec             `json:"velocity"`
+	SlowUntil   float64         `json:"slow_until"`
+	Meal        string          `json:"meal"`
+	MealUntil   float64         `json:"meal_until"`
+	Owner       string          `json:"owner"`
+	Name        string          `json:"name"`
+	Mon         Mon             `json:"mon"`
+	Pos         Vec             `json:"pos"`
+	HP          float64         `json:"hp"`
+	MaxHP       float64         `json:"max_hp"`
+	Energy      float64         `json:"energy"`
+	ShotAt      float64         `json:"shot_at"`
+	SpecialAt   float64         `json:"special_at"`
+	DashAt      float64         `json:"dash_at"`
+	Invincible  float64         `json:"invincible"`
+	Damage      float64         `json:"damage"`
+	Auto        bool            `json:"auto"`
+	Used        map[string]bool `json:"used"`
+	Moves       [4]Move         `json:"moves"`
+	MoveAt      [4]float64      `json:"move_at"`
+	Eff         [4]float64      `json:"eff"`
+	LastMove    int             `json:"last_move"`
+	LastMoveAt  float64         `json:"last_move_at"`
+	StunUntil   float64         `json:"stun_until"`
+	ChargeUntil float64         `json:"charge_until"`
+	ChargeDir   Vec             `json:"-"`
+	ChargeSpeed float64         `json:"-"`
+	ChargeSlot  int             `json:"-"`
+	ChargeHit   bool            `json:"-"`
 }
 type Projectile struct {
 	Pos    Vec     `json:"pos"`
@@ -207,6 +218,8 @@ type Projectile struct {
 	Life   float64 `json:"life"`
 	Damage float64 `json:"damage"`
 	Radius float64 `json:"radius"`
+	Move   string  `json:"move"`
+	Knock  float64 `json:"knock"`
 }
 type Blast struct {
 	Pos    Vec     `json:"pos"`
@@ -215,6 +228,10 @@ type Blast struct {
 	At     float64 `json:"at"`
 	Radius float64 `json:"radius"`
 	Done   bool    `json:"done"`
+	Move   string  `json:"move"`
+	Damage float64 `json:"damage"`
+	Knock  float64 `json:"knock"`
+	Wave   bool    `json:"wave"`
 }
 type Battle struct {
 	Beams       []Beam       `json:"beams"`

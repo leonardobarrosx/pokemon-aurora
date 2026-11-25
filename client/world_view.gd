@@ -123,10 +123,22 @@ func battle(b:Dictionary):
 		var phase=float(Time.get_ticks_msec()%40)/40.0*TAU;shake=Vector2(cos(phase),sin(phase))*2
 	draw_set_transform(shake)
 	maps.v=self;maps.arena()
+	arena_field(b)
+	var now=game.server_time()
 	for blast in b.get("blasts",[]):
-		var v=Vector2(blast.pos.x,blast.pos.y);var col=type_color(blast.type)
-		if blast.done:effect(blast.type,v,float(blast.at))
-		else:draw_arc(v,blast.radius,0,TAU,32,col,2);draw_arc(v,blast.radius*clampf(1-(float(blast.at)-game.server_time())/.75,0,1),0,TAU,32,col,2)
+		var v=Vector2(blast.pos.x,blast.pos.y);var col=type_color(blast.type);var radius=float(blast.radius)
+		if blast.done:
+			if blast.get("wave",false):
+				var grow=clampf((now-float(blast.at))/.35,0,1)
+				draw_arc(v,radius*grow,0,TAU,48,Color(col,1-grow),10*(1-grow)+2)
+				draw_circle(v,radius*grow,Color(col,.18*(1-grow)))
+			effect(blast.type,v,float(blast.at))
+		else:
+			# Aviso no chão: a área marcada enche até o golpe cair.
+			var fill=clampf(1-(float(blast.at)-now)/.9,0,1)
+			draw_circle(v,radius,Color(col,.16))
+			draw_arc(v,radius,0,TAU,40,Color(col,.9),2)
+			draw_circle(v,radius*fill,Color(col,.22))
 	for f in b.fighters:
 		var velocity=Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0))
 		var v=smooth_position(str(b.id)+":"+str(f.owner),Vector2(f.pos.x,f.pos.y),velocity)
@@ -134,11 +146,23 @@ func battle(b:Dictionary):
 		follower(f.mon,v,int(f.get("facing",0)),f.auto or Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0)).length()>1,float(f.get("physique",{}).get("scale",1)),true)
 		if Time.get_ticks_msec()<int(flash_until.get(str(f.owner),0)):draw_circle(v,26,Color(1,1,1,.3))
 		rect(v.x-24,v.y-24,48,6,"354842");rect(v.x-22,v.y-22,44*float(f.hp)/float(f.max_hp),2,"9ce2a8")
-		if float(f.invincible)>game.server_time():draw_arc(v,24,0,TAU,24,Color("f6e3ae"),2)
+		if float(f.invincible)>now:draw_arc(v,24,0,TAU,24,Color("f6e3ae"),2)
+		if float(f.get("charge_until",0))>now:
+			# Investida: rastro de velocidade atrás do Pokémon.
+			var back=-velocity.normalized() if velocity.length()>1 else Vector2.LEFT
+			for k in 3:draw_line(v+back*(14+k*8)+back.orthogonal()*(k-1)*8,v+back*(34+k*10)+back.orthogonal()*(k-1)*8,Color(1,1,1,.7-k*.18),3)
+		if float(f.get("stun_until",0))>now:
+			for k in 3:
+				var a=now*6+k*TAU/3;draw_circle(v+Vector2(cos(a)*14,-30+sin(a)*4),2.5,Color("ffe27a"))
 	for shot in b.get("projectiles",[]):
 		var age=clampf(game.server_time()-float(game.data.get("now",game.server_time())),0,.12)
 		var v=Vector2(shot.pos.x,shot.pos.y)+Vector2(shot.vel.x,shot.vel.y)*age;var col=type_color(shot.type)
-		draw_circle(v,shot.radius,col);draw_circle(v,shot.radius*.4,Color("fff2c6"))
+		if str(shot.get("move",""))=="Flamethrower":
+			draw_circle(v,shot.radius*1.5,Color(col,.45));draw_circle(v,shot.radius*.8,Color("ffd27a"))
+		else:
+			var tail=Vector2(shot.vel.x,shot.vel.y).normalized()*-shot.radius*2.2
+			draw_line(v,v+tail,Color(col,.5),shot.radius*1.2)
+			draw_circle(v,shot.radius,col);draw_circle(v,shot.radius*.4,Color("fff2c6"))
 	for beam in b.get("beams",[]):
 		var a=Vector2(beam.from.x,beam.from.y);var z=Vector2(beam.to.x,beam.to.y);var color=type_color(beam.type)
 		if game.server_time()<float(beam.at):draw_line(a,z,Color(color,.4),2)
@@ -157,6 +181,33 @@ func battle(b:Dictionary):
 				draw_arc(origin,16+(action_pulse_until-Time.get_ticks_msec())*.08,0,TAU,20,type_color(game.data.species[str(int(mine.mon.species))].type),2)
 	draw_set_transform(Vector2.ZERO)
 
+# Marcações do campo e treinadores na beira da arena (como nas arenas
+# ranqueadas): cada treinador fica fora da área de luta, atrás do parceiro.
+func arena_field(b:Dictionary):
+	var line=Color(1,1,1,.55)
+	var field=Rect2(18,94,476,256)
+	draw_rect(field,line,false,2)
+	draw_line(Vector2(256,94),Vector2(256,350),line,2)
+	draw_arc(Vector2(256,222),38,0,TAU,40,line,2)
+	draw_circle(Vector2(256,222),3,line)
+	for side in [0,1]:
+		var x=18 if side==0 else 494
+		var box=Rect2(x-(0 if side==0 else 48),172,48,100)
+		draw_rect(box,line,false,2)
+	var spots=[Vector2(36,378),Vector2(476,96)]
+	for i in b.fighters.size():
+		var f=b.fighters[i]
+		var at=spots[i] if i<2 else spots[0]
+		var facing=3 if i==0 else 0
+		if str(f.owner)==game.data.player.get("id",""):
+			var p=game.data.player
+			trainer(at,p.color,"",p.get("look",{}),p.get("colors",{}),"walk",facing)
+		elif str(f.owner)=="npc":
+			if b.kind=="gym":trainer(at,"green","gardener",{},{},"walk",facing)
+		else:
+			for other in game.data.get("players",[]):
+				if str(other.get("id",""))==str(f.owner):trainer(at,other.get("color","green"),"",other.get("look",{}),other.get("colors",{}),"walk",facing)
+
 func effect(kind:String,pos:Vector2,at:float):
 	var file={"Fogo":"fire blast","Água":"018-Water01","Elétrico":"017-Thunder01","Gelo":"PRAS- Ice"}.get(kind,"015-Fire01")
 	var tex=texture("res://assets/indigo/effects/"+file+".png")
@@ -165,7 +216,7 @@ func effect(kind:String,pos:Vector2,at:float):
 	draw_texture_rect_region(tex,Rect2(pos-Vector2(96,96),Vector2(192,192)),Rect2((frame%5)*192,(frame/5)*192,192,192))
 
 func type_color(t:String)->Color:
-	return Color({"Fogo":"e88d63","Água":"83c4df","Planta":"91ce82","Elétrico":"edcf76","Gelo":"c2e6f1","Pedra":"b1a1bc","Voador":"c3d6db"}.get(t,"bf99dd"))
+	return Color({"Fogo":"e88d63","Água":"83c4df","Planta":"91ce82","Elétrico":"edcf76","Gelo":"c2e6f1","Pedra":"c7a978","Voador":"c3d6db","Normal":"e3dccd","Fantasma":"9c82c8","Noturno":"6b6170","Psíquico":"f08cb4","Terra":"d2a868","Inseto":"b5cf6a"}.get(t,"bf99dd"))
 
 func arcade(a:Dictionary,p:Dictionary):
 	var t=game.server_time()-float(a.start)
