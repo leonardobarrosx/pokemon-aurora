@@ -228,7 +228,7 @@ func _process(delta:float):
 				dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
 			moving=dir.length()>0
 			var aim=view.world_mouse()
-			dispatch({"type":"input","move":{"x":dir.x,"y":dir.y},"aim":{"x":aim.x,"y":aim.y}})
+			dispatch({"type":"input","move":{"x":dir.x,"y":dir.y},"aim":{"x":aim.x,"y":aim.y},"run":Input.is_physical_key_pressed(KEY_SHIFT)})
 	if not request_busy and not commands.is_empty():dispatch(commands.pop_front())
 
 func notice(text:String):

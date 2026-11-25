@@ -280,6 +280,7 @@ func move_card(parent:Node,mine:Dictionary,k:int):
 	button.add_theme_stylebox_override("disabled",Design.raised(Color("#e9e1d0"),Color(tone,.5),tone,10,5))
 	button.pressed.connect(func():game.view.local_action("move");game.send({"type":"move","index":k}))
 	parent.add_child(button)
+	button.tooltip_text="%s · %s\n%s · poder %s · energia %d · recarga %.1f s"%[m.name,m.type,SHAPE_TEXT.get(m.shape,""),str(int(m.power)) if float(m.power)>0 else "—",int(m.cost),float(m.cooldown)]
 	# Faixa do tipo à esquerda, com o número da tecla.
 	var strip=ColorRect.new();strip.color=tone;strip.position=Vector2(2,2);strip.size=Vector2(36,75);strip.mouse_filter=Control.MOUSE_FILTER_IGNORE
 	button.add_child(strip)

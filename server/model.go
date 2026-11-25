@@ -163,6 +163,7 @@ type Player struct {
 	Arcade     *Arcade            `json:"arcade"`
 	Event      string             `json:"event"`
 	WarpAt     float64            `json:"-"`
+	Running    bool               `json:"running"`
 	ReturnArea string             `json:"return_area"`
 	ReturnPos  Vec                `json:"return_pos"`
 }

@@ -25,6 +25,7 @@ type Command struct {
 	Move    Vec               `json:"move"`
 	Aim     Vec               `json:"aim"`
 	Fly     bool              `json:"fly"`
+	Run     bool              `json:"run"`
 }
 
 var areaNeed = map[string]int{"casa": 0, "vila": 0, "jardim": 0, "rota": 1, "mina": 2, "ginasio": 2, "safari": 3, "lago": 3}
@@ -38,6 +39,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			return errMsg("entrada inválida")
 		}
 		p.Input = c.Move
+		p.Running = c.Run
 		if p.Input.Len() > 1 {
 			p.Input = p.Input.Unit()
 		}

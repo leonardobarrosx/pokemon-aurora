@@ -192,6 +192,9 @@ func (w *World) enterAt(p *Player, area string, pos Vec, now float64) {
 func (w *World) walkMap(p *Player, dt, now float64) {
 	m := areaMaps[p.Area]
 	speed := 80.0
+	if p.Running {
+		speed = 112 // correr com Shift em qualquer mapa (ideia do Emerald Legacy)
+	}
 	if p.Transport == "bike" {
 		speed = 120
 	}

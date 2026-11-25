@@ -56,7 +56,7 @@ func draw_map_layer(m:Dictionary,key:String):
 func map_scene(p:Dictionary,m:Dictionary):
 	var mode="fish" if float(p.get("fishing",0))>0 else ("bike" if p.get("transport","")=="bike" else "walk")
 	var input_dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
-	var speed=120.0 if mode=="bike" else 80.0
+	var speed=120.0 if mode=="bike" else (112.0 if Input.is_physical_key_pressed(KEY_SHIFT) else 80.0)
 	var player_pos=smooth_position("trainer:"+str(p.id),Vector2(p.pos.x,p.pos.y),input_dir*speed)
 	var size=Vector2(float(m.w),float(m.h))*float(m.cell)
 	camera=(player_pos-Vector2(256,200)).clamp(Vector2(224,78),(size-Vector2(736,462)).max(Vector2(224,78))).round()
