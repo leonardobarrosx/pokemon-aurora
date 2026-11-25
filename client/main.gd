@@ -220,7 +220,7 @@ func _process(delta:float):
 			if screen=="":
 				dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
 			moving=dir.length()>0
-			var aim=view.get_local_mouse_position()
+			var aim=view.world_mouse()
 			dispatch({"type":"input","move":{"x":dir.x,"y":dir.y},"aim":{"x":aim.x,"y":aim.y}})
 	if not request_busy and not commands.is_empty():dispatch(commands.pop_front())
 
@@ -1250,7 +1250,8 @@ func _unhandled_input(event:InputEvent):
 		if pos.x<0 or pos.x>512 or pos.y<0 or pos.y>384:return
 		if event.pressed and data.player.battle!="":view.local_action("attack");send({"type":"attack"})
 		elif event.pressed and placing!="":send({"type":"decorate","value":placing,"pos":{"x":pos.x,"y":pos.y}});placing=""
-		elif not event.pressed and data.player.area=="safari" and data.player.safari!=null:send({"type":"throw","pos":{"x":pos.x,"y":pos.y}})
+		elif not event.pressed and data.player.area=="safari" and data.player.safari!=null:
+			var target=view.world_mouse();send({"type":"throw","pos":{"x":target.x,"y":target.y}})
 		elif event.pressed and data.player.area=="casa":
 			if Rect2(340,140,120,100).has_point(pos):open_panel("pc")
 			elif Rect2(350,65,110,110).has_point(pos):open_panel("casa")

@@ -70,11 +70,15 @@ func run():
 	for area in game.AREAS:
 		load_state(home)
 		game.data.player.area=area
-		if area=="safari":game.data.player.safari={"species":25,"pos":{"x":216,"y":246}}
+		var area_map=game.view.map_for(area)
+		if area_map.has("default"):game.data.player.pos={"x":area_map.default[0],"y":area_map.default[1]-64}
+		if area=="safari":game.data.player.safari={"species":25,"pos":{"x":float(game.data.player.pos.x)+150,"y":float(game.data.player.pos.y)-40}}
 		game.refresh_sidebar()
 		await shot("mundo",area)
 	for state in ["aguardando","fisgada"]:
 		game.data.player.area="lago"
+		var lake=game.view.map_for("lago")
+		if lake.has("points"):game.data.player.pos={"x":lake.points.pesca[0],"y":lake.points.pesca[1]}
 		game.data.player.fishing=game.server_time()+(6 if state=="aguardando" else -.15)
 		game.refresh_sidebar()
 		await shot("mundo","pesca-"+state)

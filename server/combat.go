@@ -138,7 +138,11 @@ func (w *World) tick(dt, now float64) {
 			p.Input = Vec{}
 		}
 		if p.Battle == "" && p.Arcade == nil {
-			movePlayer(p, dt)
+			if areaMaps[p.Area] != nil {
+				w.walkMap(p, dt, now)
+			} else {
+				movePlayer(p, dt)
+			}
 		}
 		settleTraining(p, now)
 		if p.Arcade != nil {

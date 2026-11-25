@@ -162,6 +162,7 @@ type Player struct {
 	Safari     *Safari            `json:"safari"`
 	Arcade     *Arcade            `json:"arcade"`
 	Event      string             `json:"event"`
+	WarpAt     float64            `json:"-"`
 }
 
 func newPlayer(name string, starter int, now float64) *Player {

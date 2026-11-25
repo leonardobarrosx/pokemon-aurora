@@ -41,7 +41,10 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		if p.Input.Len() > 1 {
 			p.Input = p.Input.Unit()
 		}
-		p.Aim = bounds(c.Aim)
+		p.Aim = c.Aim
+		if p.Battle != "" || areaMaps[p.Area] == nil {
+			p.Aim = bounds(c.Aim)
+		}
 		p.InputAt = now
 		if c.Move.X < 0 {
 			p.Facing = 1
@@ -92,9 +95,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 				return errMsg("Fly exige um parceiro voador e uma visita anterior a pé")
 			}
 		}
-		p.Area = c.Area
-		p.Visits[c.Area] = true
-		p.Pos = Vec{256, 290}
+		w.enter(p, c.Area, now)
 	case "appearance":
 		return setAppearance(p, c.Look, c.Colors)
 	case "wardrobe":
@@ -492,7 +493,19 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		if p.Area != "safari" {
 			return errMsg("vá à Reserva Orvalho")
 		}
-		p.Safari = &Safari{Species: []int{16, 19, 25, 133}[mathrand.IntN(4)], Pos: Vec{100 + mathrand.Float64()*300, 150 + mathrand.Float64()*140}, At: now}
+		pos := Vec{100 + mathrand.Float64()*300, 150 + mathrand.Float64()*140}
+		if m := areaMaps[p.Area]; m != nil {
+			// Perto do jogador e em chão livre, dentro do mapa maior.
+			for try := 0; try < 20; try++ {
+				a := mathrand.Float64() * 2 * math.Pi
+				cand := m.bounds(p.Pos.Add(Vec{math.Cos(a), math.Sin(a)}.Mul(90 + mathrand.Float64()*110)))
+				if !m.solid(cand, Vec{}) {
+					pos = cand
+					break
+				}
+			}
+		}
+		p.Safari = &Safari{Species: []int{16, 19, 25, 133}[mathrand.IntN(4)], Pos: pos, At: now}
 	case "throw":
 		if p.Area != "safari" || p.Safari == nil || p.Balls < 1 || len(p.Mons) >= 200 || !finite(c.Pos.X) || !finite(c.Pos.Y) {
 			return errMsg("encontre um Pokémon e prepare uma bola")

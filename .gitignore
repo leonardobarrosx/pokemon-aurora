@@ -4,3 +4,4 @@ client/.godot/
 server/data/
 build/
 client/**/*.import
+/data/

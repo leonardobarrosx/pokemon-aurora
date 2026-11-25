@@ -15,6 +15,76 @@ var shake_until=0.0
 var action_pulse_until=0.0
 var action_pulse=""
 const INK = Color("273e42")
+var map_cache:Dictionary={}
+var camera:=Vector2.ZERO
+
+# Mapas externos gerados com os tilesets do FireRed (ferramentas/mapas).
+func map_for(area:String)->Dictionary:
+	if map_cache.has(area):return map_cache[area]
+	var path="res://assets/maps/%s.json"%area
+	var data:Dictionary={}
+	if FileAccess.file_exists(path):data=JSON.parse_string(FileAccess.get_file_as_string(path))
+	map_cache[area]=data
+	return data
+
+func world_mouse()->Vector2:
+	return get_local_mouse_position()+camera
+
+func draw_map_layer(m:Dictionary,key:String):
+	var tex=texture("res://assets/maps/%s_%s.png"%[m.atlas,"below" if key=="tiles" else "above"])
+	if tex==null:return
+	var cell=float(m.cell);var cols=int(m.columns);var w=int(m.w);var h=int(m.h)
+	# A vista cobre a tela inteira (1920×1080 = 960×540 do mundo), não só a moldura.
+	var x0=maxi(0,int((camera.x-224)/cell));var y0=maxi(0,int((camera.y-78)/cell))
+	var x1=mini(w,x0+int(960/cell)+2);var y1=mini(h,y0+int(540/cell)+2)
+	var cells:Array=m[key]
+	for y in range(y0,y1):
+		for x in range(x0,x1):
+			var t=int(cells[y*w+x])
+			if t<0:continue
+			draw_texture_rect_region(tex,Rect2(x*cell,y*cell,cell,cell),Rect2((t%cols)*16,(t/cols)*16,16,16))
+
+func map_scene(p:Dictionary,m:Dictionary):
+	var mode="fish" if float(p.get("fishing",0))>0 else ("bike" if p.get("transport","")=="bike" else "walk")
+	var input_dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
+	var speed=120.0 if mode=="bike" else 80.0
+	var player_pos=smooth_position("trainer:"+str(p.id),Vector2(p.pos.x,p.pos.y),input_dir*speed)
+	var size=Vector2(float(m.w),float(m.h))*float(m.cell)
+	camera=(player_pos-Vector2(256,200)).clamp(Vector2(224,78),(size-Vector2(736,462)).max(Vector2(224,78))).round()
+	draw_set_transform(-camera)
+	draw_map_layer(m,"tiles")
+	var points:Dictionary=m.get("points",{})
+	if p.area=="jardim":
+		for i in 6:
+			var key="canteiro%d"%i
+			if not points.has(key) or i>=p.plots.size():continue
+			var pos=Vector2(points[key][0],points[key][1])
+			var plot=p.plots[i]
+			if float(plot.at)>0:
+				maps.v=self;maps.region("Exterior1",Rect2(160,160,32,64),pos-Vector2(16,48))
+				if plot.water:draw_circle(pos+Vector2(14,10),3,Color("83c4df"))
+			txt(pos+Vector2(-4,30),str(i+1),10)
+	if p.area=="safari" and p.get("safari")!=null:
+		var s=p.safari;var target=Vector2(s.pos.x,s.pos.y);mon({"species":s.species},target)
+		draw_arc(target,18+sin(Time.get_ticks_msec()/220.0)*5,0,TAU,32,Color("f1df93"),2)
+	var actors:Array=[]
+	for n in m.get("npcs",[]):actors.append({"y":float(n.y),"npc":n})
+	for other in game.data.get("players",[]):
+		if other.area==p.area:actors.append({"y":float(other.pos.y),"other":other})
+	actors.append({"y":player_pos.y,"me":true})
+	actors.sort_custom(func(a,b):return a.y<b.y)
+	for a in actors:
+		if a.has("npc"):
+			var n=a.npc;var pos=Vector2(n.x,n.y);trainer(pos,"green",n.sprite);txt(pos-Vector2(12,58),n.name,10)
+		elif a.has("other"):
+			var other=a.other;var other_pos=smooth_position("trainer:"+str(other.id),Vector2(other.pos.x,other.pos.y))
+			trainer(other_pos,other.color,"",other.get("look",{}),other.get("colors",{}));txt(other_pos-Vector2(20,58),other.name,10)
+		else:
+			var partner=game.team_mon(0)
+			if not partner.is_empty():follower(partner,player_pos+Vector2(-30,-4),int(p.get("facing",0)),game.moving)
+			trainer(player_pos,p.color,"",p.get("look",{}),p.get("colors",{}),mode,int(p.get("facing",0)))
+	draw_map_layer(m,"above")
+	draw_set_transform(Vector2.ZERO)
 
 func rect(x: float,y: float,w: float,h: float,c: String):
 	draw_rect(Rect2(round(x/2)*2,round(y/2)*2,round(w/2)*2,round(h/2)*2),Color(c))
@@ -234,6 +304,7 @@ func arcade(a:Dictionary,p:Dictionary):
 	mon(m,Vector2(a.pos.x,a.pos.y),64)
 
 func _draw():
+	camera=Vector2.ZERO
 	if game==null or game.data.is_empty():
 		room({"theme":"verde","decor":[]});trainer(Vector2(260,280));return
 	var p:Dictionary=game.data.player
@@ -242,6 +313,8 @@ func _draw():
 		for b in game.data.get("battles",[]):
 			if b.id==game.spectate:battle(b);return
 	if p.get("arcade")!=null:arcade(p.arcade,p);return
+	var area_map=map_for(str(p.area))
+	if not area_map.is_empty():map_scene(p,area_map);return
 	if p.area=="casa":room(p)
 	else:outdoors(p)
 	for other in game.data.get("players",[]):
