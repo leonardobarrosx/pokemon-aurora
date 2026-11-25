@@ -246,6 +246,9 @@ type Battle struct {
 	ID          string       `json:"id"`
 	Kind        string       `json:"kind"`
 	Gym         string       `json:"gym"`
+	Area        string       `json:"area"`
+	Origin      Vec          `json:"origin"`
+	Trainer     Vec          `json:"trainer"`
 	Fighters    [2]*Fighter  `json:"fighters"`
 	Projectiles []Projectile `json:"projectiles"`
 	Blasts      []Blast      `json:"blasts"`
@@ -282,6 +285,7 @@ type World struct {
 	Chat     []Message          `json:"chat"`
 	Queue    []string           `json:"queue"`
 	Market   []Listing          `json:"market"`
+	Wild     map[string][]*Wild `json:"-"`
 }
 
 func newWorld() *World {

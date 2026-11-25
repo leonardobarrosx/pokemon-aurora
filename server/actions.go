@@ -209,7 +209,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			if dir.Len() < .01 {
 				dir = p.Aim.Add(f.Pos.Mul(-1)).Unit()
 			}
-			f.Pos = bounds(f.Pos.Add(dir.Mul(62 / math.Pow(1+f.Physique.Mass/40, .2))))
+			b.step(f, f.Pos.Add(dir.Mul(62 / math.Pow(1+f.Physique.Mass/40, .2))))
 			f.Energy -= math.Min(35, 18+f.Physique.Mass/30)
 			f.DashAt = now + 2
 			f.Invincible = now + .3

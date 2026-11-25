@@ -61,6 +61,23 @@ func run():
 			await shot("menus","hud-jornada")
 			quit(1 if failed else 0)
 			return
+	if args.size()>2 and args[2]=="mato":
+		game.login()
+		var source=home.duplicate(true);source.player.area="kt_route1"
+		var m0=JSON.parse_string(FileAccess.get_file_as_string("res://assets/maps/kt_route1.json"))
+		var c=Vector2(m0.default[0],m0.default[1])
+		source.player.pos={"x":c.x,"y":c.y}
+		source.wild=[{"id":"w1","species":16,"level":4,"pos":{"x":c.x+90,"y":c.y-60},"facing":1,"water":false},{"id":"w2","species":19,"level":3,"pos":{"x":c.x-120,"y":c.y+40},"facing":2,"water":false},{"id":"w3","species":25,"level":5,"pos":{"x":c.x+40,"y":c.y+110},"facing":3,"water":false}]
+		load_state(source);game.refresh_sidebar()
+		await shot("mundo","mato-selvagens")
+		var fight=combat.duplicate(true)
+		fight.player.area="kt_route1";fight.player.pos={"x":c.x,"y":c.y}
+		var b=fight.battle;b.area="kt_route1";b.origin={"x":c.x-256,"y":c.y-222};b.trainer={"x":200,"y":250}
+		b.fighters[0].pos={"x":210,"y":230};b.fighters[1].pos={"x":330,"y":190};b.fighters[1].hp=b.fighters[1].max_hp*.6
+		load_state(fight)
+		await shot("arena","mato-batalha")
+		quit(1 if failed else 0)
+		return
 	if args.size()>2 and args[2]=="montaria":
 		game.login()
 		for setup in [["surf","hn_route126",131,"~"],["dive","hn_underwater_route126",131,"."],["mount","kt_route1",95,"."],["mount","hn_route101",19,"."]]:

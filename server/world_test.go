@@ -543,3 +543,38 @@ func TestSurfDiveAndMount(t *testing.T) {
 		t.Fatalf("montaria no Onix: %v %s", err, p.Mount)
 	}
 }
+
+func TestVisibleWildBattleOnMap(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Mato", 1)
+	m := areaMaps["kt_route1"]
+	p.Area, p.Pos, p.Seen = "kt_route1", Vec{m.Default[0], m.Default[1]}, 0
+	for i := 0; i < 400 && len(w.Wild["kt_route1"]) == 0; i++ {
+		w.tickWild(1, 0)
+	}
+	if len(w.Wild["kt_route1"]) == 0 {
+		t.Fatal("deveriam aparecer selvagens no mato da Rota 1")
+	}
+	wm := w.Wild["kt_route1"][0]
+	if !habitat(m, wm.Pos, wm.Water) {
+		t.Fatal("selvagem fora do mato")
+	}
+	if len(w.wildNear(p)) == 0 {
+		t.Fatal("o cliente deveria receber os selvagens próximos")
+	}
+	p.Pos, wm.Water = wm.Pos, false
+	if !w.touchWild(p, 10) {
+		t.Fatal("encostar no selvagem deveria começar a batalha")
+	}
+	b := w.Battles[p.Battle]
+	if b.Area != "kt_route1" || b.Kind != "capture" || b.Fighters[1].Mon.Species != wm.Species {
+		t.Fatalf("batalha deveria acontecer no mapa: %+v", b.Area)
+	}
+	got := b.Fighters[1].Pos.Add(b.Origin)
+	if distance(got, wm.Pos) > 40 {
+		t.Fatalf("o selvagem deveria lutar onde estava: %v vs %v", got, wm.Pos)
+	}
+	if len(w.Wild["kt_route1"]) != 0 && w.Wild["kt_route1"][0] == wm {
+		t.Fatal("o selvagem em batalha sai da lista do mapa")
+	}
+}

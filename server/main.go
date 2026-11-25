@@ -67,7 +67,7 @@ func (s *Server) snapshot(p *Player, now float64) map[string]any {
 			live = append(live, b)
 		}
 	}
-	return map[string]any{"player": p, "players": others, "battle": s.world.Battles[p.Battle], "battles": live, "chat": s.world.Chat, "rankings": ranks, "now": now, "species": species, "market": s.world.Market, "regions": regionStatus(p)}
+	return map[string]any{"player": p, "players": others, "battle": s.world.Battles[p.Battle], "battles": live, "chat": s.world.Chat, "rankings": ranks, "now": now, "species": species, "market": s.world.Market, "regions": regionStatus(p), "wild": s.world.wildNear(p)}
 }
 func (s *Server) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json; charset=utf-8")

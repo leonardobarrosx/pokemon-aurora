@@ -119,10 +119,16 @@ func map_scene(p:Dictionary,m:Dictionary):
 	for n in m.get("npcs",[]):actors.append({"y":float(n.y),"npc":n})
 	for other in game.data.get("players",[]):
 		if other.area==p.area:actors.append({"y":float(other.pos.y),"other":other})
+	for wm in game.data.get("wild",[]):actors.append({"y":float(wm.pos.y),"wild":wm})
 	actors.append({"y":player_pos.y,"me":true})
 	actors.sort_custom(func(a,b):return a.y<b.y)
 	for a in actors:
-		if a.has("npc"):
+		if a.has("wild"):
+			var wm=a.wild;var wpos=smooth_position("wild:"+str(wm.id),Vector2(wm.pos.x,wm.pos.y))
+			if bool(wm.get("water",false)):draw_arc(wpos+Vector2(0,4),18+sin(Time.get_ticks_msec()/280.0)*2,PI*.1,PI*.9,14,Color(1,1,1,.5),2)
+			else:draw_circle(wpos+Vector2(0,2),9,Color(0,0,0,.18))
+			follower({"species":wm.species,"id":wm.id},wpos,int(wm.get("facing",0)),true)
+		elif a.has("npc"):
 			var n=a.npc;var pos=lift(m,Vector2(n.x,n.y));trainer(pos,"green",n.sprite,{},{},"walk",int(n.get("facing",0)))
 			if str(n.name)!="":txt(pos-Vector2(12,58),n.name,10)
 		elif a.has("other"):
@@ -269,9 +275,19 @@ func battle(b:Dictionary):
 	var shake=Vector2.ZERO
 	if Time.get_ticks_msec()<shake_until:
 		var phase=float(Time.get_ticks_msec()%40)/40.0*TAU;shake=Vector2(cos(phase),sin(phase))*2
-	draw_set_transform(shake)
-	maps.v=self;maps.arena()
-	arena_field(b)
+	var field_map=map_for(str(b.get("area",""))) if str(b.get("area",""))!="" else {}
+	var field_origin=Vector2(b.get("origin",{}).get("x",0),b.get("origin",{}).get("y",0))
+	if not field_map.is_empty():
+		# Batalha no próprio mapa: o campo é o pedaço do mapa onde o encontro aconteceu.
+		draw_set_transform(shake-field_origin)
+		draw_map_layer(field_map,"tiles")
+		draw_set_transform(shake)
+		var p=game.data.player;var tr=Vector2(b.get("trainer",{}).get("x",60),b.get("trainer",{}).get("y",300))
+		if str(b.fighters[0].owner)==str(p.get("id","")):trainer(tr+Vector2(0,24),p.color,"",p.get("look",{}),p.get("colors",{}),"walk",int(p.get("facing",0)))
+	else:
+		draw_set_transform(shake)
+		maps.v=self;maps.arena()
+		arena_field(b)
 	var now=game.server_time()
 	for blast in b.get("blasts",[]):
 		var v=Vector2(blast.pos.x,blast.pos.y);var col=type_color(blast.type);var radius=float(blast.radius)
@@ -316,6 +332,8 @@ func battle(b:Dictionary):
 		if game.server_time()<float(beam.at):draw_line(a,z,Color(color,.4),2)
 		else:draw_line(a,z,color,float(beam.width)*2);draw_line(a,z,Color("f7f2d3"),float(beam.width));effect(beam.type,z,float(beam.at))
 
+	if not field_map.is_empty():
+		draw_set_transform(shake-field_origin);draw_map_layer(field_map,"above");draw_set_transform(shake)
 	if float(b.get("pause_until",0))>game.server_time():
 		draw_rect(Rect2(0,72,512,280),Color(1,1,.8,.25))
 	cutin(b)

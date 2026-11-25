@@ -194,7 +194,7 @@ func (b *Battle) hit(i int, target *Fighter, dmg, push float64, dir Vec, kind st
 	}
 	target.HP = math.Max(0, target.HP-dmg)
 	b.Fighters[i].Damage += dmg
-	target.Pos = bounds(target.Pos.Add(dir.Unit().Mul(push)))
+	b.step(target, target.Pos.Add(dir.Unit().Mul(push)))
 	// Empurrões fortes atordoam; o porte reduz o tempo.
 	if push > 22 {
 		target.StunUntil = math.Max(target.StunUntil, now+math.Min(.6, push/90)/math.Sqrt(target.Physique.Scale))
@@ -306,7 +306,7 @@ func (b *Battle) tickCharges(dt, now float64) {
 		if f.ChargeUntil <= now {
 			continue
 		}
-		f.Pos = bounds(f.Pos.Add(f.ChargeDir.Mul(f.ChargeSpeed * dt)))
+		b.step(f, f.Pos.Add(f.ChargeDir.Mul(f.ChargeSpeed * dt)))
 		target := b.Fighters[1-i]
 		if f.ChargeHit || target.Invincible >= now {
 			continue
@@ -320,7 +320,7 @@ func (b *Battle) tickCharges(dt, now float64) {
 			}
 			// Recuo: quem bate num alvo muito mais pesado volta para trás.
 			recoil := clamp(push*math.Sqrt((target.Physique.Mass+10)/(f.Physique.Mass+10))*.35, 0, 40)
-			f.Pos = bounds(f.Pos.Add(f.ChargeDir.Mul(-recoil)))
+			b.step(f, f.Pos.Add(f.ChargeDir.Mul(-recoil)))
 			f.ChargeHit = true
 			f.ChargeUntil = now
 		}

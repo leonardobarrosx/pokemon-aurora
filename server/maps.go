@@ -4,7 +4,6 @@ import (
 	"embed"
 	"encoding/json"
 	"math"
-	mathrand "math/rand/v2"
 	"strings"
 )
 
@@ -312,7 +311,6 @@ func (w *World) walkMap(p *Player, dt, now float64) {
 		p.Pos = y
 	}
 	updateRide(p, m)
-	moved := distance(start, p.Pos)
 	if now-p.WarpAt > .5 && p.Input.Len() > 0 {
 		raw := start.Add(p.Input.Mul(speed * dt))
 		if to, pos, ok := m.edge(raw); ok {
@@ -338,19 +336,8 @@ func (w *World) walkMap(p *Player, dt, now float64) {
 		}
 		return
 	}
-	// Grama alta: encontros aleatórios enquanto o jogador anda nela.
-	surfing := p.Transport == "surf" && len(m.Water) > 0
-	if moved > 0 && (m.at(p.Pos) == '"' || m.Cave || surfing) && p.Battle == "" && len(p.Team) > 0 && p.Area != "safari" {
-		pool := routePool[p.Area]
-		if surfing {
-			pool = m.Water
-		} else if z := m.zone(p.Pos); z != nil {
-			pool = z.Encounters
-		} else if len(m.Encounters) > 0 {
-			pool = m.Encounters
-		}
-		if len(pool) > 0 && mathrand.Float64() < moved/32*.09 {
-			_ = w.startBattle(p, "capture", pool[mathrand.IntN(len(pool))], nil, now)
-		}
+	// Os selvagens andam visíveis pelo mato: encostar num deles começa a luta.
+	if w.touchWild(p, now) {
+		return
 	}
 }

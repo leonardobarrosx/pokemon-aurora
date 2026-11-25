@@ -166,6 +166,7 @@ func (w *World) nextMon(b *Battle, i int, now float64) bool {
 	return false
 }
 func (w *World) tick(dt, now float64) {
+	w.tickWild(dt, now)
 	for _, p := range w.Players {
 		if now-p.InputAt > .3 {
 			p.Input = Vec{}
@@ -238,9 +239,9 @@ func (w *World) tick(dt, now float64) {
 				delta := target.Pos.Add(f.Pos.Mul(-1))
 				f.Facing = facing(delta)
 				if delta.Len() > 160 {
-					f.Pos = bounds(f.Pos.Add(delta.Unit().Mul(dt * 60)))
+					b.step(f, f.Pos.Add(delta.Unit().Mul(dt * 60)))
 				}
-				f.Pos = bounds(f.Pos.Add(Vec{0, math.Sin(now*2+float64(i)) * dt * 35}))
+				b.step(f, f.Pos.Add(Vec{0, math.Sin(now*2+float64(i)) * dt * 35}))
 				if f.StunUntil < now && f.ChargeUntil < now {
 					b.autoMove(i, now)
 				}
@@ -258,7 +259,11 @@ func (w *World) tick(dt, now float64) {
 				targetVel := p.Input.Mul(speed)
 				accel := clamp(dt*10/math.Pow(1+f.Physique.Mass/30, .3), 0, 1)
 				f.Velocity = f.Velocity.Add(targetVel.Add(f.Velocity.Mul(-1)).Mul(accel))
-				f.Pos = bounds(f.Pos.Add(f.Velocity.Mul(dt)))
+				if next := bounds(f.Pos.Add(f.Velocity.Mul(dt))); !b.mapBlocked(f, next) {
+					f.Pos = next
+				} else {
+					f.Velocity = Vec{}
+				}
 			}
 		}
 		if b.End > 0 {
