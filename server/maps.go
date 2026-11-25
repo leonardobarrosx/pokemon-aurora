@@ -58,9 +58,10 @@ type AreaMap struct {
 const kantoStart = "kt_pallet_town"
 const hoennStart = "hn_littleroot_town"
 const johtoStart = "jt_johto"
+const sinnohStart = "sn_sinnoh"
 
 // regionStarts diz onde cada região recebe quem chega viajando.
-var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart, "johto": johtoStart}
+var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart, "johto": johtoStart, "sinnoh": sinnohStart}
 
 // A jornada segue a ordem dos jogos: Kanto (FireRed), Hoenn (Emerald),
 // Johto (HeartGold) e Sinnoh (Platinum). Cada região abre quando o treinador
@@ -107,12 +108,15 @@ func regionStatus(p *Player) []map[string]any {
 	return out
 }
 
-func isKanto(area string) bool { return strings.HasPrefix(area, "kt_") }
-func isHoenn(area string) bool { return strings.HasPrefix(area, "hn_") }
-func isJohto(area string) bool { return strings.HasPrefix(area, "jt_") }
+func isKanto(area string) bool  { return strings.HasPrefix(area, "kt_") }
+func isHoenn(area string) bool  { return strings.HasPrefix(area, "hn_") }
+func isJohto(area string) bool  { return strings.HasPrefix(area, "jt_") }
+func isSinnoh(area string) bool { return strings.HasPrefix(area, "sn_") }
 
 // isImported indica mapas importados dos jogos do GBA, livres desde o início.
-func isImported(area string) bool { return isKanto(area) || isHoenn(area) || isJohto(area) }
+func isImported(area string) bool {
+	return isKanto(area) || isHoenn(area) || isJohto(area) || isSinnoh(area)
+}
 
 func regionOf(area string) string {
 	switch {
@@ -122,6 +126,8 @@ func regionOf(area string) string {
 		return "hoenn"
 	case isJohto(area):
 		return "johto"
+	case isSinnoh(area):
+		return "sinnoh"
 	}
 	return "aurora"
 }

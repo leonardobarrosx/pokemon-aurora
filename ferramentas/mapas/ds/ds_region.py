@@ -190,7 +190,51 @@ def heights(g, chunks, w, h, with_objects=False):
     return hm
 
 
-def render_area(g, chunks, cols, rows, outdir, crop=False):
+def next_walk(walk):
+    """nw[z, x] = primeira linha andável ao sul de z (ou -1)."""
+    h, w = walk.shape
+    nw = np.full((h, w), -1, np.int32)
+    cur = np.full(w, -1, np.int32)
+    for z in range(h - 1, -1, -1):
+        nw[z] = cur
+        cur = np.where(walk[z], z, cur)
+    return nw
+
+
+def occluders(cv, c, r, grid):
+    """Pixels que ficam por cima dos personagens.
+
+    Um pixel elevado (acima do chão da própria célula) cobre quem está atrás
+    dele, mas não pode cobrir a cabeça de quem está na primeira célula livre à
+    frente. Assim telhados, copas e balcões escondem quem passa atrás sem
+    tapar quem está na frente."""
+    walk, hm, nw = grid
+    H, W = walk.shape
+    py, px = np.nonzero(cv.rgba[..., 3] > 0)
+    if not len(px):
+        return cv.up
+    s = r * CH + py + .5
+    cx = np.clip((c * CH + px) // 16, 0, W - 1)
+    zr = np.clip(np.floor(cv.zw[py, px] / 16).astype(int), 0, H - 1)
+    zf = nw[zr, cx]
+    ok = zf >= 0
+    # Chão de referência: o da célula livre à frente (o das paredes não é confiável).
+    floor = np.where(ok, hm[np.maximum(zf, 0), cx], hm[zr, cx])
+    floor = np.where(walk[zr, cx], np.minimum(floor, hm[zr, cx]), floor)
+    elevated = cv.top[py, px] - floor >= 10
+    foot = np.where(ok, (zf + .7) * 16 - K * hm[np.maximum(zf, 0), cx], 1e9)
+    up = elevated & (s < foot - 30)
+    out = np.zeros(cv.up.shape, bool)
+    out[py, px] = up
+    return out
+
+
+def grid_of(cells, hm, w, h):
+    walk = np.array([ch in '."' for ch in cells], bool).reshape(h, w)
+    return walk, hm, next_walk(walk)
+
+
+def render_area(g, chunks, cols, rows, outdir, crop=False, grid=None):
     """Desenha os chunks {(cx,cy): (land, area)} em imagens de 512 px.
 
     Linha -1 recebe o que sobe além do topo. Devolve a lista de imagens e,
@@ -209,6 +253,8 @@ def render_area(g, chunks, cols, rows, outdir, crop=False):
             cv.flush()
             if not cv.rgba[..., 3].any():
                 continue
+            if grid is not None:
+                cv.up = occluders(cv, c, r, grid)
             made.append((c, r, cv))
     if crop:
         # Interiores: junta tudo numa imagem só, recortada no que foi desenhado.
@@ -284,10 +330,6 @@ def main():
             chunks[(x - bx0, y - by0)] = (mland[y * mw + x], int(hdr[hid]["areaDataBank"]))
     layout = {WORLD: dict(origin=(bx0 * 32, by0 * 32), w=W * 32, h=H * 32)}
     areas = {}
-    if "--skip-world" not in sys.argv:
-        imgs = render_area(g, chunks, W, H, os.path.join(cdir, "jt", WORLD))
-    else:
-        imgs = None
     cells = ["#"] * (W * 32 * H * 32)
     for (cx, cy), (li, _) in chunks.items():
         perm = g.perms(li)
@@ -295,6 +337,9 @@ def main():
             x, y = cx * 32 + i % 32, cy * 32 + i // 32
             cells[y * W * 32 + x] = cell_code(v)
     hm = heights(g, chunks, W * 32, H * 32)
+    imgs = None
+    if "--skip-world" not in sys.argv:
+        imgs = render_area(g, chunks, W, H, os.path.join(cdir, "jt", WORLD), grid=grid_of(cells, hm, W * 32, H * 32))
     zones, zone_info, zidx = [], [], {}
     for cy in range(H):
         for cx in range(W):
@@ -315,20 +360,21 @@ def main():
         ch = {(i % w, i // w): (land[i], int(hdr[hid]["areaDataBank"])) for i in range(w * h) if land[i] != 0xFFFF}
         if not ch:
             continue
-        crop = render_area(room, ch, w, h, os.path.join(cdir, "jt", area), crop=True)
+        full = ["#"] * (w * 32 * h * 32)
+        for (cx, cy), (li, _) in ch.items():
+            for i, v in enumerate(room.perms(li)):
+                full[(cy * 32 + i // 32) * w * 32 + cx * 32 + i % 32] = cell_code(v)
+        fullh = heights(room, ch, w * 32, h * 32, with_objects=True)
+        crop = render_area(room, ch, w, h, os.path.join(cdir, "jt", area), crop=True, grid=grid_of(full, fullh, w * 32, h * 32))
         if crop is None:
             continue
         x0, y0, x1, y1 = crop
         # Recorte em células (o topo pode ter subido além do chunk por causa da altura).
         c0, r0 = x0 // 16, max(y0, 0) // 16
         c1, r1 = x1 // 16, min(y1, h * CH) // 16
-        full = ["#"] * (w * 32 * h * 32)
-        for (cx, cy), (li, _) in ch.items():
-            for i, v in enumerate(room.perms(li)):
-                full[(cy * 32 + i // 32) * w * 32 + cx * 32 + i % 32] = cell_code(v)
         cw, chh = c1 - c0, r1 - r0
         cells = [full[(r0 + y) * w * 32 + c0 + x] for y in range(chh) for x in range(cw)]
-        hm = heights(room, ch, w * 32, h * 32, with_objects=True)[r0:r1, c0:c1]
+        hm = fullh[r0:r1, c0:c1]
         land, surf = enc.get(hdr[hid].get("wildEncounterBank", ""), ([], []))
         areas[area] = dict(w=cw, h=chh, cells=cells, heights=hm, origin=(c0, r0), imgs=dict(crop=(x0 - c0 * 16, y0 - r0 * 16)),
                            headers={hid}, name=nice(names[hid]), encounters=land, water=surf,

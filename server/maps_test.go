@@ -146,3 +146,33 @@ func TestJohtoOpensAfterHoennAndHasZones(t *testing.T) {
 		}
 	}
 }
+
+func TestSinnohOpensAfterJohto(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "A", 1)
+	if areaMaps[sinnohStart] == nil {
+		t.Skip("Sinnoh não importada")
+	}
+	p.Visits["kt_indigo_plateau_exterior"] = true
+	p.Visits["hn_ever_grande_city"] = true
+	if err := w.action(p, Command{Type: "travel", Area: "sinnoh"}, 900); err == nil {
+		t.Fatal("Sinnoh deveria abrir só depois do Ginásio de Blackthorn")
+	}
+	p.Visits["jt_blackthorn_gym"] = true
+	if err := w.action(p, Command{Type: "travel", Area: "sinnoh"}, 1000); err != nil {
+		t.Fatal(err)
+	}
+	if z := areaMaps[p.Area].zone(p.Pos); p.Area != sinnohStart || z == nil || z.Name != "Twinleaf Town" {
+		t.Fatalf("deveria chegar em Twinleaf Town, chegou em %s %v", p.Area, z)
+	}
+	for name, am := range areaMaps {
+		if !isSinnoh(name) {
+			continue
+		}
+		for _, wp := range am.Warps {
+			if wp.To != "@voltar" && areaMaps[wp.To] == nil {
+				t.Fatalf("porta de %s leva a %s, que não existe", name, wp.To)
+			}
+		}
+	}
+}

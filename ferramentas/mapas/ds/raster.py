@@ -6,7 +6,7 @@ paredes viradas para o sul aparecem, como nos jogos de DS vistos de cima.
 """
 import numpy as np
 
-K = 0.9  # inclinação: quanto a altura sobe na tela
+K = 1.0  # inclinação: 1 texel de parede = 1 pixel, como nos tiles 2D
 
 
 class Canvas:
@@ -16,6 +16,7 @@ class Canvas:
         self.depth = np.full((h, w), -1e9, np.float32)
         self.top = np.full((h, w), -1e9, np.float32)  # altura do que está desenhado
         self.up = np.zeros((h, w), bool)  # pixel vai para a camada de cima (copas, telhados)
+        self.zw = np.full((h, w), -1e9, np.float32)  # z do mundo do ponto desenhado
 
     def project(self, p):
         x, y, z = p
@@ -89,6 +90,7 @@ class Canvas:
         out[ok, 3] = 255
         region[ok] = key[ok]
         self.top[y0:y1, x0:x1][ok] = depth[ok]
+        self.zw[y0:y1, x0:x1][ok] = zz[ok]
         up = self.up[y0:y1, x0:x1]
         up[ok] = (depth[ok] >= min_h) if min_h is not None else False
 
