@@ -46,6 +46,21 @@ func run():
 	root.add_child(game)
 	game.set_process(false)
 	game.commands.clear()
+	if args.size()>2 and args[2] in ["cutins","jornada"]:
+		if args[2]=="jornada":
+			game.login();load_state(home)
+			for r in game.data.regions:
+				for g in r.get("badges",[]):g.done=str(g.id) in ["aurora_1","kanto_1","kanto_2","kanto_3"]
+				if r.id=="kanto":r.visited=41
+			game.open_panel("jornada")
+			await shot("menus","jornada")
+			var scroll=game.overlay_body.get_parent() as ScrollContainer
+			if scroll:scroll.scroll_vertical=99999
+			await shot("menus","jornada-rodape")
+			game.close_panel();game.data.player.area="kt_pewter_city_gym";game.refresh_sidebar()
+			await shot("menus","hud-jornada")
+			quit(1 if failed else 0)
+			return
 	if args.size()>2 and args[2]=="cutins":
 		await cutin_states()
 		quit(1 if failed else 0)
@@ -56,11 +71,18 @@ func run():
 		return
 	game.login()
 	await shot("menus","entrada")
-	for page in ["equipe","mapa","loja","breeding","treino","mercado","casa","profissao","ranking","vila","jardim","pc","guarda-roupa","genes","iguaria","lago"]:
+	for page in ["equipe","jornada","mapa","loja","breeding","treino","mercado","casa","profissao","ranking","vila","jardim","pc","guarda-roupa","genes","iguaria","lago"]:
 		load_state(home)
 		match page:
 			"guarda-roupa":game.wardrobe_menu()
 			"genes":game.genome_panel(game.team_mon(0))
+			"jornada":
+				# Jornada no meio de Kanto: três insígnias e Hoenn ainda fechada.
+				for r in game.data.regions:
+					for g in r.get("badges",[]):g.done=str(g.id) in ["aurora_1","kanto_1","kanto_2","kanto_3"]
+					if r.id=="kanto":r.visited=41
+					if r.id=="aurora":r.visited=6
+				game.open_panel(page)
 			"iguaria":game.confirm_delicacy()
 			"lago":
 				game.data.player.area="lago"

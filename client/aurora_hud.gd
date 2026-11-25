@@ -191,10 +191,12 @@ func exploration(p:Dictionary):
 	dock.theme=game.page_theme
 	dock.position=Vector2(196,972);dock.size=Vector2(1528,72)
 	dock.alignment=BoxContainer.ALIGNMENT_CENTER
-	for e in [["equipe","Equipe","equipe"],["mapa","Mapa","mapa"],["loja","Mochila","mochila"],["breeding","Linhagens","linhagens"],["ranking","Liga","ranking"],["casa","Casa","casa"]]:
+	for e in [["equipe","Equipe","equipe"],["jornada","Jornada","ranking"],["mapa","Mapa","mapa"],["loja","Mochila","mochila"],["breeding","Linhagens","linhagens"],["ranking","Liga","ranking"],["casa","Casa","casa"]]:
 		game.btn(dock,e[1],func():game.open_panel(e[0]),168,e[2]).custom_minimum_size.y=60
 	var verbs={"casa":"Minha casa","vila":"Conversar","jardim":"Canteiros","rota":"Explorar","ginasio":"Saguão","safari":"Procurar","mina":"Minerar","lago":"Pescar"}
-	var act=game.btn(dock,verbs.get(p.area,"Interagir")+" · E",game.interact,220,"brilho")
+	var leader=game.gym_info_at(str(p.area))
+	var verb=verbs.get(p.area,"Desafiar "+str(leader.leader) if leader.size()>0 and p.area!="ginasio" else "Interagir")
+	var act=game.btn(dock,verb+" · E",game.interact,220,"brilho")
 	act.custom_minimum_size.y=60
 	Design.primary(act)
 

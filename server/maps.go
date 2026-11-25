@@ -103,7 +103,11 @@ func regionStatus(p *Player) []map[string]any {
 			prev := regionOrder[i-2]
 			need = "Visite " + regionGoalName[prev]
 		}
-		out = append(out, map[string]any{"id": r, "open": regionOpen(p, r), "need": need})
+		entry := map[string]any{"id": r, "open": regionOpen(p, r), "need": need}
+		for k, v := range journey(p, r) {
+			entry[k] = v
+		}
+		out = append(out, entry)
 	}
 	return out
 }

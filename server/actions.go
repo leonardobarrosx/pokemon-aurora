@@ -162,10 +162,11 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		}
 		return w.startBattle(p, "capture", pool[mathrand.IntN(len(pool))], nil, now)
 	case "gym":
-		if p.Area != "ginasio" {
-			return errMsg("vá ao ginásio")
+		g := gymAt(p.Area)
+		if g == nil {
+			return errMsg("vá a um ginásio")
 		}
-		return w.startBattle(p, "gym", 1, nil, now)
+		return w.startBattle(p, "gym", g.Species, nil, now)
 	case "attack", "special", "move", "dash", "ball", "flee":
 		b := w.Battles[p.Battle]
 		if b == nil || b.End > 0 {

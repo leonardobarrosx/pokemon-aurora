@@ -27,13 +27,18 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 	b := &Battle{ID: uid(), Kind: kind, Start: now, Projectiles: []Projectile{}, Beams: []Beam{}, Blasts: []Blast{}, Log: "Mova-se, mire com o mouse e ataque!"}
 	b.Fighters[0] = makeFighter(p, *p.mon(p.Team[0]), Vec{100, 230})
 	m := newMon(s)
+	g := gymAt(p.Area)
+	if g == nil {
+		g = &gyms[0]
+	}
 	if kind == "gym" {
-		m.Level = 12
+		m.Level = g.Level
 	}
 	b.Fighters[1] = makeFighter(nil, m, Vec{410, 200})
 	if kind == "gym" {
-		b.Fighters[1].Name = "Flora"
-		b.Fighters[1].Art = "in_erika"
+		b.Gym = g.ID
+		b.Fighters[1].Name = g.Leader
+		b.Fighters[1].Art = g.Art
 	}
 	if other != nil {
 		if other.Battle != "" {
@@ -97,6 +102,16 @@ func (w *World) endBattle(b *Battle, winner string, now float64) {
 			if b.Kind == "gym" {
 				p.Coins += 40
 				p.Flags["gym"]++
+				if g := gymByID(b.Gym); g != nil {
+					if p.Badges == nil {
+						p.Badges = map[string]bool{}
+					}
+					if !p.Badges[g.ID] {
+						p.Badges[g.ID] = true
+						p.Coins += 200
+						p.Notice = "Vitória! Você conquistou a " + g.Badge + " de " + g.Leader + "."
+					}
+				}
 				elapsed := now - b.Start
 				if p.Records["gym"] == 0 || elapsed < p.Records["gym"] {
 					p.Records["gym"] = elapsed

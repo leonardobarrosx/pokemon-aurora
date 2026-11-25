@@ -351,6 +351,11 @@ func trainer_art(f:Dictionary,kind:String,age:float)->Dictionary:
 			if strip==null:return {"tex":null}
 			var n=int(strip.get_width()/80);var frame=clampi(int(age*12),0,n-1)
 			return {"tex":strip,"region":Rect2(frame*80,0,80,80)}
+		if art.begins_with("ds/"):
+			var sheet=texture("res://assets/characters/%s.png"%art)
+			if sheet==null:return {"tex":null}
+			var cell=sheet.get_width()/4.0
+			return {"tex":sheet,"region":Rect2(0,0,cell,cell)}
 		var t=texture("res://assets/trainers/%s.png"%art)
 		return {"tex":t,"region":Rect2(Vector2.ZERO,t.get_size()) if t else Rect2()}
 	var look:Dictionary={};var colors:Dictionary={}
@@ -385,7 +390,9 @@ func arena_field(b:Dictionary):
 			var p=game.data.player
 			trainer(at,p.color,"",p.get("look",{}),p.get("colors",{}),"walk",facing)
 		elif str(f.owner)=="npc":
-			if b.kind=="gym":trainer(at,"green","ds/hg_gsleader12",{},{},"walk",facing)
+			if b.kind=="gym":
+				var sprite=str(game.gym_info(str(b.get("gym",""))).get("sprite",""))
+				trainer(at,"green",sprite if sprite!="" else "ds/hg_gsleader12",{},{},"walk",facing)
 		else:
 			for other in game.data.get("players",[]):
 				if str(other.get("id",""))==str(f.owner):trainer(at,other.get("color","green"),"",other.get("look",{}),other.get("colors",{}),"walk",facing)

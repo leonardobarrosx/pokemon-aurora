@@ -462,3 +462,33 @@ func TestTrainerCutins(t *testing.T) {
 		t.Fatalf("ball throw should show the trainer: %+v", last)
 	}
 }
+
+func TestGymBadgesAndJourney(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Insígnias", 1)
+	p.Area = "kt_pewter_city_gym"
+	if err := w.action(p, Command{Type: "gym"}, 1000); err != nil {
+		t.Fatal(err)
+	}
+	b := w.Battles[p.Battle]
+	if b.Gym != "kanto_1" || b.Fighters[1].Name != "Brock" || b.Fighters[1].Mon.Level != 14 || b.Fighters[1].Art != "in_brock" {
+		t.Fatalf("ginásio errado: %+v", b.Fighters[1])
+	}
+	if g := gymAt("sn_hearthome_city_gym_trainer_room_1"); g == nil || g.Leader != "Fantina" {
+		t.Fatalf("salas do ginásio devem levar à líder: %+v", g)
+	}
+	w.endBattle(b, p.ID, 1001)
+	if !p.Badges["kanto_1"] {
+		t.Fatalf("vitória deveria dar a insígnia: %v / %s", p.Badges, p.Notice)
+	}
+	var kanto map[string]any
+	for _, r := range regionStatus(p) {
+		if r["id"] == "kanto" {
+			kanto = r
+		}
+	}
+	badges := kanto["badges"].([]map[string]any)
+	if len(badges) != 8 || badges[0]["done"] != true || kanto["areas"].(int) < 50 {
+		t.Fatalf("painel de Kanto incompleto: %v", kanto)
+	}
+}

@@ -158,6 +158,7 @@ type Player struct {
 	Losses     int                `json:"losses"`
 	Rating     int                `json:"rating"`
 	Records    map[string]float64 `json:"records"`
+	Badges     map[string]bool    `json:"badges"`
 	Rewarded   map[string]int     `json:"rewarded"`
 	Safari     *Safari            `json:"safari"`
 	Arcade     *Arcade            `json:"arcade"`
@@ -170,7 +171,7 @@ type Player struct {
 
 func newPlayer(name string, starter int, now float64) *Player {
 	m := newMon(starter)
-	return &Player{ID: uid(), Name: name, Area: "casa", Pos: Vec{256, 300}, Seen: now, Look: map[string]string{"gender": "m", "hair": "boy2", "top": "jacket", "bottom": "jeans", "hat": "", "acc": "", "bag": ""}, Colors: map[string]string{}, Color: "green", Theme: "verde", Coins: 300, Flags: map[string]int{}, Mons: []Mon{m}, Team: []string{m.ID}, Balls: 10, Seeds: 6, Stones: map[string]int{}, Decor: []Decor{}, Visits: map[string]bool{"casa": true, "vila": true, "jardim": true}, Profession: "Treinador", Friends: map[string]int{}, Gifts: map[string]float64{}, Rating: 1000, Records: map[string]float64{}, Rewarded: map[string]int{}, Notice: "Bem-vindo a Aurora. Encontre a Professora Íris na vila."}
+	return &Player{ID: uid(), Name: name, Area: "casa", Pos: Vec{256, 300}, Seen: now, Look: map[string]string{"gender": "m", "hair": "boy2", "top": "jacket", "bottom": "jeans", "hat": "", "acc": "", "bag": ""}, Colors: map[string]string{}, Color: "green", Theme: "verde", Coins: 300, Flags: map[string]int{}, Mons: []Mon{m}, Team: []string{m.ID}, Balls: 10, Seeds: 6, Stones: map[string]int{}, Decor: []Decor{}, Visits: map[string]bool{"casa": true, "vila": true, "jardim": true}, Profession: "Treinador", Friends: map[string]int{}, Gifts: map[string]float64{}, Rating: 1000, Records: map[string]float64{}, Rewarded: map[string]int{}, Badges: map[string]bool{}, Notice: "Bem-vindo a Aurora. Encontre a Professora Íris na vila."}
 }
 func (p *Player) mon(id string) *Mon {
 	for i := range p.Mons {
@@ -243,6 +244,7 @@ type Battle struct {
 	PauseUntil  float64      `json:"pause_until"`
 	ID          string       `json:"id"`
 	Kind        string       `json:"kind"`
+	Gym         string       `json:"gym"`
 	Fighters    [2]*Fighter  `json:"fighters"`
 	Projectiles []Projectile `json:"projectiles"`
 	Blasts      []Blast      `json:"blasts"`

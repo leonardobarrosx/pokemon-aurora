@@ -223,7 +223,7 @@ func received(_result:int,code:int,_headers:PackedStringArray,body:PackedByteArr
 		if view:view.observe_snapshot(response)
 		data=response;clock_offset=float(response.now)-Time.get_unix_time_from_system();refresh_sidebar()
 		if data.player.notice!=last_notice:last_notice=data.player.notice;notice(last_notice)
-		if refresh_pending and screen in ["equipe","breeding","treino","loja","casa","vila","jardim","pc","profissao","mercado","mapa"]:open_panel(screen)
+		if refresh_pending and screen in ["equipe","breeding","treino","loja","casa","vila","jardim","pc","profissao","mercado","mapa","jornada"]:open_panel(screen)
 	if submitted_chat!="" and not response.has("error") and screen=="ranking" and is_instance_valid(message_input) and message_input.text.strip_edges()==submitted_chat:
 		message_input.clear()
 	if response.has("error"):notice(str(response.error).capitalize())
@@ -287,7 +287,7 @@ func login():
 	Design.primary(start)
 	label(c,"O progresso fica no servidor. Esta instalação guarda sua chave de acesso.",14,Color("9eb2ad"))
 
-const NAV_ROUTES=[["inicio","Início"],["equipe","Equipe"],["mapa","Mapa"],["loja","Mochila"],["breeding","Linhagens"],["treino","Treino"],["mercado","Mercado"],["casa","Minha casa"],["profissao","Profissão"],["ranking","Liga e saguão"]]
+const NAV_ROUTES=[["inicio","Início"],["equipe","Equipe"],["jornada","Jornada"],["mapa","Mapa"],["loja","Mochila"],["breeding","Linhagens"],["treino","Treino"],["mercado","Mercado"],["casa","Minha casa"],["profissao","Profissão"],["ranking","Liga e saguão"]]
 
 func brand(parent:Node,origin:Vector2,scale_factor:float=1.0):
 	var seal=Paper.make("logo",Rect2(origin,Vector2(70,70)*scale_factor))
@@ -338,7 +338,7 @@ func nav_item(parent:Node,route:String,text:String,active:bool)->Button:
 	for state in ["font_color","font_focus_color","font_hover_color","font_pressed_color","font_hover_pressed_color"]:
 		item.add_theme_color_override(state,Color("#fbf6ea"))
 	parent.add_child(item)
-	with_icon(item,{"loja":"mochila","breeding":"linhagens"}.get(route,route),26)
+	with_icon(item,{"loja":"mochila","breeding":"linhagens","jornada":"ranking"}.get(route,route),26)
 	item.add_theme_constant_override("h_separation",16)
 	if route=="inicio":item.pressed.connect(close_panel)
 	else:item.pressed.connect(open_panel.bind(route))
@@ -643,6 +643,7 @@ func open_panel(which:String):
 	var titles={
 		"equipe":["Minha equipe","Seus Pokémon em Aurora"],
 		"mapa":["Mapa de Aurora","Escolha um destino. Para voar até ele, visite a área primeiro."],
+		"jornada":["Painel de Jornada","Progresso, insígnias e viagem entre regiões."],
 		"loja":["Mochila e loja","Compre suprimentos para a jornada e objetos para sua casa."],
 		"breeding":["Linhagens","Cruzamentos, genes e incubadora"],
 		"mercado":["Mercado","Compre e anuncie exemplares"],
@@ -658,6 +659,7 @@ func open_panel(which:String):
 	modal(title[0],title[1])
 	var p:Dictionary=data.player
 	match which:
+		"jornada":journey_panel()
 		"mapa":
 			var trip=panel(overlay_body);trip.custom_minimum_size.x=1500
 			var trip_row=row(trip,20)
@@ -1241,6 +1243,85 @@ func interact():
 		"safari":send({"type":"safari"});notice("Mire no Pokémon e solte a bola no centro do alvo.")
 		"lago":
 			lake_menu()
+		_:
+			if gym_info_at(str(p.area)).size()>0:send({"type":"gym"})
+
+# Ginásio cujo líder fica nesta área (ou numa sala do mesmo ginásio).
+func gym_info_at(area:String)->Dictionary:
+	for r in data.get("regions",[]):
+		for g in r.get("badges",[]):
+			var a=str(g.area)
+			if a==area or (r.id!="aurora" and area.begins_with(a.substr(0,a.find("_gym")+4))):return g
+	return {}
+
+func gym_info(id:String)->Dictionary:
+	for r in data.get("regions",[]):
+		for g in r.get("badges",[]):
+			if str(g.id)==id:return g
+	return {}
+
+const REGION_TAGS={"aurora":"Região original · livre","kanto":"FireRed · capítulo 1","hoenn":"Emerald · capítulo 2","johto":"HeartGold · capítulo 3","sinnoh":"Platinum · capítulo 4"}
+
+# Painel de Jornada: progresso geral, uma linha por região com exploração,
+# as oito insígnias e a viagem. As regiões abrem em ordem; depois de abertas
+# dá para ir e voltar a qualquer momento.
+func journey_panel():
+	var p:Dictionary=data.player
+	var regions:Array=data.get("regions",[])
+	var won=0;var total_gyms=0;var seen=0;var areas=0;var open=0
+	for r in regions:
+		won+=r.get("badges",[]).filter(func(g):return g.done).size()
+		total_gyms+=r.get("badges",[]).size();seen+=int(r.get("visited",0));areas+=int(r.get("areas",0))
+		if r.open:open+=1
+	var summary=panel(overlay_body);summary.custom_minimum_size.x=1500
+	var sum_row=row(summary,48)
+	for stat in [["INSÍGNIAS","%d de %d"%[won,total_gyms],won,total_gyms,Design.GOLD],["MAPAS EXPLORADOS","%d de %d"%[seen,areas],seen,areas,Design.GREEN],["REGIÕES ABERTAS","%d de %d"%[open,regions.size()],open,regions.size(),Design.SKY]]:
+		var c=column(sum_row,6)
+		spaced(c,stat[0],12)
+		label(c,stat[1],26)
+		var bar=progress(c,maxf(1,stat[3]),stat[4],400,14);bar.value=stat[2]
+	var here=region_of(str(p.area))
+	for r in regions:
+		var id=str(r.id)
+		var card=panel(overlay_body);card.custom_minimum_size.x=1500
+		var line=row(card,28)
+		var info=column(line,6);info.custom_minimum_size.x=360
+		spaced(info,REGION_TAGS.get(id,""),12)
+		label(info,REGION_NAMES.get(id,id),30)
+		var state="Você está aqui" if id==here else ("Aberta" if r.open else str(r.need))
+		label(info,state,15,ACCENT if r.open else Color("#8b7f68"))
+		var explore=row(info,10)
+		var bar=progress(explore,maxf(1,float(r.get("areas",0))),Design.GREEN,200,12);bar.value=float(r.get("visited",0))
+		label(explore,"%d/%d mapas"%[int(r.get("visited",0)),int(r.get("areas",0))],13)
+		if str(r.get("goal",""))!="":label(info,"Meta: chegar a "+str(r.goal),13)
+		var go=btn(info,"Você está aqui" if id==here else "Viajar",func():send({"type":"travel","area":id});close_panel(),0,"mapa")
+		go.disabled=id==here or not r.open
+		if r.open and id!=here:Design.primary(go)
+		var case_box=grid_cards(line,8)
+		var list:Array=r.get("badges",[])
+		for i in 8:
+			var slot=column(case_box,4);slot.custom_minimum_size.x=118
+			var g:Dictionary=list[i] if i<list.size() else {}
+			var frame=PanelContainer.new();frame.custom_minimum_size=Vector2(118,104)
+			var done=bool(g.get("done",false))
+			var style=Design.surface(Color("#fff4d6") if done else Color("#e9e0cc"),10,Design.GOLD if done else Design.LINE,3 if done else 2)
+			style.set_content_margin_all(4)
+			frame.add_theme_stylebox_override("panel",style)
+			slot.add_child(frame)
+			if g.is_empty():
+				var empty=Label.new();empty.text="?";empty.custom_minimum_size=Vector2(108,96)
+				empty.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;empty.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
+				empty.add_theme_font_size_override("font_size",34);empty.add_theme_color_override("font_color",Color("#b9aa8b"))
+				frame.add_child(empty)
+				var soon=label(slot,"Em breve",13,Color("#8b7f68"));soon.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+				continue
+			var art=view.trainer_art({"art":g.art},"badge",0)
+			if art.tex:thumbnail(frame,art.tex,Vector2(108,96),art.region)
+			if not done:frame.get_child(0).modulate=Color(.2,.22,.28,.55) if not bool(g.ready) else Color(.35,.37,.42,.9)
+			var name_label=label(slot,str(g.leader),13,Design.INK if done else Color("#8b7f68"))
+			name_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+			slot.tooltip_text="%s · %s\n%s"%[g.badge,g.town,"Conquistada" if done else ("Desafie no ginásio de "+str(g.town) if bool(g.ready) else "Mapa ainda não importado")]
+			frame.tooltip_text=slot.tooltip_text
 
 func lake_menu():
 	screen="lago"
