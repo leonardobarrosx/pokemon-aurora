@@ -106,7 +106,7 @@ def sheet(path, w, h, dest, palfile=None):
     for r, row in enumerate(rows):
         for c, fr in enumerate(row):
             fr = fr.resize((w * 2, h * 2), Image.NEAREST)
-            out.paste(fr, (c * cell + (cell - w * 2) // 2, r * cell + cell - h * 2 + 4 if h * 2 <= cell else r * cell), fr)
+            out.paste(fr, (c * cell + (cell - w * 2) // 2, r * cell + cell - h * 2 if h * 2 <= cell else r * cell), fr)
     out.save(dest)
 
 

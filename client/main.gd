@@ -14,6 +14,11 @@ func region_of(area:String)->String:
 func area_name(area:String)->String:
 	if AREAS.has(area):return AREAS[area]
 	var m=view.map_for(area) if view else {}
+	# Mundo aberto de DS: o nome muda conforme o chunk onde o jogador está.
+	if m.has("zones") and data.has("player") and str(data.player.get("area",""))==area:
+		var pos=data.player.pos;var ch=float(m.chunk)*float(m.cell)
+		var i=int(float(pos.y)/ch)*int(m.zone_cols)+int(float(pos.x)/ch)
+		if i>=0 and i<m.zones.size():return str(m.zone_names[int(m.zones[i])])
 	return str(m.get("name",area))
 
 const AREAS={"casa":"Meu cantinho","vila":"Vila Alvorada","rota":"Trilha das Folhas","jardim":"Jardim de berries","mina":"Mina da Lua","ginasio":"Ginásio Raiz","safari":"Reserva Orvalho","lago":"Lago Celeste"}

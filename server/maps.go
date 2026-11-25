@@ -44,23 +44,30 @@ type AreaMap struct {
 	Default     [2]float64            `json:"default"`
 	Connections []Connection          `json:"connections"`
 	Encounters  []int                 `json:"encounters"`
-	Cave        bool                  `json:"cave"`
-	Name        string                `json:"name"`
+	// Mundo aberto de DS: cada chunk (Chunk x Chunk células) pertence a uma zona
+	// com nome e encontros próprios.
+	Zones    []int      `json:"zones"`
+	ZoneInfo []ZoneInfo `json:"zone_info"`
+	Chunk    int        `json:"chunk"`
+	ZoneCols int        `json:"zone_cols"`
+	Cave     bool       `json:"cave"`
+	Name     string     `json:"name"`
 }
 
 // Regiões: Aurora (mapas originais), Kanto (FireRed) e Hoenn (Emerald).
 const kantoStart = "kt_pallet_town"
 const hoennStart = "hn_littleroot_town"
+const johtoStart = "jt_johto"
 
 // regionStarts diz onde cada região recebe quem chega viajando.
-var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart}
+var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart, "johto": johtoStart}
 
 // A jornada segue a ordem dos jogos: Kanto (FireRed), Hoenn (Emerald),
 // Johto (HeartGold) e Sinnoh (Platinum). Cada região abre quando o treinador
 // chega à Liga da anterior. Aurora fica aberta o tempo todo.
 var regionOrder = []string{"kanto", "hoenn", "johto", "sinnoh"}
-var regionGoal = map[string]string{"kanto": "kt_indigo_plateau_exterior", "hoenn": "hn_ever_grande_city"}
-var regionGoalName = map[string]string{"kanto": "Indigo Plateau", "hoenn": "Ever Grande City"}
+var regionGoal = map[string]string{"kanto": "kt_indigo_plateau_exterior", "hoenn": "hn_ever_grande_city", "johto": "jt_blackthorn_gym"}
+var regionGoalName = map[string]string{"kanto": "Indigo Plateau", "hoenn": "Ever Grande City", "johto": "Ginásio de Blackthorn"}
 
 func regionOpen(p *Player, region string) bool {
 	if region == "aurora" {
@@ -93,7 +100,7 @@ func regionStatus(p *Player) []map[string]any {
 		need := ""
 		if i > 1 {
 			prev := regionOrder[i-2]
-			need = "Chegue a " + regionGoalName[prev]
+			need = "Visite " + regionGoalName[prev]
 		}
 		out = append(out, map[string]any{"id": r, "open": regionOpen(p, r), "need": need})
 	}
@@ -102,9 +109,10 @@ func regionStatus(p *Player) []map[string]any {
 
 func isKanto(area string) bool { return strings.HasPrefix(area, "kt_") }
 func isHoenn(area string) bool { return strings.HasPrefix(area, "hn_") }
+func isJohto(area string) bool { return strings.HasPrefix(area, "jt_") }
 
 // isImported indica mapas importados dos jogos do GBA, livres desde o início.
-func isImported(area string) bool { return isKanto(area) || isHoenn(area) }
+func isImported(area string) bool { return isKanto(area) || isHoenn(area) || isJohto(area) }
 
 func regionOf(area string) string {
 	switch {
@@ -112,8 +120,29 @@ func regionOf(area string) string {
 		return "kanto"
 	case isHoenn(area):
 		return "hoenn"
+	case isJohto(area):
+		return "johto"
 	}
 	return "aurora"
+}
+
+type ZoneInfo struct {
+	Name       string `json:"name"`
+	Encounters []int  `json:"encounters"`
+	Water      []int  `json:"water"`
+}
+
+// zone devolve a zona da posição, ou nil em mapas sem zonas.
+func (m *AreaMap) zone(v Vec) *ZoneInfo {
+	if len(m.Zones) == 0 || m.Chunk == 0 || m.ZoneCols == 0 {
+		return nil
+	}
+	size := float64(m.Chunk) * m.Cell
+	i := int(v.Y/size)*m.ZoneCols + int(v.X/size)
+	if v.X < 0 || v.Y < 0 || i < 0 || i >= len(m.Zones) || m.Zones[i] >= len(m.ZoneInfo) {
+		return nil
+	}
+	return &m.ZoneInfo[m.Zones[i]]
 }
 
 var areaMaps = map[string]*AreaMap{}
@@ -290,7 +319,9 @@ func (w *World) walkMap(p *Player, dt, now float64) {
 	// Grama alta: encontros aleatórios enquanto o jogador anda nela.
 	if moved > 0 && (m.at(p.Pos) == '"' || m.Cave) && p.Battle == "" && len(p.Team) > 0 && p.Area != "safari" {
 		pool := routePool[p.Area]
-		if len(m.Encounters) > 0 {
+		if z := m.zone(p.Pos); z != nil {
+			pool = z.Encounters
+		} else if len(m.Encounters) > 0 {
 			pool = m.Encounters
 		}
 		if len(pool) > 0 && mathrand.Float64() < moved/32*.09 {

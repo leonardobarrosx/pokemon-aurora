@@ -39,6 +39,8 @@ def blocks(d):
 # ---------------------------------------------------------------- texturas
 def textures(d):
     """Lê o bloco TEX0 de um BTX0/BMD0: {nome: (w, h, rgba ndarray)}."""
+    if len(d) < 20:
+        return {}
     b = blocks(d)
     if b"TEX0" not in b:
         return {}

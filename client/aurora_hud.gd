@@ -11,6 +11,7 @@ const CYAN=Design.MINT
 const Icons=preload("res://aurora_icons.gd")
 var score_label:Label
 var context_label:Label
+var area_label:Label
 var live_label:Label
 const GOLD=Color("eac57d")
 
@@ -165,7 +166,7 @@ func exploration(p:Dictionary):
 	if not p.team.is_empty():portrait(profile,game.team_mon(0),Vector2(50,52))
 	var identity=game.column(profile,2);game.label(identity,p.name,22);game.label(identity,"TREINADOR  /  NÍVEL %d"%(1+int(p.xp)/100),11,CYAN)
 	var location=game.column(floating(Vector2(720,22),Vector2(480,94)),3)
-	var area=game.label(location,game.area_name(str(p.area)),22);area.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+	area_label=game.label(location,game.area_name(str(p.area)),22);area_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	context_label=game.label(location,"REGIÃO "+game.REGION_NAMES[game.region_of(str(p.area))].to_upper(),13,GOLD);context_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
 	var wallet=game.column(floating(Vector2(1560,22),Vector2(336,94)),4)
 	var money=game.row(wallet,8);money.add_child(Icons.make("moeda",GOLD,20));game.label(money,"%s moedas     %d fichas"%[game._thousands(int(p.coins)),p.points],17,GOLD)
@@ -211,6 +212,7 @@ func minigame(activity:Dictionary):
 	Design.primary(game.btn(footer,"Encerrar · Esc",func():game.send({"type":"arcade_stop"}),0,"fechar"))
 
 func update_values():
+	if is_instance_valid(area_label):area_label.text=game.area_name(str(game.data.player.area))
 	if is_instance_valid(context_label):
 		var bite=float(game.data.player.get("fishing",0))
 		var now=game.server_time()

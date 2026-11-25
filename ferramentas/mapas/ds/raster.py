@@ -15,12 +15,26 @@ class Canvas:
         self.rgba = np.zeros((h, w, 4), np.uint8)
         self.depth = np.full((h, w), -1e9, np.float32)
         self.top = np.full((h, w), -1e9, np.float32)  # altura do que está desenhado
+        self.up = np.zeros((h, w), bool)  # pixel vai para a camada de cima (copas, telhados)
 
     def project(self, p):
         x, y, z = p
         return ((x - self.ox) * self.s, (z - K * y - self.oz) * self.s, y)
 
-    def tri(self, pts, uvs, tex, rep, cols=None):
+    later = None
+
+    def flush(self):
+        """Desenha os triângulos translúcidos guardados, depois dos opacos."""
+        items, self.later = self.later or [], []
+        for args in items:
+            self.tri(*args, now=True)
+
+    def tri(self, pts, uvs, tex, rep, cols=None, min_h=None, alpha=31, now=False):
+        if 0 < alpha < 31 and not now:
+            if self.later is None:
+                self.later = []
+            self.later.append((pts, uvs, tex, rep, cols, min_h, alpha))
+            return
         P = np.array([self.project(p) for p in pts], np.float64)
         xs, ys = P[:, 0], P[:, 1]
         x0, x1 = int(max(np.floor(xs.min()), 0)), int(min(np.ceil(xs.max()), self.w))
@@ -44,7 +58,7 @@ class Canvas:
         zz = w0 * pts[0][2] + w1 * pts[1][2] + w2 * pts[2][2]
         key = depth * 4 + zz * 0.001
         region = self.depth[y0:y1, x0:x1]
-        ok = inside & (key >= region - 1e-3)
+        ok = inside & (key >= region - (1e-3 if alpha >= 31 else 2.0))
         if not ok.any():
             return
         if tex is None:
@@ -65,10 +79,18 @@ class Canvas:
             color[..., :3] = (color[..., :3] * c).astype(np.uint8)
         ok &= color[..., 3] >= 128
         out = self.rgba[y0:y1, x0:x1]
+        if alpha < 31:  # material translúcido (sombras, brilhos): mistura sem gravar profundidade
+            if alpha == 0:
+                return
+            a = alpha / 31
+            out[ok, :3] = (out[ok, :3] * (1 - a) + color[ok, :3] * a).astype(np.uint8)
+            return
         out[ok] = color[ok]
         out[ok, 3] = 255
         region[ok] = key[ok]
         self.top[y0:y1, x0:x1][ok] = depth[ok]
+        up = self.up[y0:y1, x0:x1]
+        up[ok] = (depth[ok] >= min_h) if min_h is not None else False
 
 
 def wrap(u, n, repeat, flip):

@@ -30,7 +30,43 @@ func map_for(area:String)->Dictionary:
 func world_mouse()->Vector2:
 	return get_local_mouse_position()+camera
 
+# Mapas de DS (Johto, Sinnoh): imagens já desenhadas por chunk, em vez de tiles.
+func draw_image_layer(m:Dictionary,key:String):
+	var img:Dictionary=m.image
+	var base="res://assets/maps/%s/"%img.dir
+	var suffix="" if key=="tiles" else "_up"
+	if img.get("crop")!=null:
+		var t=image_tex(base+"0_0"+suffix+".png")
+		if t:draw_texture_rect(t,Rect2(Vector2(float(img.crop[0]),float(img.crop[1]))*2,t.get_size()*2),false)
+		return
+	if not m.has("_tiles"):
+		var have={}
+		for pair in img.get("tiles",[]):have[Vector2i(int(pair[0]),int(pair[1]))]=true
+		m["_tiles"]=have
+	var size=float(img.chunk)*2
+	var c0=int(floor((camera.x-224)/size));var r0=int(floor((camera.y-78)/size))
+	for r in range(r0,r0+int(540/size)+2):
+		for c in range(c0,c0+int(960/size)+2):
+			if not m._tiles.has(Vector2i(c,r)):continue
+			var t=image_tex(base+"%d_%d%s.png"%[c,r,suffix])
+			if t:draw_texture_rect(t,Rect2(c*size,r*size,size,size),false)
+
+func image_tex(path:String)->Texture2D:
+	if not textures.has(path):
+		textures[path]=load(path) if ResourceLoader.exists(path) else null
+	return textures[path]
+
+# Altura do chão na posição (mapas de DS): o desenho sobe K*altura na tela.
+func lift(m:Dictionary,pos:Vector2)->Vector2:
+	if not m.has("heights"):return pos
+	var cell=float(m.cell);var x=int(pos.x/cell);var y=int(pos.y/cell);var w=int(m.w)
+	if x<0 or y<0 or x>=w or y>=int(m.h):return pos
+	return pos-Vector2(0,float(m.heights[y*w+x])*float(m.image.k)*2)
+
 func draw_map_layer(m:Dictionary,key:String):
+	if m.has("image"):
+		draw_image_layer(m,key)
+		return
 	var tex=texture("res://assets/maps/%s_%s.png"%[m.atlas,"below" if key=="tiles" else "above"])
 	if tex==null:return
 	var cell=float(m.cell);var cols=int(m.columns);var w=int(m.w);var h=int(m.h)
@@ -57,7 +93,7 @@ func map_scene(p:Dictionary,m:Dictionary):
 	var mode="fish" if float(p.get("fishing",0))>0 else ("bike" if p.get("transport","")=="bike" else "walk")
 	var input_dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
 	var speed=120.0 if mode=="bike" else (112.0 if Input.is_physical_key_pressed(KEY_SHIFT) else 80.0)
-	var player_pos=smooth_position("trainer:"+str(p.id),Vector2(p.pos.x,p.pos.y),input_dir*speed)
+	var player_pos=lift(m,smooth_position("trainer:"+str(p.id),Vector2(p.pos.x,p.pos.y),input_dir*speed))
 	var size=Vector2(float(m.w),float(m.h))*float(m.cell)
 	camera=(player_pos-Vector2(256,200)).clamp(Vector2(224,78),(size-Vector2(736,462)).max(Vector2(224,78))).round()
 	# Mapas menores que a tela (interiores) ficam centralizados.
@@ -87,10 +123,10 @@ func map_scene(p:Dictionary,m:Dictionary):
 	actors.sort_custom(func(a,b):return a.y<b.y)
 	for a in actors:
 		if a.has("npc"):
-			var n=a.npc;var pos=Vector2(n.x,n.y);trainer(pos,"green",n.sprite,{},{},"walk",int(n.get("facing",0)))
+			var n=a.npc;var pos=lift(m,Vector2(n.x,n.y));trainer(pos,"green",n.sprite,{},{},"walk",int(n.get("facing",0)))
 			if str(n.name)!="":txt(pos-Vector2(12,58),n.name,10)
 		elif a.has("other"):
-			var other=a.other;var other_pos=smooth_position("trainer:"+str(other.id),Vector2(other.pos.x,other.pos.y))
+			var other=a.other;var other_pos=lift(m,smooth_position("trainer:"+str(other.id),Vector2(other.pos.x,other.pos.y)))
 			trainer(other_pos,other.color,"",other.get("look",{}),other.get("colors",{}));txt(other_pos-Vector2(20,58),other.name,10)
 		else:
 			var partner=game.team_mon(0)

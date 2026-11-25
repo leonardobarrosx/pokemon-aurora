@@ -111,3 +111,38 @@ func TestHoennLittlerootToRoute101AndTravel(t *testing.T) {
 		t.Fatal("viagem de Hoenn para Kanto falhou")
 	}
 }
+
+func TestJohtoOpensAfterHoennAndHasZones(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "A", 1)
+	if areaMaps[johtoStart] == nil {
+		t.Skip("Johto não importada")
+	}
+	p.Visits["kt_indigo_plateau_exterior"] = true
+	if err := w.action(p, Command{Type: "travel", Area: "johto"}, 900); err == nil {
+		t.Fatal("Johto deveria abrir só depois de Ever Grande City")
+	}
+	p.Visits["hn_ever_grande_city"] = true
+	if err := w.action(p, Command{Type: "travel", Area: "johto"}, 1000); err != nil {
+		t.Fatal(err)
+	}
+	m := areaMaps[p.Area]
+	z := m.zone(p.Pos)
+	if p.Area != johtoStart || z == nil || z.Name != "New Bark Town" {
+		t.Fatalf("deveria chegar em New Bark Town, chegou em %s %v", p.Area, z)
+	}
+	if m.at(p.Pos) == '#' {
+		t.Fatal("ponto de chegada em Johto não pode ser parede")
+	}
+	// Todas as portas de Johto levam a áreas que existem.
+	for name, am := range areaMaps {
+		if !isJohto(name) {
+			continue
+		}
+		for _, wp := range am.Warps {
+			if wp.To != "@voltar" && areaMaps[wp.To] == nil {
+				t.Fatalf("porta de %s leva a %s, que não existe", name, wp.To)
+			}
+		}
+	}
+}
