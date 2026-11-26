@@ -1,0 +1,146 @@
+{
+  "kanto_1": {
+    "id": "kanto_1",
+    "theme": "rocha",
+    "title": "Pedreira Monumental",
+    "w": 32,
+    "h": 24,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRssssssssssssssssssssssssssssssRRssssssssssss......ssssssssssssRRssssssssssss......ssssssssssssRRssFRRRssssss.......RRRrrssssssRRsssRRRssss.P.......RRRRRssssssRRsssRRRssrr............ssssssssRRsssRRRsss...........rrssssssssRRsssssssss.............ssssssssRRsssssssPs.............PRRRRsssRRsssssrsss.............sRRRRsssRRssssssssssr.......P..ssRRRFsssRRsssssRRRRRsr.......ssssRRRRsssRRsssssRRRRRsssssssrsssssRRRRsssRRssssssssssss......rsssssrsssssRRssssssssssss......sssssssrssssRRssssssssssssssssssssssssssssssRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        10,
+        18
+      ],
+      [
+        21,
+        5
+      ]
+    ]
+  },
+  "kanto_2": {
+    "id": "kanto_2",
+    "theme": "agua",
+    "title": "Estádio Aquático",
+    "w": 32,
+    "h": 24,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRR..............................RR..............................RR...w~wwwwwwwwppppww...www~w...RR...WW>>>>>>>>pppp>>>>>>>>WW...RR...WW>>>>>>>>>pp>>>>>>>>>WW...RR...WWWWkkWWWppppppWWWkkWWWW...RR...WWWpkkppWppppppWWWkkWWWW...RR..bbbbbbbbbbbbppppWpppppWWW...RR..bbbbbbbbbbbbbpbbbbbbbbbbbb..RR...WWWWWWWWWpppppbbbbbbbbbbb..RR...WWWWWWkkWppppppWkkWWWWWW...RR...WW<<<<kk<<<<pp<<kk<<<<WW...RR...WW<<<<<<<<pppp<<<<<<<<WW...RR...wwwwwwwwwwppppwwwwwwwwww...RR...wwwww...wwwwppwwwwwwwwww...RR..............................RRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        10,
+        19
+      ],
+      [
+        21,
+        5
+      ]
+    ]
+  },
+  "kanto_4": {
+    "id": "kanto_4",
+    "theme": "planta",
+    "title": "Jardim Botânico",
+    "w": 40,
+    "h": 30,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGGGGGGGGGGGGGGGGGLLLLLLGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLGGGGGGGGGGGGGGGGGG......................................GG......................................GG....t.ggg.....h...........gggg........GG....gggggooo..h.......ggggggggg..t....GG...ggggggggg..h.....oooggggggggg......GG...ggggggggg..h.......ggggggggg.......GG...ggggggggg..h........ggggggg........GG....ggggggg....hhhhhhhhh....www.......GG......ggg...........sssssswwwwwww.....GG....ssssssssss......sssssswwwwwwww....GG....ssssssssssgggg.......bbbbbbbbbbb..GG............ssggggg......bbbbbbbbbbb..GG...........gssgggggg......wwwwwww.....GG.....t......sssssssss.......www.......GG....ggggggg.sssssssssh........ooo.....GG...ggggggggg.........h.....ggggg......GG...ggggggggooo.......h...ggggggggg....GG...ggggggggg.........h...ggggggggg....GG....ggggggg..........h...gtggggggg....GG...........................ggggg......GG......................................GG......................................GGGGGGGGGGGGGGGGGGCCCCCCGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGGCCCCCCGGGGGGGGGGGGGGGGGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        14,
+        24
+      ],
+      [
+        25,
+        5
+      ]
+    ]
+  },
+  "kanto_7": {
+    "id": "kanto_7",
+    "theme": "fogo",
+    "title": "Laboratório Vulcânico",
+    "w": 48,
+    "h": 36,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMM.........MMMMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMMTTTTTT...MMMMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMMTTTTTT...VMMMMMMllllllMMMMTTTTTMMMMMMMMMMMRRMMMM.........MMMMMMMllllllMMMMTTTTTMMMMMMMMMMMRRMMMM.........MMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMMMMMMMMMMMMMMMMMMMMVMMMMMMMMMMMMMMMMRRMMMMMMGGMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMRRMMMMMMGGMMTTTTTTMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMTTTTTTMMMMllllllMMMMMMMMVMMMMMMMMMMMRRMMMMMMMMMMTTTTTTMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMMMeeeMMMMMMMMMMMMMMMMMMMeeeMMMMMMMMMRRMMMMMMMMMMMMeeeMMMMMMMMMMMMMMTTTTTeeeMMMMMMMMMRRMMMMMMMMMMMMeeeMMMMMllllllMMMTTTTTeeeMMMMMMMMMRRMMMMMMTTTTTMMMMMMMMMllllllMMMTTTTTMMMMGGGMMMMMRRMMMMMMTTTTTMMMMMVMMMllllllMMMMMMMMMMMMGGGMMMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMM..........MMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMM..........MMMMRRMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM...TTTTT..MMMMRRMMMMMMMMMVMMMMMMMMMMMMMMMMMMVMMM...TTTTT..MMMMRRMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMM..........MMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMM..........MMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMM..........MMMMRRMMMMMMMMMMMMMMMMMMMMllllllMMMMMMMMMMMMMMMMMMMMRRMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMMRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        18,
+        30
+      ],
+      [
+        29,
+        5
+      ]
+    ]
+  },
+  "hoenn_4": {
+    "id": "hoenn_4",
+    "theme": "fogo",
+    "title": "Santuário Termal",
+    "w": 40,
+    "h": 30,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRR,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,RR,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,RR,,,,t,,,,,,,,,,,,,ss,,,,,,,,,,,,,t,,,,RR,,,,,,,,,,,,,,,uuussuuuu,,,,,,,,,,,,,,RR,,,,,r,,,,,,uuuuuullluuuuuu,V,,,,,,,,,RR,,,,,,,,,Vuuuuuuuussuuuuuuuuu,,r,,,,,,RR,,,,,,,,uuuuuusssssssssssuuuuuu,,,,,,,RR,,,,,,,uuuuusssssussuussrssuuuuu,,,,,,RR,,,,,,uuuuussssuuussuuuussssuuuuu,,,,,RR,,,,,,uuuusssuuuusssssuuuusssuuuu,,,,,RR,,,bbbbbbbbbbbbbbbVssssuuussssuuu,,,,,RR,,,bbbbbbbbbbbbbbbsssssuuuusssuuuu,,,,RR,,,,,,uuussssuuusssssVbbbbbbbbbbbbb,,,RR,,,,,,uuuusssuruussssbbbbbbbbbbbbbb,,,RR,,,,,,uuuuussssuuuussuuussssuuuuu,,,,,RR,,,,,,,uuuuusssssuussusssssuuuuu,,,,,,RR,,,,,,,,uVuuuusssssssssssuuVuuu,,,,,,,RR,,,,,,r,,,uuuuuuuullluuuuuuuu,,,,,,,,,RR,,,,,,,,,,,,uuuuuuussuuuuuu,,,r,,,,,,,RR,,,,t,,,,,,,,,,uuuussuuu,,,,,,,,,t,,,,RR,,,,,,,,,,,,,,,,,,,ss,,,,,,,,,,,,,,,,,RR,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,,RRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        14,
+        24
+      ],
+      [
+        25,
+        5
+      ]
+    ]
+  },
+  "johto_7": {
+    "id": "johto_7",
+    "theme": "gelo",
+    "title": "Lago Glacial",
+    "w": 48,
+    "h": 36,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnRRnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnRRnnnnrnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnRRnnnnnnnnnnnnnjnnniiiiiiiiiiiiinnnnnnnnnnnnnnnnRRnnnnnnnnnnnnjjjiiiiiiiiiiiiiiiiiinnnnnnnrnnnnnRRnnnnnnnnnnniijiiiiiiiiiiiiiiiinnnnninnnnnnnnnnRRnnnnnnnnnnnnnnniiiiiiiiiiiiinnnnnnnnninnnnnnnnRRnnnnnnnnnnIInnnniiiiiiiiiiinnnnnnInInninnnnnnnRRnnnnnnnnnnnnnnniiiiiiiiiiiiinnnnnnnnniiinnnnnnRRnnnnnniiiiiiiiiiiiiiiiiiiiiiiinnnnniiiiiinnnnnRRnnnnniiiiiiiiiiiiiiiiijjjiiiiiiiiiiiiiiiiinnnnRRnnnnniiiiiiiiiiiiiijjjjjjjjjiiiiiiiiijiiiinnnnRRnnnninnnnnnnnniiijjjjjjjjjjjjjiiiiiijjjiiiinnnRRnnnninnnnnnnnniijjjjjWWWWWjjjjjiiiiiijiiiiinnnRRnnnninnnnnnnnniijjjjWWWWWWWjjjjiiiiiiiiiiiinnnRRnnnniiiiiiiiiiiijjjjjWWWWWjjjjjiiiiiiiiiiiinnnRRnnnniiiiiiiiiiiiijjjjjjjjjjjjjinnnnnnnnniiinnnRRnnnnniiiiiiiiiiiiiijjjjjjjjjiiinnnnnnnnniinnnnRRnnnnniijiiiiiiiiiiiiiijjjiiiiiinnnnIInnniinnnnRRnnnnnnjjjiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiiinnnnnRRnnnnnnnjiiiinnnnnnnnniiiiiiiiiiiiiiiiiiinnnnnnRRnnnnnnnniiinnnnInInnnniiinnnnInInniiiiinnnnnnnRRnnnnnnnnniiinnnnnnnnniiinjnnnnnnnnniiinnnnnnnnRRnnnnnnnnnnniiiiiiiiiiiiijjjnnnnnnniinnnnnnnnnnRRnnnnnrnnnnnnnniiiiiiiiiiijiiiiiiinnnnnnnnnnnnnRRnnnnnnnnnnnnnnnnnnniiiiiiiiiiinnnnnnnnnnrnnnnnRRnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnRRnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnnRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        18,
+        30
+      ],
+      [
+        29,
+        5
+      ]
+    ]
+  },
+  "johto_4": {
+    "id": "johto_4",
+    "theme": "fantasma",
+    "title": "Templo Assombrado",
+    "w": 40,
+    "h": 30,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAARRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRLLLLLLRRRRRRRRRRRRRRRRRR......................................RR......................................RR..........................OOOOOO......RR.....OOOOOO............Y..OOOOOO......RR.....OOOOOO...RRRRRRR.....OOOOOO......RR.....OOOOOO.............P.OOOOOO......RR.....Y......P.........................RR.......RRRRRRRR,,,,,,,.......Y........RR.......R.......,,,,,,,.R..............RR.......R.......,,,,,,,.R..............RR.......R.......,,,,,,,.R.....P........RR...............,,,,,,,.RRRRR..........RR...............,,,,,,,................RR............RRRRR...........OOOOO.....RR........P...R...............OOOOO.....RR............R...............OOOOO.....RR............R...OOOOOOP.....OOOOO.....RR................OOOOOO.RRRRROOOOO.....RR........Y.......OOOOOO................RR................OOOOOO................RR......................................RR......................................RRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRCCCCCCRRRRRRRRRRRRRRRRRAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        14,
+        24
+      ],
+      [
+        25,
+        5
+      ]
+    ]
+  },
+  "sinnoh_2": {
+    "id": "sinnoh_2",
+    "theme": "planta",
+    "title": "Floresta Ancestral",
+    "w": 32,
+    "h": 24,
+    "cells": "AAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAGGGGGGGGGGGGGLLLLLLGGGGGGGGGGGGGGGGGGGGGGGGGGLLLLLLGGGGGGGGGGGGGG...............ss.............GG..............sss.............GG...tgggggg..ssssPgg.......t...GG..gggggggggssssgggggg.........GG...ggggPgg.sssgggggg..WWW.....GG......o.....shhhhh..WwwwwwW...GG....t.......sss.....wwwwwww...GG......ggggg.sss....bbbbbbbbbb.GG.....ggggggsssggg.obbbbbbbbbb.GG......ggggsssgggggg.WwwwwwW...GG...t.....Psssggggggg..WWW.....GG...........sssggghg..ggggg....GG....ggggg...sssggh...Pgggg....GG...ggggg...o.sss.....gggggt...GG....gggg......sss.............GG...............ss.............GGGGGGGGGGGGGGCCCCCCGGGGGGGGGGGGGGGGGGGGGGGGGGCCCCCCGGGGGGGGGGGGGAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA",
+    "spawn": [
+      [
+        10,
+        18
+      ],
+      [
+        21,
+        5
+      ]
+    ]
+  }
+}
