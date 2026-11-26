@@ -5,3 +5,4 @@ server/data/
 build/
 client/**/*.import
 /data/
+server/server
