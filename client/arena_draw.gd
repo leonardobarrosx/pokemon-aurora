@@ -106,7 +106,9 @@ func prop(fd:Dictionary,ch:String,c:int,r:int,top:bool,alpha:float=1.0):
 
 func ground(b:Dictionary):
 	var fd:Dictionary=b.field
-	var tex:Texture2D=v.texture("res://assets/stadiums/%s.png"%str(fd.get("id",b.get("gym",""))))
+	var id=str(fd.get("id",b.get("gym","")))
+	var upgraded="res://assets/stadiums/v10/%s.svg"%id
+	var tex:Texture2D=v.texture(upgraded) if ResourceLoader.exists(upgraded) else v.texture("res://assets/stadiums/%s.png"%id)
 	var cs=float(fd.cell);var cols=int(fd.cols)
 	var now=v.game.server_time()
 	var vis=visible_cells(fd)
