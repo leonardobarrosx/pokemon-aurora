@@ -1,0 +1,1 @@
+{"w":5,"h":5,"cell":32,"cells":"######....#....###..#####","warps":[{"x":4,"y":1,"w":1,"h":1,"to":"@voltar"},{"x":4,"y":2,"w":1,"h":1,"to":"@voltar"},{"x":4,"y":3,"w":1,"h":1,"to":"@voltar"}],"connections":[],"encounters":[],"water":[],"cave":false,"spawns":{},"points":{},"default":[80.0,86.4],"name":"Inside Of Truck","npcs":[]}

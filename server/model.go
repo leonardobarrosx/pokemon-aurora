@@ -114,6 +114,7 @@ type Arcade struct {
 type Player struct {
 	Facing     int                `json:"facing"`
 	Transport  string             `json:"transport"`
+	Mount      string             `json:"mount"`
 	Look       map[string]string  `json:"look"`
 	Colors     map[string]string  `json:"colors"`
 	Meal       string             `json:"meal"`
@@ -158,15 +159,20 @@ type Player struct {
 	Losses     int                `json:"losses"`
 	Rating     int                `json:"rating"`
 	Records    map[string]float64 `json:"records"`
+	Badges     map[string]bool    `json:"badges"`
 	Rewarded   map[string]int     `json:"rewarded"`
 	Safari     *Safari            `json:"safari"`
 	Arcade     *Arcade            `json:"arcade"`
 	Event      string             `json:"event"`
+	WarpAt     float64            `json:"-"`
+	Running    bool               `json:"running"`
+	ReturnArea string             `json:"return_area"`
+	ReturnPos  Vec                `json:"return_pos"`
 }
 
 func newPlayer(name string, starter int, now float64) *Player {
 	m := newMon(starter)
-	return &Player{ID: uid(), Name: name, Area: "casa", Pos: Vec{256, 300}, Seen: now, Look: map[string]string{"gender": "m", "hair": "boy2", "top": "jacket", "bottom": "jeans", "hat": "", "acc": "", "bag": ""}, Colors: map[string]string{}, Color: "green", Theme: "verde", Coins: 300, Flags: map[string]int{}, Mons: []Mon{m}, Team: []string{m.ID}, Balls: 10, Seeds: 6, Stones: map[string]int{}, Decor: []Decor{}, Visits: map[string]bool{"casa": true, "vila": true, "jardim": true}, Profession: "Treinador", Friends: map[string]int{}, Gifts: map[string]float64{}, Rating: 1000, Records: map[string]float64{}, Rewarded: map[string]int{}, Notice: "Bem-vindo a Aurora. Encontre a Professora Íris na vila."}
+	return &Player{ID: uid(), Name: name, Area: "casa", Pos: Vec{256, 300}, Seen: now, Look: map[string]string{"gender": "m", "hair": "boy2", "top": "jacket", "bottom": "jeans", "hat": "", "acc": "", "bag": ""}, Colors: map[string]string{}, Color: "green", Theme: "verde", Coins: 300, Flags: map[string]int{}, Mons: []Mon{m}, Team: []string{m.ID}, Balls: 10, Seeds: 6, Stones: map[string]int{}, Decor: []Decor{}, Visits: map[string]bool{"casa": true, "vila": true, "jardim": true}, Profession: "Treinador", Friends: map[string]int{}, Gifts: map[string]float64{}, Rating: 1000, Records: map[string]float64{}, Rewarded: map[string]int{}, Badges: map[string]bool{}, Notice: "Bem-vindo a Aurora. Encontre a Professora Íris na vila."}
 }
 func (p *Player) mon(id string) *Mon {
 	for i := range p.Mons {
@@ -178,26 +184,41 @@ func (p *Player) mon(id string) *Mon {
 }
 
 type Fighter struct {
-	Facing     int             `json:"facing"`
-	Physique   Physique        `json:"physique"`
-	Velocity   Vec             `json:"velocity"`
-	SlowUntil  float64         `json:"slow_until"`
-	Meal       string          `json:"meal"`
-	MealUntil  float64         `json:"meal_until"`
-	Owner      string          `json:"owner"`
-	Name       string          `json:"name"`
-	Mon        Mon             `json:"mon"`
-	Pos        Vec             `json:"pos"`
-	HP         float64         `json:"hp"`
-	MaxHP      float64         `json:"max_hp"`
-	Energy     float64         `json:"energy"`
-	ShotAt     float64         `json:"shot_at"`
-	SpecialAt  float64         `json:"special_at"`
-	DashAt     float64         `json:"dash_at"`
-	Invincible float64         `json:"invincible"`
-	Damage     float64         `json:"damage"`
-	Auto       bool            `json:"auto"`
-	Used       map[string]bool `json:"used"`
+	Facing      int             `json:"facing"`
+	Physique    Physique        `json:"physique"`
+	Velocity    Vec             `json:"velocity"`
+	SlowUntil   float64         `json:"slow_until"`
+	Meal        string          `json:"meal"`
+	MealUntil   float64         `json:"meal_until"`
+	Owner       string          `json:"owner"`
+	Name        string          `json:"name"`
+	Art         string          `json:"art"`
+	Mon         Mon             `json:"mon"`
+	Pos         Vec             `json:"pos"`
+	HP          float64         `json:"hp"`
+	MaxHP       float64         `json:"max_hp"`
+	Energy      float64         `json:"energy"`
+	ShotAt      float64         `json:"shot_at"`
+	SpecialAt   float64         `json:"special_at"`
+	DashAt      float64         `json:"dash_at"`
+	Invincible  float64         `json:"invincible"`
+	Damage      float64         `json:"damage"`
+	Auto        bool            `json:"auto"`
+	Used        map[string]bool `json:"used"`
+	Moves       [4]Move         `json:"moves"`
+	MoveAt      [4]float64      `json:"move_at"`
+	Eff         [4]float64      `json:"eff"`
+	LastMove    int             `json:"last_move"`
+	LastMoveAt  float64         `json:"last_move_at"`
+	StunUntil   float64         `json:"stun_until"`
+	ChargeUntil float64         `json:"charge_until"`
+	Terrain     string          `json:"terrain"`
+	Hidden      bool            `json:"hidden"`
+	WarpAt      float64         `json:"-"`
+	ChargeDir   Vec             `json:"-"`
+	ChargeSpeed float64         `json:"-"`
+	ChargeSlot  int             `json:"-"`
+	ChargeHit   bool            `json:"-"`
 }
 type Projectile struct {
 	Pos    Vec     `json:"pos"`
@@ -207,6 +228,8 @@ type Projectile struct {
 	Life   float64 `json:"life"`
 	Damage float64 `json:"damage"`
 	Radius float64 `json:"radius"`
+	Move   string  `json:"move"`
+	Knock  float64 `json:"knock"`
 }
 type Blast struct {
 	Pos    Vec     `json:"pos"`
@@ -215,12 +238,21 @@ type Blast struct {
 	At     float64 `json:"at"`
 	Radius float64 `json:"radius"`
 	Done   bool    `json:"done"`
+	Move   string  `json:"move"`
+	Damage float64 `json:"damage"`
+	Knock  float64 `json:"knock"`
+	Wave   bool    `json:"wave"`
 }
 type Battle struct {
 	Beams       []Beam       `json:"beams"`
 	PauseUntil  float64      `json:"pause_until"`
 	ID          string       `json:"id"`
 	Kind        string       `json:"kind"`
+	Gym         string       `json:"gym"`
+	Field       *Field       `json:"field,omitempty"`
+	Area        string       `json:"area"`
+	Origin      Vec          `json:"origin"`
+	Trainer     Vec          `json:"trainer"`
 	Fighters    [2]*Fighter  `json:"fighters"`
 	Projectiles []Projectile `json:"projectiles"`
 	Blasts      []Blast      `json:"blasts"`
@@ -228,6 +260,15 @@ type Battle struct {
 	End         float64      `json:"end"`
 	Winner      string       `json:"winner"`
 	Log         string       `json:"log"`
+	// Cutins: arte de batalha do treinador ao lançar Pokébola, trocar de
+	// Pokémon ou dar um comando de ataque especial.
+	Cutins []Cutin `json:"cutins"`
+}
+type Cutin struct {
+	Side int     `json:"side"`
+	Kind string  `json:"kind"`
+	Text string  `json:"text"`
+	At   float64 `json:"at"`
 }
 type Message struct {
 	Name string  `json:"name"`
@@ -248,6 +289,7 @@ type World struct {
 	Chat     []Message          `json:"chat"`
 	Queue    []string           `json:"queue"`
 	Market   []Listing          `json:"market"`
+	Wild     map[string][]*Wild `json:"-"`
 }
 
 func newWorld() *World {

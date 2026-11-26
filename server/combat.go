@@ -3,12 +3,11 @@ package main
 import (
 	"fmt"
 	"math"
-	mathrand "math/rand/v2"
 )
 
 func makeFighter(p *Player, m Mon, pos Vec) *Fighter {
 	hp := 90 + species[m.Species].HP + float64(m.Level*3+m.IV[0]+m.EV[0]/4)
-	f := &Fighter{Owner: "npc", Name: species[m.Species].Name, Mon: m, Pos: pos, HP: hp, MaxHP: hp, Energy: 100, Auto: true, Used: map[string]bool{m.ID: true}, Physique: physique(m)}
+	f := &Fighter{Owner: "npc", Name: species[m.Species].Name, Mon: m, Pos: pos, HP: hp, MaxHP: hp, Energy: 100, Auto: true, Used: map[string]bool{m.ID: true}, Physique: physique(m), Moves: movesFor(m)}
 	if p != nil {
 		f.Owner = p.ID
 		f.Name = p.Name
@@ -28,12 +27,21 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 	b := &Battle{ID: uid(), Kind: kind, Start: now, Projectiles: []Projectile{}, Beams: []Beam{}, Blasts: []Blast{}, Log: "Mova-se, mire com o mouse e ataque!"}
 	b.Fighters[0] = makeFighter(p, *p.mon(p.Team[0]), Vec{100, 230})
 	m := newMon(s)
+	g := gymAt(p.Area)
+	if g == nil {
+		g = &gyms[0]
+	}
 	if kind == "gym" {
-		m.Level = 12
+		m.Level = g.Level
 	}
 	b.Fighters[1] = makeFighter(nil, m, Vec{410, 200})
 	if kind == "gym" {
-		b.Fighters[1].Name = "Flora"
+		b.Gym = g.ID
+		b.Fighters[1].Name = g.Leader
+		b.Fighters[1].Art = g.Art
+		b.Field = newField(g.ID, now)
+		b.Fighters[0].Pos = b.Field.Spawn[0]
+		b.Fighters[1].Pos = b.Field.Spawn[1]
 	}
 	if other != nil {
 		if other.Battle != "" {
@@ -46,56 +54,33 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 		b.Fighters[0].Auto = false
 	}
 	p.Battle = b.ID
+	b.updateEff()
+	b.cutin(0, "switch", "Vai, "+monName(b.Fighters[0].Mon)+"!", now)
+	if kind == "gym" || kind == "pvp" {
+		b.cutin(1, "switch", "Vai, "+monName(b.Fighters[1].Mon)+"!", now+1.2)
+	}
 	w.Battles[b.ID] = b
 	return nil
 }
-func damage(a, b *Fighter) float64 {
-	at, bt := species[a.Mon.Species].Type, species[b.Mon.Species].Type
-	factor := 1.0
-	if a.Meal == "iguaria" && a.MealUntil > nowSec() {
-		factor *= 1.08
+
+// cutin guarda a arte do treinador para o cliente mostrar por um instante.
+func (b *Battle) cutin(side int, kind, text string, at float64) {
+	b.Cutins = append(b.Cutins, Cutin{Side: side, Kind: kind, Text: text, At: at})
+	if len(b.Cutins) > 4 {
+		b.Cutins = b.Cutins[len(b.Cutins)-4:]
 	}
-	if (at == "Fogo" && bt == "Planta") || (at == "Planta" && (bt == "Água" || bt == "Pedra")) || (at == "Água" && (bt == "Fogo" || bt == "Pedra")) || (at == "Elétrico" && (bt == "Água" || bt == "Voador")) {
-		factor = 1.4
-	}
-	if a.Mon.Held == "Pedra Dura" && at == "Pedra" {
-		factor *= 1.15
-	}
-	return math.Max(3, (10+species[a.Mon.Species].Attack/10+float64(a.Mon.Level)/2+float64(a.Mon.IV[1]+a.Mon.EV[1]/4)/8-float64(b.Mon.EV[2])/40)*factor)
 }
+
+func monName(m Mon) string {
+	return species[m.Species].Name
+}
+
+// shoot mantém os comandos antigos: ataque = golpe 1, especial = golpe 4.
 func (b *Battle) shoot(i int, aim Vec, now float64, special bool) error {
-	f, target := b.Fighters[i], b.Fighters[1-i]
-	f.Facing = facing(aim.Add(f.Pos.Mul(-1)))
 	if special {
-		if now < f.SpecialAt || f.Energy < 30 {
-			return fmt.Errorf("habilidade recarregando")
-		}
-		f.SpecialAt = now + 4
-		f.Energy -= 30
-		if b.beamSkill(i, aim, now) {
-			return nil
-		}
-		pos := bounds(aim)
-		delta := pos.Add(f.Pos.Mul(-1))
-		if delta.Len() > 180 {
-			pos = f.Pos.Add(delta.Unit().Mul(180))
-		}
-		b.Blasts = append(b.Blasts, Blast{Pos: pos, Owner: f.Owner, Type: species[f.Mon.Species].Type, At: now + .75, Radius: 42})
-		return nil
+		return b.useMove(i, 3, aim, now)
 	}
-	if now < f.ShotAt {
-		return fmt.Errorf("golpe recarregando")
-	}
-	f.ShotAt = now + .65
-	dir := aim.Add(f.Pos.Mul(-1)).Unit()
-	f.Facing = facing(dir)
-	speed := 185 + float64(f.Mon.EV[5])/12
-	radius := 7.0
-	if f.Mon.Held == "Lente Foco" {
-		radius = 10
-	}
-	b.Projectiles = append(b.Projectiles, Projectile{Pos: f.Pos.Add(dir.Mul(18)), Vel: dir.Mul(speed), Owner: f.Owner, Type: species[f.Mon.Species].Type, Life: 2.5, Damage: damage(f, target), Radius: radius})
-	return nil
+	return b.useMove(i, 0, aim, now)
 }
 func (w *World) endBattle(b *Battle, winner string, now float64) {
 	if b.End > 0 {
@@ -120,6 +105,16 @@ func (w *World) endBattle(b *Battle, winner string, now float64) {
 			if b.Kind == "gym" {
 				p.Coins += 40
 				p.Flags["gym"]++
+				if g := gymByID(b.Gym); g != nil {
+					if p.Badges == nil {
+						p.Badges = map[string]bool{}
+					}
+					if !p.Badges[g.ID] {
+						p.Badges[g.ID] = true
+						p.Coins += 200
+						p.Notice = "Vitória! Você conquistou a " + g.Badge + " de " + g.Leader + "."
+					}
+				}
 				elapsed := now - b.Start
 				if p.Records["gym"] == 0 || elapsed < p.Records["gym"] {
 					p.Records["gym"] = elapsed
@@ -165,6 +160,8 @@ func (w *World) nextMon(b *Battle, i int, now float64) bool {
 				next.Invincible = now + 1
 				next.Auto = f.Auto
 				b.Fighters[i] = next
+				b.updateEff()
+				b.cutin(i, "switch", "Vai, "+monName(next.Mon)+"!", now)
 				return true
 			}
 		}
@@ -172,12 +169,17 @@ func (w *World) nextMon(b *Battle, i int, now float64) bool {
 	return false
 }
 func (w *World) tick(dt, now float64) {
+	w.tickWild(dt, now)
 	for _, p := range w.Players {
 		if now-p.InputAt > .3 {
 			p.Input = Vec{}
 		}
 		if p.Battle == "" && p.Arcade == nil {
-			movePlayer(p, dt)
+			if areaMaps[p.Area] != nil {
+				w.walkMap(p, dt, now)
+			} else {
+				movePlayer(p, dt)
+			}
 		}
 		settleTraining(p, now)
 		if p.Arcade != nil {
@@ -233,22 +235,34 @@ func (w *World) tick(dt, now float64) {
 				regen *= 1.05
 			}
 			f.Energy = math.Min(100, f.Energy+dt*regen)
+			if f.StunUntil > now || f.ChargeUntil > now {
+				continue
+			}
 			if f.Auto {
 				delta := target.Pos.Add(f.Pos.Mul(-1))
 				f.Facing = facing(delta)
-				if delta.Len() > 160 {
-					f.Pos = bounds(f.Pos.Add(delta.Unit().Mul(dt * 60)))
+				pace := dt * 60 * b.terrainSpeed(f)
+				if b.cellCost(f, f.Pos) >= 3 {
+					// Caiu num lugar ruim: procura a casa certa para ficar.
+					if safe, ok := b.safeCell(f); ok {
+						b.autoStep(f, safe.Add(f.Pos.Mul(-1)), pace*1.4)
+					}
+				} else if delta.Len() > 160 {
+					b.autoStep(f, delta, pace)
 				}
-				f.Pos = bounds(f.Pos.Add(Vec{0, math.Sin(now*2+float64(i)) * dt * 35}))
-				_ = b.shoot(i, target.Pos, now, false)
-				if mathrand.Float64() < dt*.25 {
-					_ = b.shoot(i, target.Pos, now, true)
+				wobble := Vec{0, math.Sin(now*2+float64(i)) * dt * 35}
+				if b.cellCost(f, f.Pos.Add(wobble.Unit().Mul(fieldCell*.6))) <= b.cellCost(f, f.Pos) {
+					b.step(f, f.Pos.Add(wobble))
+				}
+				if f.StunUntil < now && f.ChargeUntil < now {
+					b.autoMove(i, now)
 				}
 			} else if p != nil {
 				speed := (105 + float64(f.Mon.EV[5])/10) / math.Pow(1+f.Physique.Mass/50, .12)
 				if f.SlowUntil > now {
 					speed *= .65
 				}
+				speed *= b.terrainSpeed(f)
 				if f.Meal == "salada" && f.MealUntil > now {
 					speed *= 1.05
 				}
@@ -257,30 +271,39 @@ func (w *World) tick(dt, now float64) {
 				}
 				targetVel := p.Input.Mul(speed)
 				accel := clamp(dt*10/math.Pow(1+f.Physique.Mass/30, .3), 0, 1)
+				accel *= b.grip(f) // derrapa no gelo, mais ainda se for pesado
 				f.Velocity = f.Velocity.Add(targetVel.Add(f.Velocity.Mul(-1)).Mul(accel))
-				f.Pos = bounds(f.Pos.Add(f.Velocity.Mul(dt)))
+				before := f.Pos
+				b.step(f, f.Pos.Add(f.Velocity.Mul(dt)))
+				if f.Pos == before {
+					f.Velocity = Vec{}
+				}
 			}
 		}
 		if b.End > 0 {
 			continue
 		}
+		b.tickTerrain(dt, now)
+		b.updateEff()
+		b.tickCharges(dt, now)
 		shots := b.Projectiles[:0]
 		for _, s := range b.Projectiles {
 			s.Pos = s.Pos.Add(s.Vel.Mul(dt))
 			s.Life -= dt
 			for i, target := range b.Fighters {
 				if target.Owner != s.Owner && target.Invincible < now && distance(target.Pos, s.Pos) < s.Radius+target.Physique.Radius {
-					target.HP = math.Max(0, target.HP-s.Damage)
-					target.Pos = bounds(target.Pos.Add(s.Vel.Unit().Mul(clamp(18/math.Pow(1+target.Physique.Mass/15, .5), 2, 18))))
-					if s.Type == "Elétrico" || s.Type == "Gelo" {
-						target.SlowUntil = now + 1.5
-					}
-					b.Fighters[1-i].Damage += s.Damage
+					b.hit(1-i, target, s.Damage, s.Knock, s.Vel, s.Type, now)
 					s.Life = 0
 				}
 			}
-			if s.Life > 0 && s.Pos.X > 0 && s.Pos.X < 512 && s.Pos.Y > 80 && s.Pos.Y < 364 {
+			if i, hit := b.shotBlocked(s.Pos); hit && s.Life > 0 {
+				s.Life = 0 // o obstáculo segura o disparo e leva o dano
+				b.damageObstacle(i, s.Type, s.Damage, now)
+			}
+			if s.Life > 0 && b.inside(s.Pos) {
 				shots = append(shots, s)
+			} else {
+				b.shapeField(s.Pos, s.Radius, s.Type, 0, now)
 			}
 		}
 		b.Projectiles = shots
@@ -289,12 +312,12 @@ func (w *World) tick(dt, now float64) {
 			if now >= s.At && !s.Done {
 				for i, target := range b.Fighters {
 					if target.Owner != s.Owner && target.Invincible < now && distance(target.Pos, s.Pos) < s.Radius+target.Physique.Radius {
-						d := damage(b.Fighters[1-i], target) * 1.8
-						target.HP = math.Max(0, target.HP-d)
-						b.Fighters[1-i].Damage += d
+						dir := target.Pos.Add(s.Pos.Mul(-1))
+						b.hit(1-i, target, s.Damage, s.Knock, dir, s.Type, now)
 					}
 				}
 				s.Done = true
+				b.shapeField(s.Pos, s.Radius, s.Type, s.Damage, now)
 			}
 			if now < s.At+.35 {
 				blasts = append(blasts, s)

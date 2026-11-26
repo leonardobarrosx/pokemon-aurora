@@ -25,6 +25,7 @@ type Command struct {
 	Move    Vec               `json:"move"`
 	Aim     Vec               `json:"aim"`
 	Fly     bool              `json:"fly"`
+	Run     bool              `json:"run"`
 }
 
 var areaNeed = map[string]int{"casa": 0, "vila": 0, "jardim": 0, "rota": 1, "mina": 2, "ginasio": 2, "safari": 3, "lago": 3}
@@ -38,10 +39,14 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			return errMsg("entrada inválida")
 		}
 		p.Input = c.Move
+		p.Running = c.Run
 		if p.Input.Len() > 1 {
 			p.Input = p.Input.Unit()
 		}
-		p.Aim = bounds(c.Aim)
+		p.Aim = c.Aim
+		if p.Battle != "" || areaMaps[p.Area] == nil {
+			p.Aim = bounds(c.Aim)
+		}
 		p.InputAt = now
 		if c.Move.X < 0 {
 			p.Facing = 1
@@ -64,7 +69,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		return errMsg("aguarde um instante")
 	}
 	p.LastAction = now
-	if p.Battle != "" && !slices.Contains([]string{"attack", "special", "dash", "ball", "flee", "auto", "evolve"}, c.Type) {
+	if p.Battle != "" && !slices.Contains([]string{"attack", "special", "move", "dash", "ball", "flee", "auto", "evolve"}, c.Type) {
 		return errMsg("termine a batalha primeiro")
 	}
 	if p.Arcade != nil && c.Type != "arcade_stop" {
@@ -72,13 +77,31 @@ func (w *World) action(p *Player, c Command, now float64) error {
 	}
 	switch c.Type {
 	case "transport":
-		if c.Value != "walk" && c.Value != "bike" {
+		if c.Value != "walk" && c.Value != "bike" && c.Value != "mount" {
 			return errMsg("transporte inválido")
 		}
+		if p.Transport == "surf" || p.Transport == "dive" {
+			return errMsg("saia da água primeiro")
+		}
+		p.Mount = ""
+		if c.Value == "mount" {
+			if p.Mount = rideMon(p, "Corrida"); p.Mount == "" {
+				return errMsg("a montaria precisa de um Pokémon de Corrida na equipe")
+			}
+		}
 		p.Transport = c.Value
+	case "dive":
+		return w.dive(p, now)
 	case "travel":
-		need, ok := areaNeed[c.Area]
-		if !ok || p.Quest < need {
+		// Viagem entre regiões levando a equipe: cada região tem sua chegada
+		// (Aurora na vila, Kanto em Pallet Town, Hoenn em Littleroot).
+		if start, ok := regionStarts[c.Area]; ok {
+			if !regionOpen(p, c.Area) {
+				return errMsg("essa região ainda não foi liberada: siga a jornada em ordem")
+			}
+			c.Area = start
+		}
+		if !canEnter(p, c.Area) {
 			return errMsg("continue a história para liberar essa área")
 		}
 		if c.Fly {
@@ -92,9 +115,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 				return errMsg("Fly exige um parceiro voador e uma visita anterior a pé")
 			}
 		}
-		p.Area = c.Area
-		p.Visits[c.Area] = true
-		p.Pos = Vec{256, 290}
+		w.enter(p, c.Area, now)
 	case "appearance":
 		return setAppearance(p, c.Look, c.Colors)
 	case "wardrobe":
@@ -152,11 +173,12 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		}
 		return w.startBattle(p, "capture", pool[mathrand.IntN(len(pool))], nil, now)
 	case "gym":
-		if p.Area != "ginasio" {
-			return errMsg("vá ao ginásio")
+		g := gymAt(p.Area)
+		if g == nil {
+			return errMsg("vá a um ginásio")
 		}
-		return w.startBattle(p, "gym", 1, nil, now)
-	case "attack", "special", "dash", "ball", "flee":
+		return w.startBattle(p, "gym", g.Species, nil, now)
+	case "attack", "special", "move", "dash", "ball", "flee":
 		b := w.Battles[p.Battle]
 		if b == nil || b.End > 0 {
 			return errMsg("nenhuma batalha ativa")
@@ -168,7 +190,17 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		f, foe := b.Fighters[i], b.Fighters[1-i]
 		switch c.Type {
 		case "attack", "special":
-			return b.shoot(i, p.Aim, now, c.Type == "special")
+			err := b.shoot(i, p.Aim, now, c.Type == "special")
+			if err == nil && c.Type == "special" {
+				b.cutin(i, "special", f.Moves[3].Name+"!", now)
+			}
+			return err
+		case "move":
+			err := b.useMove(i, c.Index, p.Aim, now)
+			if err == nil && c.Index == 3 {
+				b.cutin(i, "special", f.Moves[3].Name+"!", now)
+			}
+			return err
 		case "dash":
 			if now < f.DashAt || f.Energy < 20 {
 				return errMsg("esquiva recarregando")
@@ -177,7 +209,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			if dir.Len() < .01 {
 				dir = p.Aim.Add(f.Pos.Mul(-1)).Unit()
 			}
-			f.Pos = bounds(f.Pos.Add(dir.Mul(62 / math.Pow(1+f.Physique.Mass/40, .2))))
+			b.step(f, f.Pos.Add(dir.Mul(62/math.Pow(1+f.Physique.Mass/40, .2))))
 			f.Energy -= math.Min(35, 18+f.Physique.Mass/30)
 			f.DashAt = now + 2
 			f.Invincible = now + .3
@@ -192,6 +224,7 @@ func (w *World) action(p *Player, c Command, now float64) error {
 			}
 			p.Balls--
 			f.SpecialAt = now + 1.5
+			b.cutin(i, "ball", "Pokébola, vai!", now)
 			chance := .15 + (1-foe.HP/foe.MaxHP)*.78
 			if mathrand.Float64() < chance {
 				p.Mons = append(p.Mons, foe.Mon)
@@ -490,7 +523,19 @@ func (w *World) action(p *Player, c Command, now float64) error {
 		if p.Area != "safari" {
 			return errMsg("vá à Reserva Orvalho")
 		}
-		p.Safari = &Safari{Species: []int{16, 19, 25, 133}[mathrand.IntN(4)], Pos: Vec{100 + mathrand.Float64()*300, 150 + mathrand.Float64()*140}, At: now}
+		pos := Vec{100 + mathrand.Float64()*300, 150 + mathrand.Float64()*140}
+		if m := areaMaps[p.Area]; m != nil {
+			// Perto do jogador e em chão livre, dentro do mapa maior.
+			for try := 0; try < 20; try++ {
+				a := mathrand.Float64() * 2 * math.Pi
+				cand := m.bounds(p.Pos.Add(Vec{math.Cos(a), math.Sin(a)}.Mul(90 + mathrand.Float64()*110)))
+				if !m.solid(cand, Vec{}) {
+					pos = cand
+					break
+				}
+			}
+		}
+		p.Safari = &Safari{Species: []int{16, 19, 25, 133}[mathrand.IntN(4)], Pos: pos, At: now}
 	case "throw":
 		if p.Area != "safari" || p.Safari == nil || p.Balls < 1 || len(p.Mons) >= 200 || !finite(c.Pos.X) || !finite(c.Pos.Y) {
 			return errMsg("encontre um Pokémon e prepare uma bola")

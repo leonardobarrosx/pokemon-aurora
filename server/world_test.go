@@ -436,3 +436,145 @@ func TestFishingTiming(t *testing.T) {
 		t.Fatal("timed fishing did not open manual capture")
 	}
 }
+func TestTrainerCutins(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Íris", 1)
+	p.Balls = 3
+	if err := w.startBattle(p, "gym", 1, nil, 1000); err != nil {
+		t.Fatal(err)
+	}
+	b := w.Battles[p.Battle]
+	if len(b.Cutins) != 2 || b.Cutins[0].Kind != "switch" || b.Cutins[1].Side != 1 || b.Fighters[1].Art == "" {
+		t.Fatalf("gym should open with both trainers sending out: %+v", b.Cutins)
+	}
+	if err := w.action(p, Command{Type: "special"}, 1005); err != nil {
+		t.Fatal(err)
+	}
+	last := b.Cutins[len(b.Cutins)-1]
+	if last.Kind != "special" || last.Side != 0 {
+		t.Fatalf("special command should show the trainer: %+v", last)
+	}
+	w.endBattle(b, p.ID, 1006)
+	_ = w.startBattle(p, "capture", 16, nil, 1010)
+	b = w.Battles[p.Battle]
+	_ = w.action(p, Command{Type: "ball"}, 1011)
+	if last := b.Cutins[len(b.Cutins)-1]; last.Kind != "ball" {
+		t.Fatalf("ball throw should show the trainer: %+v", last)
+	}
+}
+
+func TestGymBadgesAndJourney(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Insígnias", 1)
+	p.Area = "kt_pewter_city_gym"
+	if err := w.action(p, Command{Type: "gym"}, 1000); err != nil {
+		t.Fatal(err)
+	}
+	b := w.Battles[p.Battle]
+	if b.Gym != "kanto_1" || b.Fighters[1].Name != "Brock" || b.Fighters[1].Mon.Level != 14 || b.Fighters[1].Art != "in_brock" {
+		t.Fatalf("ginásio errado: %+v", b.Fighters[1])
+	}
+	if g := gymAt("sn_hearthome_city_gym_trainer_room_1"); g == nil || g.Leader != "Fantina" {
+		t.Fatalf("salas do ginásio devem levar à líder: %+v", g)
+	}
+	w.endBattle(b, p.ID, 1001)
+	if !p.Badges["kanto_1"] {
+		t.Fatalf("vitória deveria dar a insígnia: %v / %s", p.Badges, p.Notice)
+	}
+	var kanto map[string]any
+	for _, r := range regionStatus(p) {
+		if r["id"] == "kanto" {
+			kanto = r
+		}
+	}
+	badges := kanto["badges"].([]map[string]any)
+	if len(badges) != 8 || badges[0]["done"] != true || kanto["areas"].(int) < 50 {
+		t.Fatalf("painel de Kanto incompleto: %v", kanto)
+	}
+}
+
+func TestSurfDiveAndMount(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Nadadora", 1)
+	m := areaMaps["hn_route126"]
+	if m == nil || m.connection("dive") == nil {
+		t.Fatal("Route 126 deveria ter Dive")
+	}
+	// Ponto de água qualquer.
+	var water Vec
+	for i, c := range m.Cells {
+		if c == '~' {
+			water = Vec{(float64(i%m.W) + .5) * m.Cell, (float64(i/m.W) + .5) * m.Cell}
+			break
+		}
+	}
+	p.Area, p.Pos = "hn_route126", water
+	if !w.blocks(p, m, water, Vec{}) {
+		t.Fatal("sem Pokémon de Natação a água deve bloquear")
+	}
+	lapras := newMon(131)
+	p.Mons = append(p.Mons, lapras)
+	p.Team = append(p.Team, lapras.ID)
+	if w.blocks(p, m, water, Vec{}) {
+		t.Fatal("com Lapras dá para surfar")
+	}
+	updateRide(p, m)
+	if p.Transport != "surf" || p.Mount != lapras.ID {
+		t.Fatalf("deveria estar surfando no Lapras: %s %s", p.Transport, p.Mount)
+	}
+	if err := w.dive(p, 10); err != nil || p.Area != "hn_underwater_route126" || p.Transport != "dive" {
+		t.Fatalf("mergulho falhou: %v %s %s", err, p.Area, p.Transport)
+	}
+	if err := w.dive(p, 11); err != nil || p.Area != "hn_route126" {
+		t.Fatalf("subida falhou: %v %s", err, p.Area)
+	}
+	if c := areaMaps["hn_underwater_sootopolis_city"].connection("emerge"); c == nil || c.To != "hn_sootopolis_city" {
+		t.Fatalf("Sootopolis só se alcança emergindo: %+v", c)
+	}
+	p.Area, p.Pos = kantoStart, Vec{areaMaps[kantoStart].Default[0], areaMaps[kantoStart].Default[1]}
+	updateRide(p, areaMaps[kantoStart])
+	if err := w.action(p, Command{Type: "transport", Value: "mount"}, 12); err == nil {
+		t.Fatal("montaria sem Pokémon de Corrida não deveria funcionar")
+	}
+	onix := newMon(95)
+	p.Mons = append(p.Mons, onix)
+	p.Team = append(p.Team, onix.ID)
+	if err := w.action(p, Command{Type: "transport", Value: "mount"}, 13); err != nil || p.Mount != onix.ID {
+		t.Fatalf("montaria no Onix: %v %s", err, p.Mount)
+	}
+}
+
+func TestVisibleWildBattleOnMap(t *testing.T) {
+	w := newWorld()
+	p := testPlayer(w, "Mato", 1)
+	m := areaMaps["kt_route1"]
+	p.Area, p.Pos, p.Seen = "kt_route1", Vec{m.Default[0], m.Default[1]}, 0
+	for i := 0; i < 400 && len(w.Wild["kt_route1"]) == 0; i++ {
+		w.tickWild(1, 0)
+	}
+	if len(w.Wild["kt_route1"]) == 0 {
+		t.Fatal("deveriam aparecer selvagens no mato da Rota 1")
+	}
+	wm := w.Wild["kt_route1"][0]
+	if !habitat(m, wm.Pos, wm.Water) {
+		t.Fatal("selvagem fora do mato")
+	}
+	if len(w.wildNear(p)) == 0 {
+		t.Fatal("o cliente deveria receber os selvagens próximos")
+	}
+	p.Pos, wm.Water = wm.Pos, false
+	if !w.touchWild(p, 10) {
+		t.Fatal("encostar no selvagem deveria começar a batalha")
+	}
+	b := w.Battles[p.Battle]
+	if b.Area != "kt_route1" || b.Kind != "capture" || b.Fighters[1].Mon.Species != wm.Species {
+		t.Fatalf("batalha deveria acontecer no mapa: %+v", b.Area)
+	}
+	got := b.Fighters[1].Pos.Add(b.Origin)
+	if distance(got, wm.Pos) > 40 {
+		t.Fatalf("o selvagem deveria lutar onde estava: %v vs %v", got, wm.Pos)
+	}
+	if len(w.Wild["kt_route1"]) != 0 && w.Wild["kt_route1"][0] == wm {
+		t.Fatal("o selvagem em batalha sai da lista do mapa")
+	}
+}

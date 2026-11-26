@@ -46,17 +46,136 @@ func run():
 	root.add_child(game)
 	game.set_process(false)
 	game.commands.clear()
+	if args.size()>2 and args[2] in ["cutins","jornada"]:
+		if args[2]=="jornada":
+			game.login();load_state(home)
+			for r in game.data.regions:
+				for g in r.get("badges",[]):g.done=str(g.id) in ["aurora_1","kanto_1","kanto_2","kanto_3"]
+				if r.id=="kanto":r.visited=41
+			game.open_panel("jornada")
+			await shot("menus","jornada")
+			var scroll=game.overlay_body.get_parent() as ScrollContainer
+			if scroll:scroll.scroll_vertical=99999
+			await shot("menus","jornada-rodape")
+			game.close_panel();game.data.player.area="kt_pewter_city_gym";game.refresh_sidebar()
+			await shot("menus","hud-jornada")
+			quit(1 if failed else 0)
+			return
+	if args.size()>2 and args[2]=="estadio":
+		game.login()
+		var fields=JSON.parse_string(FileAccess.get_file_as_string(args[0]+"/fields.json"))
+		# Onde pôr cada Pokémon para mostrar o terreno: [letra do jogador, letra do líder, espécie do jogador].
+		var spots={"kanto_2":["W","p",4],"kanto_1":["q","s",74],"kanto_4":["g",".",4],"kanto_7":["M","M",131],"hoenn_4":["u",",",4],"johto_7":["i","n",95]}
+		for gid in ["kanto_2","kanto_1","kanto_4","kanto_7","hoenn_4","johto_7","johto_4","sinnoh_2"]:
+			var fight=combat.duplicate(true)
+			if not fight.has("regions"):fight.regions=home.regions
+			var b=fight.battle;b.kind="gym";b.gym=gid
+			var info={}
+			for r in fight.regions:
+				for g in r.badges:
+					if g.id==gid:info=g
+			b.fighters[1].name=info.get("leader","Líder");b.fighters[1].owner="npc";b.fighters[1].art=info.get("art","")
+			b.fighters[1].hp=b.fighters[1].max_hp*.7
+			b.cutins=[];b.blasts=[];b.projectiles=[];b.beams=[]
+			var fd=fields.get(gid,{});b.field=fd
+			var cols=int(fd.cols);var cells=str(fd.cells)
+			var s0=Vector2(fd.spawn[0].x,fd.spawn[0].y);var s1=Vector2(fd.spawn[1].x,fd.spawn[1].y)
+			if spots.has(gid):
+				b.fighters[0].mon.species=spots[gid][2]
+				for k in 2:
+					var want=str(spots[gid][k]);var from=s0 if k==0 else s1;var best=from;var bd=1e9
+					for i in cells.length():
+						if cells[i]!=want:continue
+						var c=(Vector2(i%cols,i/cols)+Vector2(.5,.5))*32
+						var d=c.distance_to(from)+c.distance_to((s0+s1)/2)*.6
+						if d<bd:bd=d;best=c
+					if k==0:s0=best
+					else:s1=best
+				if gid=="kanto_1":s0+=Vector2(-34,0)
+			b.fighters[0].pos={"x":s0.x,"y":s0.y};b.fighters[1].pos={"x":s1.x,"y":s1.y}
+			for f in b.fighters:
+				var i=int(f.pos.y/32)*cols+int(f.pos.x/32)
+				f.terrain=cells[i] if i>=0 and i<cells.length() else "."
+				f.hidden=f.terrain=="g"
+				f.velocity={"x":0,"y":0}
+			b.fighters[1].mon.species=info.get("species",b.fighters[1].mon.species)
+			# Perto: os dois Pokémon se aproximando (zoom normal).
+			var far=b.fighters[1].pos.duplicate()
+			var near=s0+(s1-s0).limit_length(210)
+			b.fighters[1].pos={"x":near.x,"y":near.y}
+			game.view.arena.cam=Vector2(-1,-1);game.view.arena.user_zoom=1.0
+			game.view.render_positions.clear()
+			load_state(fight)
+			for k in 3:await process_frame
+			game.view.arena.cam=Vector2(-1,-1)
+			await shot("arena","estadio-"+gid)
+			# Longe: zoom afastado mostrando a arena inteira.
+			b.fighters[1].pos=far
+			game.view.arena.user_zoom=.4;game.view.arena.cam=Vector2(-1,-1)
+			game.view.render_positions.clear()
+			load_state(fight)
+			for k in 3:await process_frame
+			game.view.arena.cam=Vector2(-1,-1)
+			await shot("arena","estadio-"+gid+"-inteira")
+		quit(1 if failed else 0)
+		return
+	if args.size()>2 and args[2]=="mato":
+		game.login()
+		var source=home.duplicate(true);source.player.area="kt_route1"
+		var m0=JSON.parse_string(FileAccess.get_file_as_string("res://assets/maps/kt_route1.json"))
+		var c=Vector2(m0.default[0],m0.default[1])
+		source.player.pos={"x":c.x,"y":c.y}
+		source.wild=[{"id":"w1","species":16,"level":4,"pos":{"x":c.x+90,"y":c.y-60},"facing":1,"water":false},{"id":"w2","species":19,"level":3,"pos":{"x":c.x-120,"y":c.y+40},"facing":2,"water":false},{"id":"w3","species":25,"level":5,"pos":{"x":c.x+40,"y":c.y+110},"facing":3,"water":false}]
+		load_state(source);game.refresh_sidebar()
+		await shot("mundo","mato-selvagens")
+		var fight=combat.duplicate(true)
+		fight.player.area="kt_route1";fight.player.pos={"x":c.x,"y":c.y}
+		var b=fight.battle;b.area="kt_route1";b.origin={"x":c.x-256,"y":c.y-222};b.trainer={"x":200,"y":250}
+		b.fighters[0].pos={"x":210,"y":230};b.fighters[1].pos={"x":330,"y":190};b.fighters[1].hp=b.fighters[1].max_hp*.6
+		load_state(fight)
+		await shot("arena","mato-batalha")
+		quit(1 if failed else 0)
+		return
+	if args.size()>2 and args[2]=="montaria":
+		game.login()
+		for setup in [["surf","hn_route126",131,"~"],["dive","hn_underwater_route126",131,"."],["mount","kt_route1",95,"."],["mount","hn_route101",19,"."]]:
+			var source=home.duplicate(true)
+			var mon=source.player.mons[0].duplicate(true);mon.id="montaria";mon.species=setup[2]
+			source.player.mons.append(mon)
+			source.player.transport=setup[0];source.player.mount="montaria";source.player.area=setup[1]
+			load_state(source)
+			var m=game.view.map_for(setup[1]);var pos=Vector2(m.default[0],m.default[1])
+			var cells=FileAccess.get_file_as_string("res://../server/maps/%s.json"%setup[1])
+			if setup[3]=="~" and cells!="":
+				var sm=JSON.parse_string(cells);var i=str(sm.cells).find("~",int(sm.w)*12)
+				if i>=0:pos=Vector2((i%int(sm.w)+.5)*32,(i/int(sm.w)+.5)*32)
+			game.data.player.pos={"x":pos.x,"y":pos.y};game.data.player.facing=[0,2,1,3][randi()%4] if setup[0]!="surf" else 2
+			game.refresh_sidebar()
+			await shot("mundo","montaria-%s-%s"%[setup[0],setup[1]])
+		quit(1 if failed else 0)
+		return
+	if args.size()>2 and args[2]=="cutins":
+		await cutin_states()
+		quit(1 if failed else 0)
+		return
 	if args.size()>2 and args[2]=="estados":
 		await extra_states()
 		quit(1 if failed else 0)
 		return
 	game.login()
 	await shot("menus","entrada")
-	for page in ["equipe","mapa","loja","breeding","treino","mercado","casa","profissao","ranking","vila","jardim","pc","guarda-roupa","genes","iguaria","lago"]:
+	for page in ["equipe","jornada","mapa","loja","breeding","treino","mercado","casa","profissao","ranking","vila","jardim","pc","guarda-roupa","genes","iguaria","lago"]:
 		load_state(home)
 		match page:
 			"guarda-roupa":game.wardrobe_menu()
 			"genes":game.genome_panel(game.team_mon(0))
+			"jornada":
+				# Jornada no meio de Kanto: três insígnias e Hoenn ainda fechada.
+				for r in game.data.regions:
+					for g in r.get("badges",[]):g.done=str(g.id) in ["aurora_1","kanto_1","kanto_2","kanto_3"]
+					if r.id=="kanto":r.visited=41
+					if r.id=="aurora":r.visited=6
+				game.open_panel(page)
 			"iguaria":game.confirm_delicacy()
 			"lago":
 				game.data.player.area="lago"
@@ -67,14 +186,18 @@ func run():
 		if scroll and scroll.get_v_scroll_bar().max_value>scroll.size.y+4:
 			scroll.scroll_vertical=roundi(scroll.get_v_scroll_bar().max_value)
 			await shot("menus",page+"-rodape")
-	for area in game.AREAS:
+	for area in game.AREAS.keys()+["kt_pallet_town","kt_route1","kt_viridian_city","kt_pallet_town_players_house_1f","kt_mt_moon_1f","kt_cerulean_city","hn_littleroot_town","hn_route101","hn_petalburg_city","hn_rustboro_city","jt_johto","jt_new_bark_player_house_1f","jt_violet_pokecenter_1f","jt_goldenrod_pokecenter_1f","sn_sinnoh","sn_jubilife_city_pokecenter_1f","sn_eterna_city_gym"]:
 		load_state(home)
 		game.data.player.area=area
-		if area=="safari":game.data.player.safari={"species":25,"pos":{"x":216,"y":246}}
+		var area_map=game.view.map_for(area)
+		if area_map.has("default"):game.data.player.pos={"x":area_map.default[0],"y":area_map.default[1]-64}
+		if area=="safari":game.data.player.safari={"species":25,"pos":{"x":float(game.data.player.pos.x)+150,"y":float(game.data.player.pos.y)-40}}
 		game.refresh_sidebar()
 		await shot("mundo",area)
 	for state in ["aguardando","fisgada"]:
 		game.data.player.area="lago"
+		var lake=game.view.map_for("lago")
+		if lake.has("points"):game.data.player.pos={"x":lake.points.pesca[0],"y":lake.points.pesca[1]}
 		game.data.player.fishing=game.server_time()+(6 if state=="aguardando" else -.15)
 		game.refresh_sidebar()
 		await shot("mundo","pesca-"+state)
@@ -94,6 +217,7 @@ func run():
 		load_state(source)
 		if mode=="espectador":game.spectate=b.id;game.refresh_sidebar()
 		await shot("arena",mode)
+	await cutin_states()
 	for kind in ["arcade","Corrida","Voo","Natação"]:
 		var source=home.duplicate(true)
 		source.player.arcade={"kind":kind,"start":source.now-4,"score":40,"hp":3,"seed":2,"pos":{"x":240,"y":238}}
@@ -101,6 +225,19 @@ func run():
 		await shot("arena",kind.to_lower().replace("ç","c").replace("ã","a"))
 	await extra_states()
 	quit(1 if failed else 0)
+
+# Arte do treinador entrando na tela: pokébola, troca e ataque especial.
+func cutin_states():
+	for mode in [["ball","capture",0,"Pokébola, vai!",""],["switch","gym",1,"Vai, Tangela!","in_erika"],["special","pvp",0,"Hiper Raio!",""],["special","gym",1,"Raio Solar!","pt_leader_gardenia"]]:
+		var source=combat.duplicate(true)
+		var b=source.battle
+		b.kind=mode[1]
+		if b.kind=="gym":b.fighters[1].name="Flora";b.fighters[1].owner="npc";b.fighters[1].art=mode[4]
+		if b.kind=="pvp":b.fighters[1].name="Iara"
+		b.cutins=[{"side":mode[2],"kind":mode[0],"text":mode[3],"at":float(source.now)-.35}]
+		load_state(source)
+		for c in game.data.battle.cutins:c.at=game.server_time()+.28-.35
+		await shot("arena","cutin-%s-%s-%d"%[mode[0],mode[1],mode[2]])
 
 func extra_states():
 	root.gui_embed_subwindows=true

@@ -1,0 +1,343 @@
+package main
+
+import (
+	"embed"
+	"encoding/json"
+	"math"
+	"strings"
+)
+
+// Mapas externos gerados por ferramentas/mapas/build.py a partir dos
+// tilesets do FireRed. Áreas sem mapa (casa, mina, ginásio) seguem com a
+// tela fixa de 512×384.
+
+//go:embed maps/*.json
+var mapFiles embed.FS
+
+type Warp struct {
+	X  int     `json:"x"`
+	Y  int     `json:"y"`
+	W  int     `json:"w"`
+	H  int     `json:"h"`
+	To string  `json:"to"`
+	TX float64 `json:"tx"`
+	TY float64 `json:"ty"`
+}
+
+// Connection liga a borda de um mapa a outro (como nas rotas do FireRed).
+type Connection struct {
+	Dir    string `json:"dir"`
+	Offset int    `json:"offset"`
+	To     string `json:"to"`
+	W      int    `json:"w"`
+	H      int    `json:"h"`
+	X      int    `json:"x"`
+	Y      int    `json:"y"`
+}
+type AreaMap struct {
+	W           int                   `json:"w"`
+	H           int                   `json:"h"`
+	Cell        float64               `json:"cell"`
+	Cells       string                `json:"cells"`
+	Warps       []Warp                `json:"warps"`
+	Spawns      map[string][2]float64 `json:"spawns"`
+	Points      map[string][2]float64 `json:"points"`
+	Default     [2]float64            `json:"default"`
+	Connections []Connection          `json:"connections"`
+	Encounters  []int                 `json:"encounters"`
+	Water       []int                 `json:"water"`
+	// Mundo aberto de DS: cada chunk (Chunk x Chunk células) pertence a uma zona
+	// com nome e encontros próprios.
+	Zones    []int      `json:"zones"`
+	ZoneInfo []ZoneInfo `json:"zone_info"`
+	Chunk    int        `json:"chunk"`
+	ZoneCols int        `json:"zone_cols"`
+	Cave     bool       `json:"cave"`
+	Name     string     `json:"name"`
+}
+
+// Regiões: Aurora (mapas originais), Kanto (FireRed) e Hoenn (Emerald).
+const kantoStart = "kt_pallet_town"
+const hoennStart = "hn_littleroot_town"
+const johtoStart = "jt_johto"
+const sinnohStart = "sn_sinnoh"
+
+// regionStarts diz onde cada região recebe quem chega viajando.
+var regionStarts = map[string]string{"aurora": "vila", "kanto": kantoStart, "hoenn": hoennStart, "johto": johtoStart, "sinnoh": sinnohStart}
+
+// A jornada segue a ordem dos jogos: Kanto (FireRed), Hoenn (Emerald),
+// Johto (HeartGold) e Sinnoh (Platinum). Cada região abre quando o treinador
+// chega à Liga da anterior. Aurora fica aberta o tempo todo.
+var regionOrder = []string{"kanto", "hoenn", "johto", "sinnoh"}
+var regionGoal = map[string]string{"kanto": "kt_indigo_plateau_exterior", "hoenn": "hn_ever_grande_city", "johto": "jt_blackthorn_gym"}
+var regionGoalName = map[string]string{"kanto": "Indigo Plateau", "hoenn": "Ever Grande City", "johto": "Ginásio de Blackthorn"}
+
+func regionOpen(p *Player, region string) bool {
+	if region == "aurora" {
+		return true
+	}
+	if start, ok := regionStarts[region]; !ok || areaMaps[start] == nil {
+		return false
+	}
+	for i, r := range regionOrder {
+		if r != region {
+			continue
+		}
+		if i == 0 || p.Visits[regionStarts[region]] {
+			return true
+		}
+		prev := regionOrder[i-1]
+		return regionOpen(p, prev) && p.Visits[regionGoal[prev]]
+	}
+	return false
+}
+
+// regionStatus resume para o cliente quais regiões existem e estão abertas.
+func regionStatus(p *Player) []map[string]any {
+	out := []map[string]any{}
+	for i, r := range append([]string{"aurora"}, regionOrder...) {
+		start, ok := regionStarts[r]
+		if !ok || areaMaps[start] == nil && r != "aurora" {
+			continue
+		}
+		need := ""
+		if i > 1 {
+			prev := regionOrder[i-2]
+			need = "Visite " + regionGoalName[prev]
+		}
+		entry := map[string]any{"id": r, "open": regionOpen(p, r), "need": need}
+		for k, v := range journey(p, r) {
+			entry[k] = v
+		}
+		out = append(out, entry)
+	}
+	return out
+}
+
+func isKanto(area string) bool  { return strings.HasPrefix(area, "kt_") }
+func isHoenn(area string) bool  { return strings.HasPrefix(area, "hn_") }
+func isJohto(area string) bool  { return strings.HasPrefix(area, "jt_") }
+func isSinnoh(area string) bool { return strings.HasPrefix(area, "sn_") }
+
+// isImported indica mapas importados dos jogos do GBA, livres desde o início.
+func isImported(area string) bool {
+	return isKanto(area) || isHoenn(area) || isJohto(area) || isSinnoh(area)
+}
+
+func regionOf(area string) string {
+	switch {
+	case isKanto(area):
+		return "kanto"
+	case isHoenn(area):
+		return "hoenn"
+	case isJohto(area):
+		return "johto"
+	case isSinnoh(area):
+		return "sinnoh"
+	}
+	return "aurora"
+}
+
+type ZoneInfo struct {
+	Name       string `json:"name"`
+	Encounters []int  `json:"encounters"`
+	Water      []int  `json:"water"`
+}
+
+// zone devolve a zona da posição, ou nil em mapas sem zonas.
+func (m *AreaMap) zone(v Vec) *ZoneInfo {
+	if len(m.Zones) == 0 || m.Chunk == 0 || m.ZoneCols == 0 {
+		return nil
+	}
+	size := float64(m.Chunk) * m.Cell
+	i := int(v.Y/size)*m.ZoneCols + int(v.X/size)
+	if v.X < 0 || v.Y < 0 || i < 0 || i >= len(m.Zones) || m.Zones[i] >= len(m.ZoneInfo) {
+		return nil
+	}
+	return &m.ZoneInfo[m.Zones[i]]
+}
+
+var areaMaps = map[string]*AreaMap{}
+
+func init() {
+	entries, _ := mapFiles.ReadDir("maps")
+	for _, e := range entries {
+		raw, err := mapFiles.ReadFile("maps/" + e.Name())
+		if err != nil {
+			panic(err)
+		}
+		m := &AreaMap{}
+		if err := json.Unmarshal(raw, m); err != nil {
+			panic(err)
+		}
+		areaMaps[strings.TrimSuffix(e.Name(), ".json")] = m
+	}
+}
+
+func (m *AreaMap) at(v Vec) byte {
+	x, y := int(math.Floor(v.X/m.Cell)), int(math.Floor(v.Y/m.Cell))
+	if x < 0 || y < 0 || x >= m.W || y >= m.H {
+		return '#'
+	}
+	return m.Cells[y*m.W+x]
+}
+
+func (m *AreaMap) bounds(v Vec) Vec {
+	return Vec{clamp(v.X, 6, float64(m.W)*m.Cell-6), clamp(v.Y, 6, float64(m.H)*m.Cell-2)}
+}
+
+// solid: paredes e água; ressaltos só deixam passar descendo.
+func (m *AreaMap) solid(v Vec, dir Vec) bool {
+	switch m.at(v) {
+	case '#', '~':
+		return true
+	case 'v':
+		return dir.Y <= 0
+	case '^':
+		return dir.Y >= 0
+	case '>':
+		return dir.X <= 0
+	case '<':
+		return dir.X >= 0
+	}
+	return false
+}
+
+func (m *AreaMap) warpAt(v Vec) *Warp {
+	x, y := int(math.Floor(v.X/m.Cell)), int(math.Floor(v.Y/m.Cell))
+	for i, w := range m.Warps {
+		if x >= w.X && x < w.X+w.W && y >= w.Y && y < w.Y+w.H {
+			return &m.Warps[i]
+		}
+	}
+	return nil
+}
+
+// edge: se o jogador sai pela borda e há um mapa conectado ali, devolve a
+// área e a posição correspondente no outro mapa.
+func (m *AreaMap) edge(v Vec) (string, Vec, bool) {
+	size := Vec{float64(m.W) * m.Cell, float64(m.H) * m.Cell}
+	for _, c := range m.Connections {
+		off := float64(c.Offset) * m.Cell
+		var pos Vec
+		switch {
+		case c.Dir == "up" && v.Y < 4:
+			pos = Vec{v.X - off, float64(c.H)*m.Cell - 10}
+		case c.Dir == "down" && v.Y > size.Y-1:
+			pos = Vec{v.X - off, 12}
+		case c.Dir == "left" && v.X < 4:
+			pos = Vec{float64(c.W)*m.Cell - 10, v.Y - off}
+		case c.Dir == "right" && v.X > size.X-4:
+			pos = Vec{10, v.Y - off}
+		default:
+			continue
+		}
+		if pos.X > 0 && pos.Y > 0 && pos.X < float64(c.W)*m.Cell && pos.Y < float64(c.H)*m.Cell {
+			return c.To, pos, true
+		}
+	}
+	return "", Vec{}, false
+}
+
+// arrival: onde o jogador aparece ao entrar na área vindo de outra.
+func arrival(area, from string) Vec {
+	m := areaMaps[area]
+	if m == nil {
+		return Vec{256, 290}
+	}
+	if s, ok := m.Spawns[from]; ok {
+		return Vec{s[0], s[1]}
+	}
+	if s, ok := m.Points["porta_"+from]; ok {
+		return Vec{s[0], s[1]}
+	}
+	return Vec{m.Default[0], m.Default[1]}
+}
+
+func canEnter(p *Player, area string) bool {
+	if isImported(area) {
+		return areaMaps[area] != nil && regionOpen(p, regionOf(area))
+	}
+	need, ok := areaNeed[area]
+	return ok && p.Quest >= need
+}
+
+func (w *World) enter(p *Player, area string, now float64) bool {
+	if !canEnter(p, area) {
+		p.Notice = "Continue a história para liberar essa área."
+		return false
+	}
+	from := p.Area
+	p.Area = area
+	p.Visits[area] = true
+	p.Pos = arrival(area, from)
+	p.Safari = nil
+	p.Fishing = 0
+	p.WarpAt = now
+	return true
+}
+
+func (w *World) enterAt(p *Player, area string, pos Vec, now float64) {
+	p.Area = area
+	p.Visits[area] = true
+	p.Pos = pos
+	p.Safari = nil
+	p.Fishing = 0
+	p.WarpAt = now
+}
+
+func (w *World) walkMap(p *Player, dt, now float64) {
+	m := areaMaps[p.Area]
+	speed := 80.0
+	if p.Running {
+		speed = 112 // correr com Shift em qualquer mapa (ideia do Emerald Legacy)
+	}
+	switch p.Transport {
+	case "bike":
+		speed = 120
+	case "mount":
+		speed = 136
+	case "surf":
+		speed = 100
+	case "dive":
+		speed = 72
+	}
+	start := p.Pos
+	desired := m.bounds(p.Pos.Add(p.Input.Mul(speed * dt)))
+	if x := (Vec{desired.X, p.Pos.Y}); !w.blocks(p, m, x, p.Input) {
+		p.Pos = x
+	}
+	if y := (Vec{p.Pos.X, desired.Y}); !w.blocks(p, m, y, p.Input) {
+		p.Pos = y
+	}
+	updateRide(p, m)
+	if now-p.WarpAt > .5 && p.Input.Len() > 0 {
+		raw := start.Add(p.Input.Mul(speed * dt))
+		if to, pos, ok := m.edge(raw); ok {
+			w.enterAt(p, to, pos, now)
+			updateRide(p, areaMaps[to])
+			return
+		}
+	}
+	if warp := m.warpAt(p.Pos); warp != nil && now-p.WarpAt > .6 {
+		back := m.bounds(start.Add(p.Input.Mul(-8)))
+		switch {
+		case warp.To == "@voltar" && p.ReturnArea != "":
+			w.enterAt(p, p.ReturnArea, p.ReturnPos, now)
+		case warp.TX > 0 && areaMaps[warp.To] != nil:
+			p.ReturnArea, p.ReturnPos = p.Area, back
+			w.enterAt(p, warp.To, Vec{warp.TX, warp.TY}, now)
+		case warp.To != "@voltar":
+			if !w.enter(p, warp.To, now) {
+				p.Pos = back
+			}
+		default:
+			p.Pos = back
+		}
+		return
+	}
+	// Os selvagens andam visíveis pelo mato: encostar num deles começa a luta.
+	if w.touchWild(p, now) {
+		return
+	}
+}

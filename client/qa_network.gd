@@ -48,15 +48,15 @@ func run():
 	if not await wait_for(func():return game.data.get("battle")!=null):return
 	await create_timer(.2).timeout
 	game.send({"type":"input","move":{"x":0,"y":0},"aim":{"x":410,"y":200}})
-	game.send({"type":"special"})
+	game.send({"type":"move","index":1})
 	if not await wait_for(func():
 		if game.data.battle==null:return false
 		for fighter in game.data.battle.fighters:
-			if fighter.owner==game.data.player.id:return float(fighter.special_at)>game.server_time()
+			if fighter.owner==game.data.player.id:return float(fighter.move_at[1])>game.server_time()
 		return false):return
-	if not game.hud.action_buttons.has("special"):push_error("HUD não expôs ação especial");quit(1);return
+	if game.hud.move_cards.size()!=4:push_error("HUD não mostrou as 4 cartas de golpe");quit(1);return
 	game.hud.update_values()
-	if not game.hud.action_buttons.special.button.disabled:push_error("HUD não mostrou a recarga");quit(1);return
+	if not game.hud.move_cards[1].button.disabled:push_error("HUD não mostrou a recarga");quit(1);return
 	var feedback=game.data.duplicate(true)
 	feedback.battle.fighters[1].hp=float(feedback.battle.fighters[1].hp)-1
 	game.view.observe_snapshot(feedback)

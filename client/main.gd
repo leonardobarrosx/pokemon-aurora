@@ -1,5 +1,26 @@
 extends Node2D
 
+var start_region:="kanto"
+
+const REGION_NAMES={"aurora":"Aurora","kanto":"Kanto","hoenn":"Hoenn","johto":"Johto","sinnoh":"Sinnoh"}
+
+func region_of(area:String)->String:
+	if area.begins_with("kt_"):return "kanto"
+	if area.begins_with("hn_"):return "hoenn"
+	if area.begins_with("jt_"):return "johto"
+	if area.begins_with("sn_"):return "sinnoh"
+	return "aurora"
+
+func area_name(area:String)->String:
+	if AREAS.has(area):return AREAS[area]
+	var m=view.map_for(area) if view else {}
+	# Mundo aberto de DS: o nome muda conforme o chunk onde o jogador está.
+	if m.has("zones") and data.has("player") and str(data.player.get("area",""))==area:
+		var pos=data.player.pos;var ch=float(m.chunk)*float(m.cell)
+		var i=int(float(pos.y)/ch)*int(m.zone_cols)+int(float(pos.x)/ch)
+		if i>=0 and i<m.zones.size():return str(m.zone_names[int(m.zones[i])])
+	return str(m.get("name",area))
+
 const AREAS={"casa":"Meu cantinho","vila":"Vila Alvorada","rota":"Trilha das Folhas","jardim":"Jardim de berries","mina":"Mina da Lua","ginasio":"Ginásio Raiz","safari":"Reserva Orvalho","lago":"Lago Celeste"}
 const QUESTS=["Converse com Íris na vila","Capture um parceiro na rota","Plante, regue e colha uma berry","Encontre um cristal na mina","Vença Flora no Ginásio Raiz"]
 const Design=preload("res://aurora_theme.gd")
@@ -82,7 +103,7 @@ func _ready():
 	arena_backdrop.seed_value=31
 	arena_backdrop.visible=false
 	add_child(arena_backdrop)
-	view_clip=Control.new();view_clip.position=Vector2(448,156);view_clip.size=Vector2(1024,768);view_clip.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(view_clip)
+	view_clip=Control.new();view_clip.position=Vector2(448,156);view_clip.size=Vector2(1024,768);view_clip.mouse_filter=Control.MOUSE_FILTER_IGNORE;view_clip.clip_contents=true;add_child(view_clip)
 	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.scale=Vector2(2,2);view_clip.add_child(view)
 	ui=Control.new();ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(ui)
 	ui.theme=preload("res://aurora_theme.gd").make(font)
@@ -202,7 +223,7 @@ func received(_result:int,code:int,_headers:PackedStringArray,body:PackedByteArr
 		if view:view.observe_snapshot(response)
 		data=response;clock_offset=float(response.now)-Time.get_unix_time_from_system();refresh_sidebar()
 		if data.player.notice!=last_notice:last_notice=data.player.notice;notice(last_notice)
-		if refresh_pending and screen in ["equipe","breeding","treino","loja","casa","vila","jardim","pc","profissao","mercado","mapa"]:open_panel(screen)
+		if refresh_pending and screen in ["equipe","breeding","treino","loja","casa","vila","jardim","pc","profissao","mercado","mapa","jornada"]:open_panel(screen)
 	if submitted_chat!="" and not response.has("error") and screen=="ranking" and is_instance_valid(message_input) and message_input.text.strip_edges()==submitted_chat:
 		message_input.clear()
 	if response.has("error"):notice(str(response.error).capitalize())
@@ -220,8 +241,8 @@ func _process(delta:float):
 			if screen=="":
 				dir=Vector2(float(Input.is_physical_key_pressed(KEY_D) or Input.is_physical_key_pressed(KEY_RIGHT))-float(Input.is_physical_key_pressed(KEY_A) or Input.is_physical_key_pressed(KEY_LEFT)),float(Input.is_physical_key_pressed(KEY_S) or Input.is_physical_key_pressed(KEY_DOWN))-float(Input.is_physical_key_pressed(KEY_W) or Input.is_physical_key_pressed(KEY_UP))).normalized()
 			moving=dir.length()>0
-			var aim=view.get_local_mouse_position()
-			dispatch({"type":"input","move":{"x":dir.x,"y":dir.y},"aim":{"x":aim.x,"y":aim.y}})
+			var aim=view.world_mouse()
+			dispatch({"type":"input","move":{"x":dir.x,"y":dir.y},"aim":{"x":aim.x,"y":aim.y},"run":Input.is_physical_key_pressed(KEY_SHIFT)})
 	if not request_busy and not commands.is_empty():dispatch(commands.pop_front())
 
 func notice(text:String):
@@ -250,13 +271,23 @@ func login():
 		for state in ["pressed","hover_pressed"]:
 			pick.add_theme_stylebox_override(state,Design.surface(Design.CORAL,8,Design.CORAL))
 			pick.add_theme_color_override("font_"+state+"_color",Color.WHITE)
+	label(c,"REGIÃO INICIAL",13,ACCENT)
+	var regions=row(c,16)
+	var region_group=ButtonGroup.new()
+	for entry in [["kanto","Kanto · Pallet Town"],["aurora","Aurora · Vila Alvorada"]]:
+		var pick=btn(regions,entry[1],func():start_region=entry[0],300)
+		pick.toggle_mode=true;pick.button_group=region_group;pick.button_pressed=start_region==entry[0]
+		for state in ["pressed","hover_pressed"]:
+			pick.add_theme_stylebox_override(state,Design.surface(Design.CORAL,8,Design.CORAL))
+			pick.add_theme_color_override("font_"+state+"_color",Color.WHITE)
+	label(c,"A jornada segue a ordem dos jogos: Kanto, Hoenn, Johto e Sinnoh. Cada região abre quando você chega à Liga da anterior.",13,Color("5d6763"))
 	label(c,"ENDEREÇO DO SERVIDOR",13,ACCENT);server_input=LineEdit.new();server_input.text=endpoint;c.add_child(server_input)
-	var start=btn(c,"Começar minha jornada",func():endpoint=server_input.text.strip_edges().trim_suffix("/");send({"type":"register","name":name_input.text,"starter":starter}),300)
+	var start=btn(c,"Começar minha jornada",func():endpoint=server_input.text.strip_edges().trim_suffix("/");send({"type":"register","name":name_input.text,"starter":starter,"area":start_region}),300)
 	start.size_flags_horizontal=Control.SIZE_SHRINK_BEGIN
 	Design.primary(start)
 	label(c,"O progresso fica no servidor. Esta instalação guarda sua chave de acesso.",14,Color("9eb2ad"))
 
-const NAV_ROUTES=[["inicio","Início"],["equipe","Equipe"],["mapa","Mapa"],["loja","Mochila"],["breeding","Linhagens"],["treino","Treino"],["mercado","Mercado"],["casa","Minha casa"],["profissao","Profissão"],["ranking","Liga e saguão"]]
+const NAV_ROUTES=[["inicio","Início"],["equipe","Equipe"],["jornada","Jornada"],["mapa","Mapa"],["loja","Mochila"],["breeding","Linhagens"],["treino","Treino"],["mercado","Mercado"],["casa","Minha casa"],["profissao","Profissão"],["ranking","Liga e saguão"]]
 
 func brand(parent:Node,origin:Vector2,scale_factor:float=1.0):
 	var seal=Paper.make("logo",Rect2(origin,Vector2(70,70)*scale_factor))
@@ -307,7 +338,7 @@ func nav_item(parent:Node,route:String,text:String,active:bool)->Button:
 	for state in ["font_color","font_focus_color","font_hover_color","font_pressed_color","font_hover_pressed_color"]:
 		item.add_theme_color_override(state,Color("#fbf6ea"))
 	parent.add_child(item)
-	with_icon(item,{"loja":"mochila","breeding":"linhagens"}.get(route,route),26)
+	with_icon(item,{"loja":"mochila","breeding":"linhagens","jornada":"ranking"}.get(route,route),26)
 	item.add_theme_constant_override("h_separation",16)
 	if route=="inicio":item.pressed.connect(close_panel)
 	else:item.pressed.connect(open_panel.bind(route))
@@ -418,6 +449,12 @@ func refresh_sidebar():
 	if hud and not data.is_empty():hud.refresh()
 	if screen=="ranking":update_lobby()
 	if screen=="mercado":update_offers()
+
+func mon_by_id(id:String)->Dictionary:
+	if id=="" or data.is_empty():return {}
+	for m in data.player.mons:
+		if str(m.id)==id:return m
+	return {}
 
 func team_mon(index:int)->Dictionary:
 	if data.is_empty() or index>=data.player.team.size():return {}
@@ -612,6 +649,7 @@ func open_panel(which:String):
 	var titles={
 		"equipe":["Minha equipe","Seus Pokémon em Aurora"],
 		"mapa":["Mapa de Aurora","Escolha um destino. Para voar até ele, visite a área primeiro."],
+		"jornada":["Painel de Jornada","Progresso, insígnias e viagem entre regiões."],
 		"loja":["Mochila e loja","Compre suprimentos para a jornada e objetos para sua casa."],
 		"breeding":["Linhagens","Cruzamentos, genes e incubadora"],
 		"mercado":["Mercado","Compre e anuncie exemplares"],
@@ -627,7 +665,22 @@ func open_panel(which:String):
 	modal(title[0],title[1])
 	var p:Dictionary=data.player
 	match which:
+		"jornada":journey_panel()
 		"mapa":
+			var trip=panel(overlay_body);trip.custom_minimum_size.x=1500
+			var trip_row=row(trip,20)
+			var here=region_of(str(p.area))
+			var trip_text=column(trip_row,4);trip_text.size_flags_horizontal=Control.SIZE_EXPAND_FILL
+			label(trip_text,"VIAGEM ENTRE REGIÕES",13,ACCENT)
+			label(trip_text,"Você está em "+REGION_NAMES[here]+". Sua equipe viaja junto.",20)
+			for r in data.get("regions",[]):
+				var dest=str(r.id)
+				if dest==here:continue
+				var go=btn(trip_row,"Viajar para "+REGION_NAMES.get(dest,dest),func():send({"type":"travel","area":dest});close_panel(),240,"mapa")
+				if r.open:Design.primary(go)
+				else:
+					go.disabled=true;go.tooltip_text=str(r.need)
+					go.text=REGION_NAMES.get(dest,dest)+" · "+str(r.need)
 			var grid=grid_cards(overlay_body,2)
 			var unlock={"casa":0,"vila":0,"jardim":0,"rota":1,"mina":2,"ginasio":2,"safari":3,"lago":3}
 			var stamps={"casa":["Interior1",Rect2(128,608,128,96)],"vila":["Exterior1",Rect2(0,3360,192,224)],"rota":["Exterior1",Rect2(128,32,32,32)],"jardim":["Exterior1",Rect2(160,160,32,64)],"mina":["Interior1",Rect2(0,1280,64,96)],"ginasio":["Interior1",Rect2(0,2048,128,128)],"safari":["Exterior1",Rect2(128,1312,64,96)],"lago":["Exterior1",Rect2(0,320,64,32)]}
@@ -1196,6 +1249,112 @@ func interact():
 		"safari":send({"type":"safari"});notice("Mire no Pokémon e solte a bola no centro do alvo.")
 		"lago":
 			lake_menu()
+		_:
+			if str(p.get("transport","")) in ["surf","dive"]:send({"type":"dive"})
+			elif gym_info_at(str(p.area)).size()>0:send({"type":"gym"})
+			elif ferry_ports(str(p.area)).size()>0:ferry_menu()
+
+var ferry_index:Dictionary={}
+
+# Portos dos barcos (Seagallop em Kanto, S.S. Tidal em Hoenn): de um porto
+# dá para ir a qualquer outro da mesma região.
+func ferry_ports(area:String)->Array:
+	if ferry_index.is_empty():
+		for r in ["kanto","hoenn"]:
+			var path="res://assets/maps/%s_index.json"%r
+			if FileAccess.file_exists(path):ferry_index[r]=JSON.parse_string(FileAccess.get_file_as_string(path))
+	for r in ferry_index:
+		var ports:Array=ferry_index[r].get("ferries",[])
+		if area in ports:return ports
+	return []
+
+func ferry_menu():
+	var here=str(data.player.area)
+	screen="barco"
+	modal("Barco","Escolha o porto de destino. Sua equipe viaja junto.")
+	var grid=grid_cards(overlay_body,3)
+	for port in ferry_ports(here):
+		if port==here:continue
+		var card=panel(grid);var c=column(card,8);c.custom_minimum_size.x=460
+		label(c,area_name(port),22)
+		Design.primary(btn(c,"Embarcar",func():send({"type":"travel","area":port});close_panel(),0,"mapa"))
+
+# Ginásio cujo líder fica nesta área (ou numa sala do mesmo ginásio).
+func gym_info_at(area:String)->Dictionary:
+	for r in data.get("regions",[]):
+		for g in r.get("badges",[]):
+			var a=str(g.area)
+			if a==area or (r.id!="aurora" and area.begins_with(a.substr(0,a.find("_gym")+4))):return g
+	return {}
+
+func gym_info(id:String)->Dictionary:
+	for r in data.get("regions",[]):
+		for g in r.get("badges",[]):
+			if str(g.id)==id:return g
+	return {}
+
+const REGION_TAGS={"aurora":"Região original · livre","kanto":"FireRed · capítulo 1","hoenn":"Emerald · capítulo 2","johto":"HeartGold · capítulo 3","sinnoh":"Platinum · capítulo 4"}
+
+# Painel de Jornada: progresso geral, uma linha por região com exploração,
+# as oito insígnias e a viagem. As regiões abrem em ordem; depois de abertas
+# dá para ir e voltar a qualquer momento.
+func journey_panel():
+	var p:Dictionary=data.player
+	var regions:Array=data.get("regions",[])
+	var won=0;var total_gyms=0;var seen=0;var areas=0;var open=0
+	for r in regions:
+		won+=r.get("badges",[]).filter(func(g):return g.done).size()
+		total_gyms+=r.get("badges",[]).size();seen+=int(r.get("visited",0));areas+=int(r.get("areas",0))
+		if r.open:open+=1
+	var summary=panel(overlay_body);summary.custom_minimum_size.x=1500
+	var sum_row=row(summary,48)
+	for stat in [["INSÍGNIAS","%d de %d"%[won,total_gyms],won,total_gyms,Design.GOLD],["MAPAS EXPLORADOS","%d de %d"%[seen,areas],seen,areas,Design.GREEN],["REGIÕES ABERTAS","%d de %d"%[open,regions.size()],open,regions.size(),Design.SKY]]:
+		var c=column(sum_row,6)
+		spaced(c,stat[0],12)
+		label(c,stat[1],26)
+		var bar=progress(c,maxf(1,stat[3]),stat[4],400,14);bar.value=stat[2]
+	var here=region_of(str(p.area))
+	for r in regions:
+		var id=str(r.id)
+		var card=panel(overlay_body);card.custom_minimum_size.x=1500
+		var line=row(card,28)
+		var info=column(line,6);info.custom_minimum_size.x=360
+		spaced(info,REGION_TAGS.get(id,""),12)
+		label(info,REGION_NAMES.get(id,id),30)
+		var state="Você está aqui" if id==here else ("Aberta" if r.open else str(r.need))
+		label(info,state,15,ACCENT if r.open else Color("#8b7f68"))
+		var explore=row(info,10)
+		var bar=progress(explore,maxf(1,float(r.get("areas",0))),Design.GREEN,200,12);bar.value=float(r.get("visited",0))
+		label(explore,"%d/%d mapas"%[int(r.get("visited",0)),int(r.get("areas",0))],13)
+		if str(r.get("goal",""))!="":label(info,"Meta: chegar a "+str(r.goal),13)
+		var go=btn(info,"Você está aqui" if id==here else "Viajar",func():send({"type":"travel","area":id});close_panel(),0,"mapa")
+		go.disabled=id==here or not r.open
+		if r.open and id!=here:Design.primary(go)
+		var case_box=grid_cards(line,8)
+		var list:Array=r.get("badges",[])
+		for i in 8:
+			var slot=column(case_box,4);slot.custom_minimum_size.x=118
+			var g:Dictionary=list[i] if i<list.size() else {}
+			var frame=PanelContainer.new();frame.custom_minimum_size=Vector2(118,104)
+			var done=bool(g.get("done",false))
+			var style=Design.surface(Color("#fff4d6") if done else Color("#e9e0cc"),10,Design.GOLD if done else Design.LINE,3 if done else 2)
+			style.set_content_margin_all(4)
+			frame.add_theme_stylebox_override("panel",style)
+			slot.add_child(frame)
+			if g.is_empty():
+				var empty=Label.new();empty.text="?";empty.custom_minimum_size=Vector2(108,96)
+				empty.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER;empty.vertical_alignment=VERTICAL_ALIGNMENT_CENTER
+				empty.add_theme_font_size_override("font_size",34);empty.add_theme_color_override("font_color",Color("#b9aa8b"))
+				frame.add_child(empty)
+				var soon=label(slot,"Em breve",13,Color("#8b7f68"));soon.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+				continue
+			var art=view.trainer_art({"art":g.art},"badge",0)
+			if art.tex:thumbnail(frame,art.tex,Vector2(108,96),art.region)
+			if not done:frame.get_child(0).modulate=Color(.2,.22,.28,.55) if not bool(g.ready) else Color(.35,.37,.42,.9)
+			var name_label=label(slot,str(g.leader),13,Design.INK if done else Color("#8b7f68"))
+			name_label.horizontal_alignment=HORIZONTAL_ALIGNMENT_CENTER
+			slot.tooltip_text="%s · %s\n%s"%[g.badge,g.town,"Conquistada" if done else ("Desafie no ginásio de "+str(g.town) if bool(g.ready) else "Mapa ainda não importado")]
+			frame.tooltip_text=slot.tooltip_text
 
 func lake_menu():
 	screen="lago"
@@ -1234,21 +1393,27 @@ func _unhandled_input(event:InputEvent):
 		if not data.is_empty() and (data.player.arcade!=null or spectate!=""):return
 		if event.keycode==KEY_E:interact()
 		if event.keycode==KEY_M:open_panel("mapa")
-		if event.keycode==KEY_T and not data.is_empty():send({"type":"transport","value":"walk" if data.player.get("transport","")=="bike" else "bike"})
+		if event.keycode==KEY_T and not data.is_empty():send({"type":"transport","value":{"walk":"bike","":"bike","bike":"mount"}.get(str(data.player.get("transport","")),"walk")})
 		if not data.is_empty() and data.player.battle!="":
 			if event.keycode==KEY_SPACE:view.local_action("dash");send({"type":"dash"})
 			if event.keycode==KEY_Q:view.local_action("special");send({"type":"special"})
+			for k in 4:
+				if event.keycode==KEY_1+k or event.keycode==KEY_KP_1+k:view.local_action("move");send({"type":"move","index":k})
 			if event.keycode==KEY_B:send({"type":"ball"})
+			if event.keycode==KEY_Z and view.arena_active:view.arena.cycle_zoom()
 			if event.keycode==KEY_F:send({"type":"flee"})
 			if event.keycode==KEY_V:
 				for fighter in data.battle.fighters:
 					if fighter.owner==data.player.id:send({"type":"evolve","ids":[fighter.mon.id]})
+	if event is InputEventMouseButton and event.pressed and view.arena_active and (event.button_index==MOUSE_BUTTON_WHEEL_UP or event.button_index==MOUSE_BUTTON_WHEEL_DOWN):
+		view.arena.wheel(.08 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -.08)
 	if event is InputEventMouseButton and screen=="" and not data.is_empty() and event.button_index==MOUSE_BUTTON_LEFT:
 		var pos=view.get_local_mouse_position()
 		if pos.x<0 or pos.x>512 or pos.y<0 or pos.y>384:return
 		if event.pressed and data.player.battle!="":view.local_action("attack");send({"type":"attack"})
 		elif event.pressed and placing!="":send({"type":"decorate","value":placing,"pos":{"x":pos.x,"y":pos.y}});placing=""
-		elif not event.pressed and data.player.area=="safari" and data.player.safari!=null:send({"type":"throw","pos":{"x":pos.x,"y":pos.y}})
+		elif not event.pressed and data.player.area=="safari" and data.player.safari!=null:
+			var target=view.world_mouse();send({"type":"throw","pos":{"x":target.x,"y":target.y}})
 		elif event.pressed and data.player.area=="casa":
 			if Rect2(340,140,120,100).has_point(pos):open_panel("pc")
 			elif Rect2(350,65,110,110).has_point(pos):open_panel("casa")
