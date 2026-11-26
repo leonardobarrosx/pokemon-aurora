@@ -1,14 +1,15 @@
 extends RefCounted
 # Arena oficial dos ginásios: o campo é maior que a tela, a câmera acompanha
 # a luta e o jogador pode afastar o zoom (Z ou rodinha do mouse). O chão vem
-# do atlas do ginásio (assets/stadiums/<id>.png, ferramentas/mapas/stadiums.py)
-# e os obstáculos, a plateia e a luz são desenhados aqui, com profundidade.
+# do atlas do ginásio (assets/stadiums/<id>.png) e os obstáculos de
+# assets/stadiums/<id>_props.png, os dois montados por ferramentas/mapas/
+# stadiums.py com tiles e sprites do próprio jogo (FireRed e Emerald).
 
-const ORDER=".,smnMbpkwuW_><^vijgoXflexVY}{)(zRTGO"
+const ORDER=".,smnMbpkwuW_><^vijgoXflexVY}{)(zRTGOALC|"
 const WATER="wuW_><^vz"
 const DEEP="W_><^vz"
-const WALLS="RTG~F"
-const PROPS="rqhItPF~"
+const WALLS="RG"
+const PROPS="rqhItPFT~"
 const CROWD=[1,4,7,16,19,25,26,41,74,129,133,134,135,136,94,197,2,5,8]
 
 var v:Node2D
@@ -76,18 +77,32 @@ func ground_char(fd:Dictionary)->String:
 	if floor_char.has(id):return floor_char[id]
 	var count={}
 	for ch in str(fd.cells):
-		if ORDER.find(ch)>=0 and ch not in "RTGOA" and WATER.find(ch)<0:count[ch]=int(count.get(ch,0))+1
+		if ORDER.find(ch)>=0 and ch not in "RTGOALC|" and WATER.find(ch)<0:count[ch]=int(count.get(ch,0))+1
 	var best=".";var n=0
 	for ch in count:
 		if count[ch]>n:best=ch;n=count[ch]
 	floor_char[id]=best
 	return best
 
-func tile(tex:Texture2D,ch:String,at:Vector2,cs:float,i:int):
+func tile(tex:Texture2D,ch:String,at:Vector2,cs:float,i:int,h:float=-1):
 	var row=ORDER.find(ch)
 	if row<0:row=0
 	var variant=(i*7+i/13*3)%4
-	v.draw_texture_rect_region(tex,Rect2(at,Vector2(cs,cs)),Rect2(variant*32,row*32,32,32))
+	if h<0:h=cs
+	v.draw_texture_rect_region(tex,Rect2(at,Vector2(cs,h)),Rect2(variant*32,row*32,32,32.0*h/cs))
+
+# Obstáculo do atlas de sprites: casa de 64x64 apoiada no fundo da célula.
+# A metade de baixo vai com o chão; a de cima, depois dos Pokémon.
+func prop(fd:Dictionary,ch:String,c:int,r:int,top:bool,alpha:float=1.0):
+	var k=PROPS.find(ch)
+	if k<0:return
+	var tex:Texture2D=v.texture("res://assets/stadiums/%s_props.png"%str(fd.get("id","")))
+	if tex==null:return
+	var cs=float(fd.cell);var at=Vector2(c,r)*cs
+	var variant=(c*7+r*3)%2
+	var src=Rect2(variant*64,k*64+(0 if top else 32),64,32)
+	var dst=Rect2(at+Vector2(cs/2-32,-cs if top else 0),Vector2(64,32))
+	v.draw_texture_rect_region(tex,dst,src,Color(1,1,1,alpha))
 
 func ground(b:Dictionary):
 	var fd:Dictionary=b.field
@@ -101,9 +116,8 @@ func ground(b:Dictionary):
 	for r in range(vis.position.y,vis.size.y):
 		for c in range(vis.position.x,vis.size.x):
 			var i=r*cols+c;var ch=cell_at(fd,c,r);var at=Vector2(c,r)*cs
-			if ch=="A" or ch=="L" or ch=="C":continue
 			var under=ch
-			if PROPS.find(ch)>=0 and ch!="F" and ch!="~":under=base
+			if PROPS.find(ch)>=0 and "F~T".find(ch)<0:under=base
 			if ch=="F":under="R"
 			if ch=="~":under="W"
 			if tex:tile(tex,under,at,cs,i)
@@ -115,24 +129,18 @@ func ground(b:Dictionary):
 			var ch=cell_at(fd,c,r);var at=Vector2(c,r)*cs
 			if WALLS.find(ch)>=0:
 				var below=cell_at(fd,c,r+1)
-				if WALLS.find(below)<0 and below!="A" and below!="C":
-					var face=Color("3a3330") if ch!="T" else Color("2c3038")
-					if ch=="G":face=Color(.55,.75,.85,.55)
-					if str(fd.theme)=="agua":face=Color("8a9aa8")
-					if str(fd.theme)=="gelo":face=Color("5d7496")
-					v.draw_rect(Rect2(at+Vector2(0,cs),Vector2(cs,12)),face)
-					v.draw_rect(Rect2(at+Vector2(0,cs+12),Vector2(cs,6)),Color(0,0,0,.22))
-					for k in 3:v.draw_line(at+Vector2(5+k*10,cs+1),at+Vector2(5+k*10,cs+11),Color(0,0,0,.18),1)
+				if WALLS.find(below)<0 and "ALC".find(below)<0:
+					# Face da parede (tile do jogo) e a sombra que ela joga no chão.
+					if tex and ch=="R":tile(tex,"|",at+Vector2(0,cs),cs,c+r*7,cs*.5)
+					else:v.draw_rect(Rect2(at+Vector2(0,cs),Vector2(cs,cs*.5)),Color(.55,.75,.85,.55))
+					v.draw_rect(Rect2(at+Vector2(0,cs*1.5),Vector2(cs,6)),Color(0,0,0,.22))
 				var right=cell_at(fd,c+1,r)
 				if WALLS.find(right)<0 and right!="A":v.draw_rect(Rect2(at+Vector2(cs,6),Vector2(7,cs)),Color(0,0,0,.16))
-				if ch=="F":fossil(at,cs)
-				if ch=="~":waterfall(at,cs,now)
-				if ch=="T":machine(at,cs,now,c+r)
 	stands(b,fd,vis,now)
 	for r in range(vis.position.y,vis.size.y):
 		for c in range(vis.position.x,vis.size.x):
 			var ch=cell_at(fd,c,r)
-			if "rqhIPt".find(ch)>=0:prop_low(fd,ch,c,r,Vector2(c,r)*cs,cs,now)
+			if PROPS.find(ch)>=0:prop_low(fd,ch,c,r,Vector2(c,r)*cs,cs,now)
 	events_ground(fd,now)
 
 func ground_detail(fd:Dictionary,ch:String,c:int,r:int,at:Vector2,cs:float,now:float,i:int):
@@ -192,55 +200,23 @@ func ground_detail(fd:Dictionary,ch:String,c:int,r:int,at:Vector2,cs:float,now:f
 			var p0=at+Vector2(cs/2,cs/2)+dir*(fposmod(now*40+i*5,cs)-cs/2)
 			v.draw_line(p0,p0+dir*8,Color(1,1,1,.5),1)
 
-func fossil(at:Vector2,cs:float):
-	var c=at+Vector2(cs/2,cs/2)
-	v.draw_arc(c,9,0,TAU*.85,16,Color("e8dcc0"),3)
-	v.draw_arc(c,5,PI,TAU*1.3,12,Color("e8dcc0"),2)
-	for k in 5:v.draw_line(c+Vector2.from_angle(k*1.2)*5,c+Vector2.from_angle(k*1.2)*9,Color("b9a882"),1)
-
-func waterfall(at:Vector2,cs:float,now:float):
-	v.draw_rect(Rect2(at,Vector2(cs,cs+12)),Color("4a88d0"))
-	for k in 4:
-		var x=at.x+4+k*7;var y=at.y+fposmod(now*60+k*11,cs+12)
-		v.draw_line(Vector2(x,y),Vector2(x,y+10),Color(1,1,1,.7),2)
-	for k in 3:v.draw_circle(at+Vector2(6+k*10,cs+12+2*sin(now*8+k)),4,Color(1,1,1,.6))
-
-func machine(at:Vector2,cs:float,now:float,seed:int):
-	var on=int(now*2+seed)%3!=0
-	v.draw_circle(at+Vector2(8,8),2,Color("ff6a4a") if on else Color("5a2a22"))
-	v.draw_circle(at+Vector2(14,8),2,Color("7cf08a") if not on else Color("244a2c"))
-	v.draw_rect(Rect2(at+Vector2(4,18),Vector2(cs-8,4)),Color("a07a3a"))
-
-# Obstáculos baixos e base dos altos (a parte alta vem depois dos Pokémon).
+# Sombra no chão e a base do obstáculo (sprite do jogo); a queda d'água
+# ganha espuma e fios de água correndo por cima do tile.
 func prop_low(fd:Dictionary,ch:String,c:int,r:int,at:Vector2,cs:float,now:float):
-	var mid=at+Vector2(cs/2,cs*.62)
-	v.draw_set_transform_matrix(xf*Transform2D(0,Vector2(1,.45),0,mid+Vector2(4,10)))
-	v.draw_circle(Vector2.ZERO,cs*.5,Color(0,0,0,.28))
-	v.draw_set_transform_matrix(xf)
-	match ch:
-		"r","q":
-			var j=float((c*37+r*11)%7)/7.0
-			mid+=Vector2(j*6-3,fposmod(j*13,1.0)*4-2)
-			cs*=.85+j*.3
-			var tone=Color("8d8378") if str(fd.theme)!="gelo" else Color("8a9bb0")
-			if str(fd.theme)=="fogo":tone=Color("5d4f4c")
-			v.draw_circle(mid+Vector2(0,-2),cs*.46,tone.darkened(.35))
-			v.draw_circle(mid+Vector2(-2,-5),cs*.4,tone)
-			v.draw_circle(mid+Vector2(-6,-10),cs*.16,tone.lightened(.3))
-			if ch=="q":
-				v.draw_polyline(PackedVector2Array([mid+Vector2(-8,-14),mid+Vector2(-2,-6),mid+Vector2(-5,0),mid+Vector2(2,6)]),Color(0,0,0,.6),2)
-				v.draw_line(mid+Vector2(-2,-6),mid+Vector2(8,-8),Color(0,0,0,.6),2)
-		"h":
-			var leaf=Color("3d8a3e")
-			for k in 3:v.draw_circle(at+Vector2(6+k*10,cs*.55-(k%2)*3),9,leaf.darkened(.15*(k%2)))
-			v.draw_circle(at+Vector2(12,cs*.4),5,leaf.lightened(.25))
-			if cell_at(fd,c+1,r)=="h":v.draw_rect(Rect2(at+Vector2(cs/2,cs*.3),Vector2(cs,cs*.5)),leaf)
-		"P":
-			v.draw_circle(mid,cs*.42,Color("6e6a66"))
-		"t":
-			v.draw_rect(Rect2(at+Vector2(cs/2-4,cs*.2),Vector2(8,cs*.55)),Color("6b4a2c"))
-		"I":
-			v.draw_circle(mid,cs*.36,Color(.7,.85,1,.6))
+	if "rqhItPI".find(ch)>=0:
+		var mid=at+Vector2(cs/2,cs*.8)
+		var w=cs*(.9 if ch=="t" else .55)
+		v.draw_set_transform_matrix(xf*Transform2D(0,Vector2(1,.4),0,mid))
+		v.draw_circle(Vector2.ZERO,w,Color(0,0,0,.25))
+		v.draw_set_transform_matrix(xf)
+	prop(fd,ch,c,r,false)
+	if ch=="~":
+		for k in 3:
+			var x=at.x+6+k*9;var y=at.y+fposmod(now*50+k*11,cs)
+			v.draw_line(Vector2(x,y),Vector2(x,y+8),Color(1,1,1,.55),2)
+		for k in 3:v.draw_circle(at+Vector2(6+k*10,cs-2+2*sin(now*8+k)),3,Color(1,1,1,.5))
+	if ch=="T" and int(now*2+c+r)%3!=0:
+		v.draw_circle(at+Vector2(cs*.3,cs*.3),1.5,Color("ff6a4a"))
 
 # Partes altas: copa das árvores, colunas, pilares de gelo. Ficam por cima
 # dos Pokémon e ficam transparentes quando um deles está atrás.
@@ -252,27 +228,13 @@ func upper(b:Dictionary):
 	for r in range(vis.position.y,vis.size.y):
 		for c in range(vis.position.x,vis.size.x):
 			var ch=cell_at(fd,c,r)
-			if "PtI".find(ch)<0:continue
-			var at=Vector2(c,r)*cs;var top=at+Vector2(cs/2,-cs*.6)
+			if PROPS.find(ch)<0:continue
+			var at=Vector2(c,r)*cs
 			var alpha=1.0
-			for p in fpos:
-				if p.y<at.y+cs*.6 and p.distance_to(top)<cs*1.3:alpha=.45
-			match ch:
-				"P":
-					var col=Color("9d958c") if str(fd.theme)!="agua" else Color("dfe6ee")
-					v.draw_rect(Rect2(at+Vector2(cs*.18,-cs*.9),Vector2(cs*.64,cs*1.5)),Color(col,alpha))
-					v.draw_rect(Rect2(at+Vector2(cs*.18,-cs*.9),Vector2(cs*.18,cs*1.5)),Color(col.lightened(.25),alpha))
-					v.draw_rect(Rect2(at+Vector2(cs*.1,-cs*1.0),Vector2(cs*.8,cs*.22)),Color(col.lightened(.1),alpha))
-				"t":
-					var leaf=Color("2f7a3c") if str(fd.theme)!="gelo" else Color("dfeaf3")
-					for k in 5:
-						var o=Vector2(cos(k*1.3)*12,sin(k*1.3)*7-cs*.55)
-						v.draw_circle(at+Vector2(cs/2,cs/2)+o,15,Color(leaf.darkened(.1*(k%2)),alpha))
-					v.draw_circle(at+Vector2(cs*.4,-cs*.35),8,Color(leaf.lightened(.25),alpha))
-				"I":
-					var ice=Color(.75,.9,1,.85*alpha)
-					v.draw_colored_polygon(PackedVector2Array([at+Vector2(cs*.2,cs*.7),at+Vector2(cs*.35,-cs*.6),at+Vector2(cs*.55,-cs*.95),at+Vector2(cs*.8,-cs*.3),at+Vector2(cs*.85,cs*.7)]),ice)
-					v.draw_line(at+Vector2(cs*.45,-cs*.6),at+Vector2(cs*.5,cs*.5),Color(1,1,1,.8*alpha),2)
+			if "tPIT".find(ch)>=0:
+				for p in fpos:
+					if p.y<at.y+cs*.7 and p.y>at.y-cs*1.2 and absf(p.x-at.x-cs/2)<cs*1.1:alpha=.45
+			prop(fd,ch,c,r,true,alpha)
 	events_air(fd,now)
 	lighting(fd,now)
 
@@ -287,9 +249,6 @@ func stands(b:Dictionary,fd:Dictionary,vis:Rect2i,now:float):
 			var ch=cell_at(fd,c,r)
 			if ch!="A":continue
 			var at=Vector2(c,r)*cs
-			var tier=Color("2a3646") if r%2==0 else Color("223040")
-			v.draw_rect(Rect2(at,Vector2(cs,cs)),tier)
-			v.draw_line(at+Vector2(0,cs-2),at+Vector2(cs,cs-2),Color("3c4e63"),2)
 			var seed=(c*31+r*17)%97
 			if seed%5==0:continue # cadeira vazia
 			var sp=CROWD[seed%CROWD.size()]
@@ -301,9 +260,8 @@ func stands(b:Dictionary,fd:Dictionary,vis:Rect2i,now:float):
 		var box=box_rect(fd,key)
 		if box.size.x<=0:continue
 		var col=theme_color(str(fd.theme)) if key=="L" else Color("3d6fa8")
-		v.draw_rect(box.grow(2),Color("1a1e26"))
-		v.draw_rect(box,col.darkened(.45))
-		v.draw_rect(Rect2(box.position,Vector2(box.size.x,6)),col)
+		v.draw_rect(box.grow(2),Color("1a1e26"),false,3)
+		v.draw_rect(Rect2(box.position,Vector2(box.size.x,4)),col)
 		v.draw_rect(box,Color("e7b443"),false,2)
 	var me=mine(b)
 	var p=v.game.data.player
