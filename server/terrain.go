@@ -66,6 +66,7 @@ var terrains = map[byte]Terrain{
 	'I': {Name: "pilar de gelo", Solid: true, HP: 55, Broken: 'w'},
 	't': {Name: "árvore", Solid: true, Flammable: false},
 	'P': {Name: "pilar", Solid: true},
+	'D': {Name: "decoração", Solid: true, Low: true},
 	'R': {Name: "parede", Solid: true},
 	'F': {Name: "fóssil", Solid: true},
 	'T': {Name: "máquina", Solid: true},

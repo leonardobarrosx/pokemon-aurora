@@ -22,6 +22,9 @@ Terreno (server/terrain.go tem as propriedades):
   F  fóssil na parede    T  máquina / tubulação      G  vidro
   ~  cascata             O  vão (só voadores)        A  arquibancada
   L  camarote do líder   C  camarote do desafiante
+  D  base de uma decoração (lanterna, bancada, vitrine): sólida e baixa;
+     o desenho vem de client/assets/stadiums/decor.png (ferramentas/mapas/
+     stadiums.py) e a arena guarda onde cada peça fica em "decor".
 """
 import json
 import math
@@ -33,7 +36,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 OUT = ROOT / "server/arenas"
 
-SOLID = set("rhItPRFTG~OALC")
+SOLID = set("rhItPRFTG~OALCD")
+DECOR = json.loads((ROOT / "client/assets/stadiums/decor.json").read_text())
 LAND_BAD = set("WlO_><^v") | SOLID
 
 
@@ -44,6 +48,26 @@ class Arena:
         self.floor = floor
         self.rng = random.Random(seed)
         self.spawn = [(w // 2 - 6, h - 6), (w // 2 + 5, 5)]
+        self.decor = []
+
+    def deco(self, key, x, y):
+        """Põe uma peça de decoração com a base começando em (x, y)."""
+        d = DECOR[key]
+        fw, fh = d["foot"]
+        self.rect(x, y, x + fw - 1, y + fh - 1, "D")
+        self.decor.append({"k": key, "x": x, "y": y, "foot": d["foot"], "src": d["src"]})
+
+    def border(self, c, t, keep="LCA"):
+        """Faixa de `t` casas na volta da área de combate (árvores, rochas)."""
+        for y in range(2, self.h - 2):
+            for x in range(self.w):
+                if x < t or x >= self.w - t or y < 2 + t or y > self.h - 3 - t:
+                    if self.g[y][x] not in keep:
+                        self.g[y][x] = c
+
+    def path(self, pts, c, width=2, on=None):
+        for (x0, y0), (x1, y1) in zip(pts, pts[1:]):
+            self.line(x0, y0, x1, y1, c, width, on)
 
     def ok(self, x, y):
         return 0 <= x < self.w and 0 <= y < self.h
@@ -177,159 +201,233 @@ class Arena:
 
     def dump(self, gid, theme, title):
         rows = ["".join(r) for r in self.g]
+        # Decoração que algum desenho posterior apagou sai da lista.
+        keep = [d for d in self.decor if self.get(d["x"], d["y"]) == "D"]
         return {"id": gid, "theme": theme, "title": title, "w": self.w, "h": self.h,
-                "cells": "".join(rows), "spawn": [list(s) for s in self.spawn]}
+                "cells": "".join(rows), "spawn": [list(s) for s in self.spawn], "decor": keep}
 
 
 # --- Ginásios com projeto próprio ------------------------------------------
+# Plantas seguindo os conceitos do Leo (previews/conceito_arenas_leo.png):
+# borda temática grossa, camarote do líder em cima e do desafiante embaixo,
+# um eixo central legível e quatro "quadrantes" com o desafio do ginásio.
 
 def pewter(a):
-    """Pedreira monumental: paredões, fósseis, pilares naturais, rochas que
-    viram cobertura e corredores laterais para os ágeis."""
+    """Pedreira monumental: areia, paredões irregulares, um platô de pedra no
+    meio, grupos de rochas que viram cobertura, estátuas e a vitrine do fóssil."""
     a.floor = "s"; a.g = [["s"] * a.w for _ in range(a.h)]
     a.frame("R", "cave")
     w, h = a.w, a.h
-    # Lajes de pedra nos camarotes e no centro (o resto é terra batida).
-    a.rect(w // 2 - 4, 4, w // 2 + 3, 5, ".", on={"s"})
-    a.rect(w // 2 - 4, h - 6, w // 2 + 3, h - 5, ".", on={"s"})
-    a.ellipse(w / 2, h / 2, 4, 3, ".", on={"s"}, wobble=.3)
-    # Corredores laterais: muros de rocha com aberturas.
-    for x in (5, w - 6):
-        a.line(x, 6, x, h - 7, "R", on={"s", "."})
-        for gap in (8, h // 2, h - 9):
-            a.rect(x, gap, x, gap + 1, "s")
-    # Fósseis encravados nos paredões.
-    for x, y in ((2, 7), (w - 3, 12), (3, h - 8), (w - 4, 6)):
+    # Paredões internos em arco, abrindo corredores laterais.
+    a.path([(4, 6), (4, 9), (6, 11)], "R", 1)
+    a.path([(4, 14), (4, h - 7), (7, h - 6)], "R", 1)
+    a.path([(w - 5, 5), (w - 5, 9)], "R", 1)
+    a.path([(w - 7, 13), (w - 5, 15), (w - 5, h - 7)], "R", 1)
+    a.path([(8, 5), (11, 5)], "R", 1)
+    # Platô de pedra no centro, com degraus para cima e para baixo.
+    a.ellipse(w / 2, h / 2 + .5, 6.5, 4, ".", on={"s"}, wobble=.25)
+    a.rect(w // 2 - 1, 4, w // 2, h - 5, ".", on={"s"})
+    # Estátuas (indestrutíveis) e grupos de rochas (destrutíveis).
+    for x, y in ((9, 8), (w - 11, h - 9)):
+        a.rect(x, y, x + 1, y + 1, "P")
+    for cx, cy, n in ((6, 7, 5), (w - 9, 9, 4), (8, h - 8, 5), (w - 8, h - 7, 3), (w // 2 - 8, h // 2 + 1, 2), (w // 2 + 8, h // 2, 2)):
+        a.blob("r", cx, cy, n, on={"s"})
+    a.deco("fossil_case", w - 10, 4)
+    for x, y in ((2, 7), (w - 3, 12), (3, h - 8)):
         if a.get(x, y) == "R":
             a.put(x, y, "F")
-    # Pilares naturais (indestrutíveis) e grupos de rochas (destrutíveis).
-    for x, y in ((w // 2 - 6, h // 2 - 3), (w // 2 + 7, h // 2 + 2), (w // 2 + 1, 7)):
-        a.rect(x, y, x + 1, y + 1, "P")
-    for cx, cy in ((9, 8), (w - 11, h - 10), (11, h - 9), (w - 10, 9), (w // 2 - 2, h // 2 + 5), (w // 2 + 3, h // 2 - 5)):
-        a.blob("r", cx, cy, 5, on={"s", "."})
-    a.scatter("r", 6, on={"s"})
+    a.spawn = [(w // 2 - 6, h - 6), (w // 2 + 5, 6)]
 
 
 def cerulean(a):
-    """Estádio aquático: piscina olímpica com raias de correnteza, ilhas,
-    plataformas que afundam, ponte e cascatas."""
+    """Estádio aquático: piscina olímpica com passarela em cruz, ponte de
+    madeira atravessando, raias com correnteza, plataformas soltas (algumas
+    afundam) e duas cascatas no fundo."""
     a.floor = "."
     a.frame("R", "rect")
     w, h = a.w, a.h
-    x0, y0, x1, y1 = 5, 7, w - 6, h - 8
+    x0, y0, x1, y1 = 4, 6, w - 5, h - 6
     a.rect(x0, y0, x1, y1, "W")
-    a.rect(x0, y0, x1, y0, "w")  # degraus rasos
-    a.rect(x0, y1, x1, y1, "w")
+    a.rect(x0, y1, x1, y1, "w")  # degrau raso na borda de baixo
     # Raias com correnteza em sentidos opostos.
-    for y, c in ((y0 + 3, ">"), (y1 - 3, "<")):
-        a.rect(x0 + 2, y, x1 - 2, y, c)
-    # Cascatas no fundo, despejando água para dentro da piscina.
-    for x in (3, w - 5):
+    a.rect(x0 + 1, y0 + 2, x1 - 1, y0 + 2, ">")
+    a.rect(x0 + 1, y1 - 3, x1 - 1, y1 - 3, "<")
+    # Cascatas despejando na piscina.
+    for x in (2, w - 4):
         a.rect(x, 3, x + 1, 3, "~")
-        a.rect(x, 4, x + 1, y0 - 1, "v")
-    # Ilhas fixas, plataformas flutuantes e as que afundam.
-    a.rect(w // 2 - 2, h // 2 - 1, w // 2 + 1, h // 2, "p")
-    for x, y in ((x0 + 3, y0 + 5), (x1 - 5, y1 - 6), (x0 + 6, y1 - 4)):
-        a.rect(x, y, x + 2, y + 1, "p")
-    for x, y in ((x0 + 9, y0 + 2), (x1 - 9, y0 + 5), (x1 - 4, h // 2), (x0 + 12, y1 - 2), (w // 2 + 4, y1 - 3)):
-        a.rect(x, y, x + 1, y + 1, "k")
-    # Ponte de um lado só (o outro lado obriga a nadar ou pular plataformas).
-    a.rect(x0 + 1, h // 2, w // 2 - 3, h // 2, "b")
-    a.spawn = [(w // 2 - 6, h - 5), (w // 2 + 5, 5)]
+        a.rect(x, 4, x + 1, y0, "v")
+    # Passarela em cruz: do camarote do líder ao do desafiante, e a ponte.
+    mid = w // 2
+    a.rect(mid - 1, y0, mid, y0 + 4, "p")
+    a.rect(mid - 1, y1 - 4, mid, y1, "p")
+    a.rect(mid - 2, h // 2 - 2, mid + 1, h // 2 + 1, "p")
+    a.rect(x0, h // 2 - 1, mid - 3, h // 2 - 1, "b")
+    a.rect(mid + 2, h // 2 - 1, x1, h // 2 - 1, "b")
+    # Plataformas soltas: as fixas e as que afundam.
+    for x, y in ((x0 + 3, y0 + 4), (x1 - 5, y0 + 4), (x0 + 5, y1 - 2), (x1 - 6, y1 - 2)):
+        a.rect(x, y, x + 2, y, "p")
+    for x, y in ((mid - 5, y0 + 1), (mid + 4, y0 + 1), (mid - 6, y1 - 5), (mid + 5, y1 - 5), (x0 + 1, h // 2 + 2), (x1 - 2, h // 2 - 4)):
+        a.rect(x, y, x + 1, y, "k")
+    a.spawn = [(w // 2 - 6, h - 5), (w // 2 + 5, 4)]
 
 
 def celadon(a):
-    """Estufa: canteiros de grama alta para emboscar, cercas vivas, árvores,
-    laguinho com passarela, flores de pólen e luz entrando pelo teto."""
+    """Estufa: parede de vidro, canteiros de flores na borda, caminhos de areia
+    em cruz, quatro canteiros de grama alta, pés de fruta e uma praça no meio."""
     a.floor = "."
     a.frame("G", "rect")
     w, h = a.w, a.h
-    # Caminhos de pedra entre canteiros.
-    for cx, cy, rx, ry in ((8, 8, 4, 3), (w - 9, h - 9, 5, 3), (9, h - 9, 4, 3), (w - 10, 8, 4, 2), (w // 2, h // 2 + 1, 3, 2)):
-        a.ellipse(cx, cy, rx, ry, "g", wobble=.35)
-    # Cercas vivas formando "salas" do jardim.
-    a.line(13, 5, 13, 10, "h")
-    a.line(w - 14, h - 11, w - 14, h - 6, "h")
-    a.line(w // 2 - 5, h // 2 - 4, w // 2 + 4, h // 2 - 4, "h")
-    # Laguinho com passarela de madeira.
-    a.ellipse(w - 9, h // 2, 4, 2.5, "w", wobble=.2)
-    a.line(w - 14, h // 2, w - 4, h // 2, "b", on={"w"})
-    # Árvores e flores (fontes de pólen).
-    for x, y in ((3, 4), (w - 4, 4), (3, h - 5), (w - 4, h - 5), (w // 2 - 9, h // 2), (w // 2 + 8, h // 2 - 6)):
+    # Canteiros de flores encostados no vidro, com árvores nos cantos.
+    for x in range(1, w - 1):
+        a.put(x, 3, "o"); a.put(x, h - 4, "o")
+    for y in range(3, h - 3):
+        a.put(1, y, "o"); a.put(w - 2, y, "o")
+    for x, y in ((2, 4), (w - 3, 4), (2, h - 5), (w - 3, h - 5), (2, h // 2), (w - 3, h // 2)):
         a.put(x, y, "t")
-    for cx, cy in ((w // 2 - 3, 6), (5, h // 2), (w // 2 + 6, h - 7)):
-        a.blob("o", cx, cy, 4)
+    a.rect(w // 2 - 3, 3, w // 2 + 2, 3, ".")
+    a.rect(w // 2 - 3, h - 4, w // 2 + 2, h - 4, ".")
+    # Quatro canteiros de grama alta, com cerca viva e pés de fruta.
+    q = ((5, 6, w // 2 - 4, h // 2 - 3), (w // 2 + 3, 6, w - 6, h // 2 - 3),
+         (5, h // 2 + 2, w // 2 - 4, h - 7), (w // 2 + 3, h // 2 + 2, w - 6, h - 7))
+    for k, (qx0, qy0, qx1, qy1) in enumerate(q):
+        a.rect(qx0, qy0, qx1, qy1, "g")
+        for x, y in ((qx0, qy0), (qx1, qy0), (qx0, qy1), (qx1, qy1)):
+            a.put(x, y, ".")
+        a.put(qx0 + 1, qy1, "h"); a.put(qx1 - 1, qy0, "h")
+    for k, x in enumerate(range(7, 12, 2)):
+        a.deco(("berry_cheri", "berry_pecha", "berry_oran")[k], x, 6)
+    for k, x in enumerate(range(w - 12, w - 7, 2)):
+        a.deco(("berry_oran", "berry_cheri", "berry_pecha")[k], x, h - 7)
+    for x, y in ((4, 5), (w - 5, 5), (4, h - 6), (w - 5, h - 6)):
+        a.deco("plant", x, y)
+    # Praça de tijolos no cruzamento dos caminhos.
+    a.rect(w // 2 - 2, h // 2 - 2, w // 2 + 1, h // 2 + 1, ",")
+    for x, y in ((w // 2 - 3, h // 2 - 3), (w // 2 + 2, h // 2 + 2)):
+        a.put(x, y, "o")
 
 
 def cinnabar(a):
-    """Laboratório vulcânico: piso de metal, canal de lava contido no meio,
-    pontes metálicas, válvulas de vapor, tubulação e vidro reforçado."""
+    """Laboratório vulcânico: piso escuro de metal, passarela clara em cruz,
+    duas piscinas de lava, bancadas, a máquina do laboratório, consoles
+    nas paredes, rochas soltas e válvulas de vapor."""
     a.floor = "M"
     a.g = [["M"] * a.w for _ in range(a.h)]
-    a.frame("T", "oct", cut=5)
+    a.frame("R", "rect")
     w, h = a.w, a.h
-    cx = w // 2
-    # Piso de concreto nas áreas de trabalho e passarelas de metal.
-    for x0, y0, x1, y1 in ((4, 5, cx - 6, h // 2 - 3), (cx + 5, h // 2 + 2, w - 5, h - 6)):
-        a.rect(x0, y0, x1, y1, ".", on={"M"})
-    a.rect(cx - 2, 4, cx + 1, h - 5, "l")
-    for y in (7, h // 2, h - 8):
-        a.rect(cx - 2, y, cx + 1, y + 1, "M")
-    # Máquinas junto às paredes e vidro reforçado protegendo os camarotes.
-    for x, y in ((3, 8), (3, h - 10), (w - 5, 9), (w - 5, h - 11)):
-        a.rect(x, y, x + 1, y + 2, "T")
-    a.rect(cx - 6, 4, cx - 4, 4, "G")
-    a.rect(cx + 3, h - 5, cx + 5, h - 5, "G")
-    # Válvulas de vapor (gêiseres com aviso) e placas elétricas de resfriamento.
-    for x, y in ((8, 7), (w - 9, h - 8), (9, h - 9), (w - 10, 8), (cx - 6, h // 2), (cx + 5, h // 2 - 1)):
+    cx, cy = w // 2, h // 2
+    a.rect(cx - 2, 3, cx + 1, h - 4, ".")
+    a.rect(4, cy - 1, w - 5, cy + 1, ".")
+    a.rect(cx - 3, cy - 2, cx + 2, cy + 2, ".")
+    # Lava contida, com borda de aviso.
+    a.ellipse(w - 12, 9, 6, 3.5, "l", on={"M"}, wobble=.3)
+    a.ellipse(12, h - 10, 6, 3.5, "l", on={"M"}, wobble=.3)
+    # Laboratório: máquina, estantes, bancadas e consoles.
+    a.deco("lab_machine", 4, 5)
+    a.deco("lab_shelf", 8, 4)
+    a.deco("lab_desk", 7, 10)
+    a.deco("lab_desk", w - 11, h - 8)
+    a.deco("lab_shelf", w - 7, h - 12)
+    a.deco("lab_machine", w - 6, h - 7)
+    for x, y in ((1, 9), (1, 10), (1, h - 14), (w - 2, 14), (w - 2, 15), (w - 2, h - 6)):
+        a.put(x, y, "T")
+    # Rochas soltas (cobertura) e válvulas de vapor.
+    for x, y in ((cx - 9, 7), (cx + 7, cy - 6), (cx - 8, cy + 6), (cx + 9, h - 8), (5, cy - 4), (w - 6, cy + 4), (cx - 14, cy + 3), (cx + 14, cy - 3)):
+        a.put(x, y, "r")
+    for x, y in ((cx - 6, cy - 5), (cx + 5, cy + 5), (w - 9, cy - 2), (8, cy + 3)):
         a.put(x, y, "V")
-    # Bancadas do laboratório com vidro e tubulação ligando as paredes.
-    for x, y in ((10, 12), (w - 14, h - 14)):
-        a.rect(x, y, x + 3, y, "T")
-        a.rect(x, y + 1, x + 3, y + 1, "G")
-    a.line(4, h - 13, 11, h - 13, "T")
-    a.line(w - 12, 13, w - 5, 13, "T")
-    a.rect(6, h // 2 - 1, 7, h // 2, "e")
-    a.rect(w - 8, h // 2, w - 7, h // 2 + 1, "e")
 
 
 def lavaridge(a):
-    """Santuário termal: fontes termais irregulares, ilhas de pedra vulcânica,
-    gêiseres naturais, pontes de madeira e vapor."""
-    a.floor = ","
-    a.g = [[","] * a.w for _ in range(a.h)]
-    a.frame("R", "round")
+    """Santuário termal: borda de pedra vulcânica com árvores e lanternas,
+    duas fontes termais com margem de pedras, ilhas, gêiseres e uma ponte de
+    madeira em S ligando os dois camarotes."""
+    a.floor = "."
+    a.frame("R", "rect")
     w, h = a.w, a.h
-    pools = ((10, 10, 5, 3.5), (w - 11, h - 11, 6, 4), (w // 2 + 2, h // 2 - 2, 4, 3), (11, h - 11, 4, 3), (w - 10, 10, 4, 3))
-    for cx, cy, rx, ry in pools:
-        a.ellipse(cx, cy, rx, ry, "u", wobble=.4)
-        a.blob("r", int(cx), int(cy), 2, on={"u"})  # ilha vulcânica
-        a.put(int(cx + rx * .4), int(cy - ry * .3), "V", on={"u"})
-    a.line(w // 2 - 3, h // 2 - 2, w // 2 + 7, h // 2 - 2, "b", on={"u"})
-    a.line(10, 5, 10, 15, "b", on={"u"})
-    for cx, cy in ((4, h // 2), (w - 5, h // 2 + 3)):
-        a.ellipse(cx, cy, 2, 3, "s", wobble=.3)
-    a.blob("l", w - 6, 6, 3, on={","})
-    for x, y in ((6, 5), (w - 7, h - 6), (5, h - 7), (w // 2 - 8, h // 2 + 4)):
+    a.border("R", 2)
+    for x, y in ((2, 4), (w - 3, 4), (2, h - 5), (w - 3, h - 5), (2, h // 2), (w - 3, h // 2 - 2)):
         a.put(x, y, "t")
+    # Fontes termais com margem de rochas (as rochas quebram).
+    for cx in (11, w - 12):
+        a.ellipse(cx, h / 2, 7.5, 7, "r", wobble=.15)
+        a.ellipse(cx, h / 2, 6.5, 6, "u", wobble=.15)
+        a.blob("r", cx - 2, h // 2 - 2, 2, on={"u"})
+        a.put(cx + 2, h // 2 + 2, "V")
+    # Ponte em S do líder ao desafiante, cortando as duas fontes.
+    mid = w // 2
+    a.path([(mid - 1, 4), (mid - 1, 7), (mid - 5, 10), (mid - 5, 13), (mid + 3, 17), (mid + 3, 21), (mid - 1, h - 6), (mid - 1, h - 4)], "b", 2)
+    for x, y in ((mid - 9, 5), (mid + 8, 5), (mid - 9, h - 6), (mid + 8, h - 6), (4, h // 2 - 4), (w - 5, h // 2 + 3)):
+        a.deco("lantern", x, y)
+    a.spawn = [(w // 2 - 6, h - 6), (w // 2 + 5, 5)]
 
 
 def mahogany(a):
-    """Caverna glacial: lago congelado com gelo que racha, neve nas margens
-    (aderência), pilares de gelo que seguram disparos e um buraco no gelo."""
+    """Lago glacial: margens de neve com pinheiros nevados, um lago de gelo
+    com uma rachadura atravessando, cristais de gelo e um buraco na água."""
     a.floor = "n"
     a.g = [["n"] * a.w for _ in range(a.h)]
     a.frame("R", "cave")
     w, h = a.w, a.h
-    a.ellipse(w / 2, h / 2, w / 2 - 6, h / 2 - 6, "i", on={"n"}, wobble=.25)
-    for _ in range(9):
-        x, y = a.rng.randint(8, w - 9), a.rng.randint(8, h - 9)
-        if a.get(x, y) == "i":
-            a.blob("j", x, y, 2, on={"i"})
-    a.ellipse(w / 2 + 6, h / 2 + 2, 2, 1.5, "W", on={"i", "j"})
-    for x, y in ((w // 2 - 7, h // 2 - 4), (w // 2 + 2, h // 2 + 5), (w // 2 - 2, h // 2 - 1), (w // 2 + 9, h // 2 - 5), (9, h - 9)):
-        a.put(x, y, "I")
-    a.scatter("r", 4, on={"n"})
+    for x, y in ((3, 5), (5, 4), (w - 4, 5), (w - 6, 4), (3, h - 6), (5, h - 5), (w - 4, h - 6), (w - 6, h - 5), (2, h // 2), (w - 3, h // 2 + 1), (8, 4), (w - 9, h - 5)):
+        if a.get(x, y) == "n":
+            a.put(x, y, "t")
+    a.ellipse(w / 2, h / 2 + .5, w / 2 - 6, h / 2 - 5.5, "i", on={"n"}, wobble=.18)
+    # Rachadura em zigue-zague de cima a baixo.
+    a.path([(w // 2, 6), (w // 2 - 3, 11), (w // 2 + 2, 16), (w // 2 - 2, 22), (w // 2 + 3, 27), (w // 2, h - 7)], "j", 1, on={"i"})
+    a.path([(w // 2 - 3, 11), (w // 2 - 10, 14)], "j", 1, on={"i"})
+    a.path([(w // 2 + 2, 16), (w // 2 + 11, 19)], "j", 1, on={"i"})
+    # Cristais de gelo (seguram disparos e quebram).
+    for cx, cy in ((w // 2 - 11, 10), (w // 2 + 10, 12), (w // 2 - 7, h - 10), (w // 2 + 8, h - 11)):
+        for dx, dy in ((0, 0), (1, 0), (0, 1)):
+            a.put(cx + dx, cy + dy, "I", on={"i", "j", "n"})
+    a.ellipse(w / 2 + 1, h / 2 + 1, 2.5, 1.5, "W", on={"i", "j"})
+
+
+def ecruteak(a):
+    """Templo assombrado: assoalho de madeira em cruz sobre a pedra escura,
+    quatro fossos (só quem voa atravessa) com pedras soltas, lanternas
+    violeta, árvores roxas e portais no meio do templo."""
+    a.floor = "."
+    a.frame("R", "rect")
+    w, h = a.w, a.h
+    mid, cy = w // 2, h // 2
+    # Alas do templo nos cantos de cima e de baixo.
+    for x0, y0 in ((1, 3), (w - 9, 3), (1, h - 6), (w - 9, h - 6)):
+        a.rect(x0, y0, x0 + 7, y0 + 2, "R")
+    # Fossos em cada quadrante.
+    for qx, qy in ((mid - 12, cy - 9), (mid + 4, cy - 9), (mid - 12, cy + 3), (mid + 4, cy + 3)):
+        a.rect(qx, qy, qx + 7, qy + 5, "O")
+        a.put(qx, qy, "."); a.put(qx + 7, qy + 5, ".")
+        a.put(qx + 2, qy + 2, "r"); a.put(qx + 5, qy + 3, "r")
+    a.rect(mid - 2, 3, mid + 1, h - 4, ",")
+    a.rect(2, cy - 1, w - 3, cy + 1, ",")
+    a.put(mid - 1, cy, "Y"); a.put(mid, cy - 1, "Y")
+    for x, y in ((mid - 4, 5), (mid + 3, 5), (mid - 4, h - 6), (mid + 3, h - 6), (3, cy - 3), (w - 4, cy + 3)):
+        a.deco("lantern_violet", x, y)
+    for x, y in ((2, 7), (w - 3, h - 8)):
+        a.put(x, y, "t")
+    a.spawn = [(mid - 6, h - 6), (mid + 5, 5)]
+
+
+def eterna(a):
+    """Floresta ancestral: mata fechada na borda, trilhas de terra em
+    diagonal, canteiros de grama alta, arcos de pedra e o círculo no meio."""
+    a.floor = "."
+    a.frame("R", "rect")
+    w, h = a.w, a.h
+    a.border("t", 2)
+    for x, y in ((3, 4), (w - 4, 4), (3, h - 5), (w - 4, h - 5), (3, 9), (w - 4, h - 10)):
+        a.put(x, y, "t")
+    mid = w // 2
+    a.path([(mid - 1, 4), (mid - 1, 6), (mid - 7, 11), (mid - 9, h - 6)], "s", 2)
+    a.path([(mid - 1, h - 5), (mid + 1, h - 8), (mid + 7, 9), (mid + 9, 5)], "s", 2)
+    for x0, y0, x1, y1 in ((4, 5, 9, 8), (w - 12, 11, w - 5, 14), (5, 14, 10, 18), (mid + 3, h - 8, mid + 8, h - 6)):
+        a.rect(x0, y0, x1, y1, "g", on={"."})
+    a.ring(mid - .5, h / 2 - .5, 3.2, 3.2, "s", width=1)
+    a.put(mid - 1, h // 2 - 1, "P")
+    for x, y in ((4, 10), (w - 5, 6), (5, h - 7), (w - 6, h - 8)):
+        a.put(x, y, "P")
+    a.spawn = [(mid - 6, h - 6), (mid + 5, 5)]
 
 
 # --- Ginásios gerados pelo tema (cada um com sua forma e semente) -------------
@@ -486,7 +584,8 @@ def snowpoint(a):
 
 
 FEATURED = {"kanto_1": pewter, "kanto_2": cerulean, "kanto_4": celadon,
-            "kanto_7": cinnabar, "hoenn_4": lavaridge, "johto_7": mahogany}
+            "kanto_7": cinnabar, "hoenn_4": lavaridge, "johto_7": mahogany,
+            "johto_4": ecruteak, "sinnoh_2": eterna}
 
 TITLES = {
     "kanto_1": "Pedreira Monumental", "kanto_2": "Estádio Aquático", "kanto_3": "Usina Elétrica",

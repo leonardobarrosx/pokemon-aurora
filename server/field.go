@@ -23,6 +23,9 @@ type Field struct {
 	Cells  string       `json:"cells"`
 	Events []FieldEvent `json:"events"`
 	Spawn  [2]Vec       `json:"spawn"`
+	// Decoração da arquitetura (lanternas, bancadas, vitrines): só desenho;
+	// a colisão vem das casas 'D' da grade.
+	Decor []json.RawMessage `json:"decor,omitempty"`
 
 	Timers  []FieldTimer    `json:"-"`
 	HP      map[int]float64 `json:"-"`
@@ -68,13 +71,14 @@ var gymTheme = map[string]string{
 var arenaFiles embed.FS
 
 type arenaFile struct {
-	ID    string    `json:"id"`
-	Theme string    `json:"theme"`
-	Title string    `json:"title"`
-	W     int       `json:"w"`
-	H     int       `json:"h"`
-	Cells string    `json:"cells"`
-	Spawn [2][2]int `json:"spawn"`
+	ID    string            `json:"id"`
+	Theme string            `json:"theme"`
+	Title string            `json:"title"`
+	W     int               `json:"w"`
+	H     int               `json:"h"`
+	Cells string            `json:"cells"`
+	Spawn [2][2]int         `json:"spawn"`
+	Decor []json.RawMessage `json:"decor"`
 }
 
 var arenas = map[string]arenaFile{}
@@ -118,7 +122,7 @@ func newField(id string, now float64) *Field {
 	if !ok {
 		a = plainArena(id)
 	}
-	fl := &Field{ID: id, Theme: a.Theme, Title: a.Title, Cols: a.W, Rows: a.H, Cell: fieldCell, Cells: a.Cells,
+	fl := &Field{ID: id, Theme: a.Theme, Title: a.Title, Cols: a.W, Rows: a.H, Cell: fieldCell, Cells: a.Cells, Decor: a.Decor,
 		Events: []FieldEvent{}, HP: map[int]float64{}, Next: map[int]float64{}, Started: now}
 	for k, s := range a.Spawn {
 		fl.Spawn[k] = fl.center(s[1]*a.W + s[0])

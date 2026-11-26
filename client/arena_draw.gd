@@ -117,7 +117,7 @@ func ground(b:Dictionary):
 		for c in range(vis.position.x,vis.size.x):
 			var i=r*cols+c;var ch=cell_at(fd,c,r);var at=Vector2(c,r)*cs
 			var under=ch
-			if PROPS.find(ch)>=0 and "F~T".find(ch)<0:under=base
+			if (PROPS.find(ch)>=0 and "F~T".find(ch)<0) or ch=="D":under=base
 			if ch=="F":under="R"
 			if ch=="~":under="W"
 			if tex:tile(tex,under,at,cs,i)
@@ -141,7 +141,35 @@ func ground(b:Dictionary):
 		for c in range(vis.position.x,vis.size.x):
 			var ch=cell_at(fd,c,r)
 			if PROPS.find(ch)>=0:prop_low(fd,ch,c,r,Vector2(c,r)*cs,cs,now)
+	decor(fd,false,[])
 	events_ground(fd,now)
+
+# Decoração (assets/stadiums/decor.png): a base vai com o chão e o que sobe
+# acima dela é desenhado depois dos Pokémon, translúcido se alguém está atrás.
+func decor(fd:Dictionary,top:bool,fpos:Array):
+	var list=fd.get("decor",[])
+	if list==null or list.is_empty():return
+	var tex:Texture2D=v.texture("res://assets/stadiums/decor.png")
+	if tex==null:return
+	var cs=float(fd.cell)
+	for d in list:
+		var src=Rect2(d.src[0],d.src[1],d.src[2],d.src[3])
+		var foot=Vector2(d.foot[0],d.foot[1])*cs
+		var base=Vector2(d.x,d.y)*cs
+		var bottom=base.y+foot.y
+		var left=base.x+(foot.x-src.size.x)/2
+		var cut=src.size.y-foot.y # parte acima da base
+		if not top:
+			v.draw_set_transform_matrix(xf*Transform2D(0,Vector2(1,.35),0,Vector2(base.x+foot.x/2,bottom-4)))
+			v.draw_circle(Vector2.ZERO,foot.x*.55,Color(0,0,0,.22))
+			v.draw_set_transform_matrix(xf)
+			v.draw_texture_rect_region(tex,Rect2(Vector2(left,base.y),Vector2(src.size.x,foot.y)),Rect2(src.position+Vector2(0,maxf(cut,0)),Vector2(src.size.x,foot.y)))
+		elif cut>0:
+			var r=Rect2(Vector2(left,base.y-cut),Vector2(src.size.x,cut))
+			var alpha=1.0
+			for p in fpos:
+				if r.grow(8).has_point(p):alpha=.45
+			v.draw_texture_rect_region(tex,r,Rect2(src.position,Vector2(src.size.x,cut)),Color(1,1,1,alpha))
 
 func ground_detail(fd:Dictionary,ch:String,c:int,r:int,at:Vector2,cs:float,now:float,i:int):
 	if ch=="." or ch=="M":
@@ -235,6 +263,7 @@ func upper(b:Dictionary):
 				for p in fpos:
 					if p.y<at.y+cs*.7 and p.y>at.y-cs*1.2 and absf(p.x-at.x-cs/2)<cs*1.1:alpha=.45
 			prop(fd,ch,c,r,true,alpha)
+	decor(fd,true,fpos)
 	events_air(fd,now)
 	lighting(fd,now)
 

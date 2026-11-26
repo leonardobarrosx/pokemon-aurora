@@ -156,7 +156,17 @@ func TestMovesReshapeTheArena(t *testing.T) {
 func TestQuarryRocksAreCoverAndBreak(t *testing.T) {
 	_, _, b := gymBattle(t, "kt_pewter_city_gym", 4)
 	fl := b.Field
-	rock := findCell(fl, 'r')
+	// Uma rocha com chão livre de pelo menos um lado (os grupos de rochas
+	// podem ter vizinhas dos dois lados).
+	rock := Vec{}
+	for i := range fl.Cells {
+		if fl.Cells[i] == 'r' && i%fl.Cols > 2 && i%fl.Cols < fl.Cols-3 &&
+			(!terrainOf(fl.Cells[i-1]).Solid && !terrainOf(fl.Cells[i-2]).Solid ||
+				!terrainOf(fl.Cells[i+1]).Solid && !terrainOf(fl.Cells[i+2]).Solid) {
+			rock = fl.center(i)
+			break
+		}
+	}
 	f := b.Fighters[0]
 	f.Pos = rock.Add(Vec{-40, 0})
 	if b.solid(f, f.Pos) {

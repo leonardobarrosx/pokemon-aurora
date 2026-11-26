@@ -226,6 +226,46 @@ def props():
     return P
 
 
+def decor():
+    """Peças grandes de decoração: nome -> (sprite, largura e altura da base
+    em casas). A base é a parte que ocupa o chão; o resto sobe por cima."""
+    D = {}
+    lab = "kt_cinnabar_island_pokemon_lab_experiment_room"
+    lab_floor = [grab(lab, 6, 3), grab(lab, 7, 3), grab(lab, 8, 4)]
+    D["lab_machine"] = (keyout(block(lab, 12, 0, 2, 3), *lab_floor), 2, 2)
+    D["lab_shelf"] = (block(lab, 3, 0, 3, 3), 3, 2)
+    D["lab_desk"] = (keyout(block(lab, 2, 3, 3, 2), *lab_floor), 3, 1)
+    mus = "kt_pewter_city_museum_1f"
+    D["fossil_case"] = (keyout(block(mus, 3, 3, 4, 3), grab(mus, 1, 3), grab(mus, 2, 4), grab(mus, 8, 6), grab(mus, 1, 5)), 4, 2)
+    man = "kt_pokemon_mansion_1f"
+    D["plant"] = (keyout(block(man, 19, 19, 1, 2), grab(man, 18, 19), grab(man, 18, 20), grab(man, 19, 21)), 1, 1)
+    pyre = "hn_mt_pyre_summit"
+    marker = keyout(block(pyre, 11, 21, 1, 2), grab(pyre, 10, 21), grab(pyre, 10, 22))
+    D["lantern"] = (marker, 1, 1)
+    D["lantern_violet"] = (recolor(marker, hue=285, sat=1.1), 1, 1)
+    for name in ("cheri", "pecha", "oran"):
+        D["berry_" + name] = (obj(OBJ_EM.parent / "berry_trees" / f"{name}.png", 4, 32), 1, 1)
+    return D
+
+
+def build_decor():
+    D = decor()
+    keys = sorted(D)
+    width = sum(img.size[0] for img, _, _ in D.values()) * 2 + 4 * len(keys)
+    height = max(img.size[1] for img, _, _ in D.values()) * 2
+    sheet = Image.new("RGBA", (width, height))
+    meta, x = {}, 0
+    for k in keys:
+        img, fw, fh = D[k]
+        big = img.resize((img.size[0] * 2, img.size[1] * 2), Image.NEAREST)
+        sheet.alpha_composite(big, (x, 0))
+        meta[k] = {"src": [x, 0, big.size[0], big.size[1]], "foot": [fw, fh]}
+        x += big.size[0] + 4
+    sheet.save(OUT / "decor.png")
+    (OUT / "decor.json").write_text(json.dumps(meta, indent=1))
+    return meta
+
+
 # ---------------------------------------------------------------- derivados
 
 def arrows(base, kind):
@@ -342,7 +382,8 @@ def ground_rows(theme, floor, L):
     rows["s"] = L["cave_sand"] if theme in ("rocha", "terra", "lutador") else L["sand"]
     rows["m"] = [recolor(t, k=.62, toward=(96, 72, 50), amount=.45) for t in L["sand"]]
     rows["n"] = L["snow"]
-    rows["M"] = L["metal"]
+    # No laboratório vulcânico o metal é escuro (fuligem), como no conceito.
+    rows["M"] = [recolor(t, k=.62, toward=(40, 40, 48), amount=.25) for t in L["metal"]] if hot else L["metal"]
     rows["b"] = L["bridge"]
     rows["p"] = L["platform"]
     rows["k"] = [hazard(t) for t in L["platform"]]
@@ -352,7 +393,7 @@ def ground_rows(theme, floor, L):
     rows["_"] = [blend(w, p, .38) for w, p in zip(water, L["platform"])]
     for a in "><^v":
         rows[a] = [arrows(t, a) for t in water]
-    rows["i"] = L["ice"] if theme != "gelo" else [L["ice"][0], L["ice_cave"][0], L["ice"][2], L["ice_cave"][1]]
+    rows["i"] = L["ice"]
     rows["j"] = [cracks(t) for t in rows["i"]]
     rows["g"] = L["tall"]
     rows["o"] = L["garden_flowers"] if theme in ("planta", "inseto") else L["flowers"]
@@ -397,6 +438,11 @@ def prop_rows(theme, P):
     tree = P["tree"]
     if cold:
         tree = [recolor(t, hue=205, sat=.35, k=1.25) for t in tree]
+    elif hot:
+        # Árvores de outono do santuário (o mesmo pinheiro, recolorido).
+        tree = [recolor(t, hue=24, sat=1.05) for t in tree]
+    elif theme == "fantasma":
+        tree = [recolor(t, hue=290, sat=.8) for t in tree]
     rows["t"] = tree
     if theme == "eletrico":
         rows["P"] = P["tesla"]
@@ -501,6 +547,7 @@ def build(gid, area, theme, L, P):
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
     L, P = lib(), props()
+    print("decoração:", ", ".join(build_decor()))
     areas = gym_areas()
     for gid in arena_list():
         theme = json.loads((SRV / "arenas" / f"{gid}.json").read_text())["theme"]
