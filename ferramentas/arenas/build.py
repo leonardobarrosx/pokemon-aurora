@@ -517,7 +517,16 @@ def main():
     src = (ROOT / "server/field.go").read_text()
     themes = dict(re.findall(r'"(\w+_\d)":\s*"(\w+)"', src))
     OUT.mkdir(parents=True, exist_ok=True)
+    custom_path = Path(__file__).with_name("layouts_v10.json")
+    custom = json.loads(custom_path.read_text(encoding="utf-8")) if custom_path.exists() else {}
     for gid, theme in sorted(themes.items()):
+        if gid in custom:
+            layout = custom[gid]
+            assert len(layout["cells"]) == layout["w"] * layout["h"]
+            assert layout["id"] == gid and layout["theme"] == theme
+            (OUT / f"{gid}.json").write_text(json.dumps(layout, ensure_ascii=False), encoding="utf-8")
+            print(gid, theme, layout["w"], layout["h"], "(v10)")
+            continue
         w, h = size_for(gid)
         a = Arena(w, h, ".", gid)
         if gid in FEATURED:
