@@ -64,8 +64,9 @@ func run():
 	if args.size()>2 and args[2]=="estadio":
 		game.login()
 		var fields=JSON.parse_string(FileAccess.get_file_as_string(args[0]+"/fields.json"))
-		var spots={"kanto_2":[{"x":200,"y":285},{"x":410,"y":200},4],"kanto_1":[{"x":140,"y":250},{"x":380,"y":170},74],"kanto_7":[{"x":120,"y":250},{"x":400,"y":200},4],"kanto_4":[{"x":150,"y":240},{"x":380,"y":180},1]}
-		for gid in ["kanto_2","kanto_1","kanto_7","kanto_4","hoenn_4","johto_4","johto_7","sinnoh_2"]:
+		# Onde pôr cada Pokémon para mostrar o terreno: [letra do jogador, letra do líder, espécie do jogador].
+		var spots={"kanto_2":["W","p",4],"kanto_1":["q","s",74],"kanto_4":["g",".",4],"kanto_7":["M","M",131],"hoenn_4":["u",",",4],"johto_7":["i","n",95]}
+		for gid in ["kanto_2","kanto_1","kanto_4","kanto_7","hoenn_4","johto_7","johto_4","sinnoh_2"]:
 			var fight=combat.duplicate(true)
 			if not fight.has("regions"):fight.regions=home.regions
 			var b=fight.battle;b.kind="gym";b.gym=gid
@@ -75,16 +76,47 @@ func run():
 					if g.id==gid:info=g
 			b.fighters[1].name=info.get("leader","Líder");b.fighters[1].owner="npc";b.fighters[1].art=info.get("art","")
 			b.fighters[1].hp=b.fighters[1].max_hp*.7
-			b.cutins=[]
-			b.field=fields.get(gid,{})
+			b.cutins=[];b.blasts=[];b.projectiles=[];b.beams=[]
+			var fd=fields.get(gid,{});b.field=fd
+			var cols=int(fd.cols);var cells=str(fd.cells)
+			var s0=Vector2(fd.spawn[0].x,fd.spawn[0].y);var s1=Vector2(fd.spawn[1].x,fd.spawn[1].y)
 			if spots.has(gid):
-				b.fighters[0].pos=spots[gid][0];b.fighters[1].pos=spots[gid][1];b.fighters[0].mon.species=spots[gid][2]
+				b.fighters[0].mon.species=spots[gid][2]
+				for k in 2:
+					var want=str(spots[gid][k]);var from=s0 if k==0 else s1;var best=from;var bd=1e9
+					for i in cells.length():
+						if cells[i]!=want:continue
+						var c=(Vector2(i%cols,i/cols)+Vector2(.5,.5))*32
+						var d=c.distance_to(from)+c.distance_to((s0+s1)/2)*.6
+						if d<bd:bd=d;best=c
+					if k==0:s0=best
+					else:s1=best
+				if gid=="kanto_1":s0+=Vector2(-34,0)
+			b.fighters[0].pos={"x":s0.x,"y":s0.y};b.fighters[1].pos={"x":s1.x,"y":s1.y}
 			for f in b.fighters:
-				var fd=b.field;var col=int((float(f.pos.x)-16)/32);var row=int((float(f.pos.y)-96)/32)
-				f.terrain=str(fd.cells)[row*15+col] if row>=0 and row<8 and col>=0 and col<15 else "."
+				var i=int(f.pos.y/32)*cols+int(f.pos.x/32)
+				f.terrain=cells[i] if i>=0 and i<cells.length() else "."
+				f.hidden=f.terrain=="g"
+				f.velocity={"x":0,"y":0}
 			b.fighters[1].mon.species=info.get("species",b.fighters[1].mon.species)
+			# Perto: os dois Pokémon se aproximando (zoom normal).
+			var far=b.fighters[1].pos.duplicate()
+			var near=s0+(s1-s0).limit_length(210)
+			b.fighters[1].pos={"x":near.x,"y":near.y}
+			game.view.arena.cam=Vector2(-1,-1);game.view.arena.user_zoom=1.0
+			game.view.render_positions.clear()
 			load_state(fight)
+			for k in 3:await process_frame
+			game.view.arena.cam=Vector2(-1,-1)
 			await shot("arena","estadio-"+gid)
+			# Longe: zoom afastado mostrando a arena inteira.
+			b.fighters[1].pos=far
+			game.view.arena.user_zoom=.4;game.view.arena.cam=Vector2(-1,-1)
+			game.view.render_positions.clear()
+			load_state(fight)
+			for k in 3:await process_frame
+			game.view.arena.cam=Vector2(-1,-1)
+			await shot("arena","estadio-"+gid+"-inteira")
 		quit(1 if failed else 0)
 		return
 	if args.size()>2 and args[2]=="mato":

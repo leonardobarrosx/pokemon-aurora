@@ -39,7 +39,9 @@ func (w *World) startBattle(p *Player, kind string, s int, other *Player, now fl
 		b.Gym = g.ID
 		b.Fighters[1].Name = g.Leader
 		b.Fighters[1].Art = g.Art
-		b.Field = newField(gymTheme[g.ID])
+		b.Field = newField(g.ID, now)
+		b.Fighters[0].Pos = b.Field.Spawn[0]
+		b.Fighters[1].Pos = b.Field.Spawn[1]
 	}
 	if other != nil {
 		if other.Battle != "" {
@@ -269,13 +271,11 @@ func (w *World) tick(dt, now float64) {
 				}
 				targetVel := p.Input.Mul(speed)
 				accel := clamp(dt*10/math.Pow(1+f.Physique.Mass/30, .3), 0, 1)
-				if b.slippery(f) {
-					accel *= .22 // derrapa no gelo
-				}
+				accel *= b.grip(f) // derrapa no gelo, mais ainda se for pesado
 				f.Velocity = f.Velocity.Add(targetVel.Add(f.Velocity.Mul(-1)).Mul(accel))
-				if next := bounds(f.Pos.Add(f.Velocity.Mul(dt))); !b.mapBlocked(f, next) && !b.solid(f, next) {
-					f.Pos = next
-				} else {
+				before := f.Pos
+				b.step(f, f.Pos.Add(f.Velocity.Mul(dt)))
+				if f.Pos == before {
 					f.Velocity = Vec{}
 				}
 			}
@@ -296,13 +296,14 @@ func (w *World) tick(dt, now float64) {
 					s.Life = 0
 				}
 			}
-			if b.Field != nil && b.Field.at(s.Pos) == 'r' {
-				s.Life = 0 // a pedra segura o disparo
+			if i, hit := b.shotBlocked(s.Pos); hit && s.Life > 0 {
+				s.Life = 0 // o obstáculo segura o disparo e leva o dano
+				b.damageObstacle(i, s.Type, s.Damage, now)
 			}
-			if s.Life > 0 && s.Pos.X > 0 && s.Pos.X < 512 && s.Pos.Y > 80 && s.Pos.Y < 364 {
+			if s.Life > 0 && b.inside(s.Pos) {
 				shots = append(shots, s)
 			} else {
-				b.shapeField(s.Pos, s.Radius, s.Type, now)
+				b.shapeField(s.Pos, s.Radius, s.Type, 0, now)
 			}
 		}
 		b.Projectiles = shots
@@ -316,7 +317,7 @@ func (w *World) tick(dt, now float64) {
 					}
 				}
 				s.Done = true
-				b.shapeField(s.Pos, s.Radius, s.Type, now)
+				b.shapeField(s.Pos, s.Radius, s.Type, s.Damage, now)
 			}
 			if now < s.At+.35 {
 				blasts = append(blasts, s)

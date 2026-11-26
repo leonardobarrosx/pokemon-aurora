@@ -103,7 +103,7 @@ func _ready():
 	arena_backdrop.seed_value=31
 	arena_backdrop.visible=false
 	add_child(arena_backdrop)
-	view_clip=Control.new();view_clip.position=Vector2(448,156);view_clip.size=Vector2(1024,768);view_clip.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(view_clip)
+	view_clip=Control.new();view_clip.position=Vector2(448,156);view_clip.size=Vector2(1024,768);view_clip.mouse_filter=Control.MOUSE_FILTER_IGNORE;view_clip.clip_contents=true;add_child(view_clip)
 	view=Node2D.new();view.set_script(load("res://world_view.gd"));view.game=self;view.scale=Vector2(2,2);view_clip.add_child(view)
 	ui=Control.new();ui.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT);ui.mouse_filter=Control.MOUSE_FILTER_IGNORE;add_child(ui)
 	ui.theme=preload("res://aurora_theme.gd").make(font)
@@ -1400,10 +1400,13 @@ func _unhandled_input(event:InputEvent):
 			for k in 4:
 				if event.keycode==KEY_1+k or event.keycode==KEY_KP_1+k:view.local_action("move");send({"type":"move","index":k})
 			if event.keycode==KEY_B:send({"type":"ball"})
+			if event.keycode==KEY_Z and view.arena_active:view.arena.cycle_zoom()
 			if event.keycode==KEY_F:send({"type":"flee"})
 			if event.keycode==KEY_V:
 				for fighter in data.battle.fighters:
 					if fighter.owner==data.player.id:send({"type":"evolve","ids":[fighter.mon.id]})
+	if event is InputEventMouseButton and event.pressed and view.arena_active and (event.button_index==MOUSE_BUTTON_WHEEL_UP or event.button_index==MOUSE_BUTTON_WHEEL_DOWN):
+		view.arena.wheel(.08 if event.button_index==MOUSE_BUTTON_WHEEL_UP else -.08)
 	if event is InputEventMouseButton and screen=="" and not data.is_empty() and event.button_index==MOUSE_BUTTON_LEFT:
 		var pos=view.get_local_mouse_position()
 		if pos.x<0 or pos.x>512 or pos.y<0 or pos.y>384:return

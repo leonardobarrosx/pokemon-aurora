@@ -230,8 +230,19 @@ func (w *World) wildNear(p *Player) []*Wild {
 
 // step move o lutador respeitando a borda do campo e, no mapa, as paredes.
 func (b *Battle) step(f *Fighter, v Vec) {
-	v = bounds(v)
-	if !b.mapBlocked(f, v) && !b.solid(f, v) {
+	v = b.bounds(v)
+	if b.free(f, v) {
 		f.Pos = v
+		return
 	}
+	// Desliza junto à parede em vez de travar.
+	if x := (Vec{v.X, f.Pos.Y}); b.free(f, x) {
+		f.Pos = x
+	} else if y := (Vec{f.Pos.X, v.Y}); b.free(f, y) {
+		f.Pos = y
+	}
+}
+
+func (b *Battle) free(f *Fighter, v Vec) bool {
+	return !b.mapBlocked(f, v) && !b.solid(f, v)
 }

@@ -213,6 +213,8 @@ type Fighter struct {
 	StunUntil   float64         `json:"stun_until"`
 	ChargeUntil float64         `json:"charge_until"`
 	Terrain     string          `json:"terrain"`
+	Hidden      bool            `json:"hidden"`
+	WarpAt      float64         `json:"-"`
 	ChargeDir   Vec             `json:"-"`
 	ChargeSpeed float64         `json:"-"`
 	ChargeSlot  int             `json:"-"`

@@ -17,6 +17,9 @@ var action_pulse=""
 const INK = Color("273e42")
 var map_cache:Dictionary={}
 var camera:=Vector2.ZERO
+var arena=preload("res://arena_draw.gd").new()
+var arena_active:=false
+var follower_tint:=Color.WHITE
 
 # Mapas externos gerados com os tilesets do FireRed (ferramentas/mapas).
 func map_for(area:String)->Dictionary:
@@ -28,6 +31,7 @@ func map_for(area:String)->Dictionary:
 	return data
 
 func world_mouse()->Vector2:
+	if arena_active:return arena.xf.affine_inverse()*get_local_mouse_position()
 	return get_local_mouse_position()+camera
 
 # Mapas de DS (Johto, Sinnoh): imagens já desenhadas por chunk, em vez de tiles.
@@ -207,7 +211,7 @@ func follower(m:Dictionary,pos:Vector2,direction:int=0,walking:bool=true,body_sc
 		offset=Vector2(point[0],point[1])*float(cell)/float(entry.follower.frame)
 		offset=Vector2(round(offset.x/2)*2,round(offset.y/2)*2)
 	pos=Vector2(round(pos.x/2)*2,round(pos.y/2)*2)
-	draw_texture_rect_region(t,Rect2(pos-offset,Vector2(cell,cell)),Rect2(frame*cell,direction*cell,cell,cell))
+	draw_texture_rect_region(t,Rect2(pos-offset,Vector2(cell,cell)),Rect2(frame*cell,direction*cell,cell,cell),follower_tint)
 
 # Treinador montado: o Pokémon (Natação na água, Corrida em terra) por baixo,
 # maior que o normal, e o treinador sentado nas costas dele.
@@ -277,7 +281,15 @@ func battle(b:Dictionary):
 		var phase=float(Time.get_ticks_msec()%40)/40.0*TAU;shake=Vector2(cos(phase),sin(phase))*2
 	var field_map=map_for(str(b.get("area",""))) if str(b.get("area",""))!="" else {}
 	var field_origin=Vector2(b.get("origin",{}).get("x",0),b.get("origin",{}).get("y",0))
-	if not field_map.is_empty():
+	var fd=b.get("field",{})
+	if fd==null:fd={}
+	arena_active=str(b.get("kind",""))=="gym" and int(fd.get("cols",0))>15 and field_map.is_empty()
+	if arena_active:
+		# Arena oficial: maior que a tela, câmera acompanha e o zoom afasta.
+		arena.v=self
+		draw_set_transform_matrix(arena.camera(b,shake))
+		arena.ground(b)
+	elif not field_map.is_empty():
 		# Batalha no próprio mapa: o campo é o pedaço do mapa onde o encontro aconteceu.
 		draw_set_transform(shake-field_origin)
 		draw_map_layer(field_map,"tiles")
@@ -309,9 +321,22 @@ func battle(b:Dictionary):
 		var velocity=Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0))
 		var v=smooth_position(str(b.id)+":"+str(f.owner),Vector2(f.pos.x,f.pos.y),velocity)
 		var ground=str(f.get("terrain",""))
-		var in_water=ground=="w" or ground=="z"
-		if not in_water:draw_rect(Rect2(v-Vector2(18,-14),Vector2(36,8)),Color(0.2,0.3,0.25,.4))
-		follower(f.mon,v,int(f.get("facing",0)),f.auto or Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0)).length()>1,float(f.get("physique",{}).get("scale",1)),true)
+		var in_water=ground!="" and "wuW_><^vz".find(ground)>=0
+		var body=float(f.get("physique",{}).get("scale",1))
+		if not in_water:
+			draw_set_transform_matrix((arena.xf if arena_active else Transform2D(0,Vector2.ONE,0,shake))*Transform2D(0,Vector2(1,.4),0,v+Vector2(0,16*body)))
+			draw_circle(Vector2.ZERO,18*body,Color(0,0,0,.28))
+			draw_set_transform_matrix(arena.xf if arena_active else Transform2D(0,Vector2.ONE,0,shake))
+		if ground=="voo":
+			draw_set_transform_matrix((arena.xf if arena_active else Transform2D(0,Vector2.ONE,0,shake))*Transform2D(0,Vector2(1,.4),0,v+Vector2(0,30*body)))
+			draw_circle(Vector2.ZERO,14*body,Color(0,0,0,.2))
+			draw_set_transform_matrix(arena.xf if arena_active else Transform2D(0,Vector2.ONE,0,shake))
+		follower_tint=Color(1,1,1,.45) if f.get("hidden",false) else Color.WHITE
+		follower(f.mon,v+(Vector2(0,-10) if ground=="voo" else Vector2.ZERO),int(f.get("facing",0)),f.auto or Vector2(f.get("velocity",{}).get("x",0),f.get("velocity",{}).get("y",0)).length()>1,body,true)
+		follower_tint=Color.WHITE
+		if f.get("hidden",false):
+			# Escondido na grama alta: só as folhas balançando na frente.
+			for k in 5:draw_line(v+Vector2(-16+k*8,18),v+Vector2(-16+k*8+sin(now*3+k)*3,2-(k%2)*5),Color("3f9a46"),3)
 		if in_water:
 			# Metade do corpo dentro da água, com marolas em volta.
 			var sp=game.data.species.get(str(int(f.mon.species)),{})
@@ -320,7 +345,7 @@ func battle(b:Dictionary):
 			for k in 2:
 				var g=fposmod(now*1.5+k*.5,1.0)
 				draw_arc(v+Vector2(0,10),18+g*14,0,TAU,24,Color(1,1,1,.45*(1-g)),1.5)
-			if not swimmer:
+			if not swimmer and "W_><^vz".find(ground)>=0:
 				draw_rect(Rect2(v+Vector2(-24,-40),Vector2(48,13)),Color(0.05,0.12,0.25,.85))
 				txt(v+Vector2(-20,-30),"Molhado",8,Color("9fd3ff"))
 		elif ground=="l" or ground=="x" or ground=="f":
@@ -351,6 +376,10 @@ func battle(b:Dictionary):
 
 	if not field_map.is_empty():
 		draw_set_transform(shake-field_origin);draw_map_layer(field_map,"above");draw_set_transform(shake)
+	if arena_active:
+		arena.upper(b)
+		draw_set_transform(Vector2.ZERO)
+		arena.overlay(b)
 	if float(b.get("pause_until",0))>game.server_time():
 		draw_rect(Rect2(0,72,512,280),Color(1,1,.8,.25))
 	cutin(b)
@@ -362,6 +391,7 @@ func battle(b:Dictionary):
 				if fighter.owner==game.data.player.id:mine=fighter
 			if not mine.is_empty():
 				var origin=smooth_position(str(b.id)+":"+str(mine.owner),Vector2(mine.pos.x,mine.pos.y))
+				if arena_active:origin=arena.xf*origin
 				draw_arc(origin,16+(action_pulse_until-Time.get_ticks_msec())*.08,0,TAU,20,type_color(game.data.species[str(int(mine.mon.species))].type),2)
 	draw_set_transform(Vector2.ZERO)
 
@@ -601,6 +631,7 @@ func arcade(a:Dictionary,p:Dictionary):
 
 func _draw():
 	camera=Vector2.ZERO
+	arena_active=false
 	if game==null or game.data.is_empty():
 		room({"theme":"verde","decor":[]});trainer(Vector2(260,280));return
 	var p:Dictionary=game.data.player

@@ -291,9 +291,10 @@ func (b *Battle) useMove(i, slot int, aim Vec, now float64) error {
 		}
 	case "beam":
 		length := 230 + 60*potency(f)
-		b.Beams = append(b.Beams, Beam{From: f.Pos, To: f.Pos.Add(dir.Mul(length)), Owner: f.Owner, Type: m.Type, Move: m.Name, At: now + m.Delay, End: now + m.Delay + .35 + m.Power/400, Width: (5 + m.Power/14) * scale, Damage: dmg, Knock: push})
+		to, _ := b.ray(f.Pos, f.Pos.Add(dir.Mul(length))) // o raio para no obstáculo
+		b.Beams = append(b.Beams, Beam{From: f.Pos, To: to, Owner: f.Owner, Type: m.Type, Move: m.Name, At: now + m.Delay, End: now + m.Delay + .35 + m.Power/400, Width: (5 + m.Power/14) * scale, Damage: dmg, Knock: push})
 	case "blast":
-		pos := bounds(aim)
+		pos := b.bounds(aim)
 		delta := pos.Add(f.Pos.Mul(-1))
 		reach := 150 + 40*potency(f)
 		if delta.Len() > reach {
@@ -318,7 +319,15 @@ func (b *Battle) tickCharges(dt, now float64) {
 		if f.ChargeUntil <= now {
 			continue
 		}
+		before := f.Pos
 		b.step(f, f.Pos.Add(f.ChargeDir.Mul(f.ChargeSpeed*dt)))
+		if f.Pos == before && b.Field != nil {
+			// Bateu num obstáculo: a investida pode quebrá-lo.
+			m := f.Moves[f.ChargeSlot]
+			b.ram(f, f.ChargeDir, m.Power, now)
+			f.ChargeUntil = now
+			continue
+		}
 		target := b.Fighters[1-i]
 		if f.ChargeHit || target.Invincible >= now {
 			continue
@@ -362,7 +371,7 @@ func (b *Battle) autoMove(i int, now float64) {
 		if s > 0 && mathrand.Float64() > .35 {
 			continue
 		}
-		_ = b.useMove(i, s, target.Pos, now)
+		_ = b.useMove(i, s, b.aimAt(target, now), now)
 		return
 	}
 }

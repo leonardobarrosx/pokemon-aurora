@@ -61,25 +61,33 @@ func TestExportPreview(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	// Campos dos estádios, com alguns golpes já mudando o terreno.
+	// Arenas dos ginásios, com alguns golpes já mudando o terreno.
 	fields := map[string]*Field{}
 	for _, g := range gyms {
-		bt := &Battle{Field: newField(gymTheme[g.ID])}
-		bt.Fighters[0] = &Fighter{Pos: Vec{100, 230}}
-		bt.Fighters[1] = &Fighter{Pos: Vec{410, 200}}
+		bt := &Battle{Field: newField(g.ID, 990)}
+		bt.Fighters[0] = &Fighter{Pos: bt.Field.Spawn[0], Mon: newMon(4)}
+		bt.Fighters[1] = &Fighter{Pos: bt.Field.Spawn[1], Mon: newMon(4)}
+		fl := bt.Field
 		switch g.ID {
 		case "kanto_2":
-			bt.shapeBeam(Vec{150, 120}, Vec{330, 120}, "Gelo", 1000)
-			bt.shapeField(Vec{300, 300}, 40, "Elétrico", 1000)
+			w := findCell(fl, 'W')
+			bt.shapeBeam(w, w.Add(Vec{200, 0}), "Gelo", 0, 1000)
+			bt.shapeField(findCell(fl, '<'), 30, "Elétrico", 0, 999)
 		case "kanto_4":
-			bt.shapeField(Vec{240, 240}, 50, "Fogo", 1000)
+			bt.shapeField(findCell(fl, 'g').Add(Vec{40, 40}), 50, "Fogo", 0, 1000)
 		case "kanto_7":
-			bt.shapeField(Vec{230, 180}, 40, "Água", 1000)
+			bt.shapeField(findCell(fl, 'l').Add(Vec{0, 200}), 40, "Água", 0, 1000)
+			for i := range fl.Cells {
+				if fl.Cells[i] == 'V' {
+					fl.event("geyser", fl.center(i), 46, 1, .6, 999.6)
+					break
+				}
+			}
 		case "kanto_1":
-			bt.Fighters[0].Pos = Vec{60, 330}
-			bt.shapeField(Vec{256, 224}, 48, "Pedra", 1000)
+			r := findCell(fl, 'r')
+			bt.damageObstacle(fl.index(r), "Lutador", 40, 1000)
 		}
-		fields[g.ID] = bt.Field
+		fields[g.ID] = fl
 	}
 	raw, _ := json.Marshal(fields)
 	if err := os.WriteFile(filepath.Join(dir, "fields.json"), raw, 0600); err != nil {

@@ -1,15 +1,18 @@
-"""Gera as texturas dos estádios dos ginásios.
+"""Gera as texturas do chão das arenas dos ginásios.
 
-Para cada ginásio sai client/assets/stadiums/<id>.png: uma tira de casas de
-32px na ordem do campo do servidor (server/field.go):
+Para cada ginásio sai client/assets/stadiums/<id>.png: uma linha por tipo de
+terreno (na ordem de ORDER, a mesma de client/world_view.gd) e 4 variações
+por linha, em casas de 32px (pixel art de 16px ampliada). As variações
+quebram a repetição do piso.
 
-    .  w  r  p  s  g  l  i  e  x
-
-O chão, a água e as pedras vêm do próprio mapa do ginásio (metatiles GBA ou
-a imagem do DS). Os tipos que o ginásio não tem são pintados em pixel art no
-mesmo estilo, puxando a cor do chão do ginásio.
+O piso principal vem do próprio mapa do ginásio (metatiles GBA ou a imagem do
+DS); os outros terrenos são pintados no mesmo estilo, com a paleta do tema.
+Obstáculos altos (pilares, árvores, rochas, máquinas) são desenhados pelo
+cliente por cima, com sombra e profundidade.
 """
-import json, re, random
+import json
+import random
+import re
 from collections import Counter
 from pathlib import Path
 from PIL import Image, ImageDraw
@@ -18,90 +21,42 @@ ROOT = Path(__file__).resolve().parents[2]
 MAPS = ROOT / "client/assets/maps"
 SRV = ROOT / "server"
 OUT = ROOT / "client/assets/stadiums"
-ORDER = ".wrpsglie x".replace(" ", "")
+ORDER = ".,smnMbpkwuW_><^vijgoXflexVY}{)(zRTGO"
+VARIANTS = 4
 T = 32
-MAP_ROCKS = {"kanto_1"}
+
+# Paleta por tema: piso claro, piso escuro, destaque.
+THEME = {
+    "rocha": ((176, 150, 112), (140, 116, 84), (204, 184, 148)),
+    "terra": ((168, 132, 92), (128, 98, 66), (196, 164, 120)),
+    "agua": ((206, 226, 236), (170, 196, 212), (236, 246, 250)),
+    "planta": ((150, 140, 120), (118, 108, 92), (180, 172, 150)),
+    "inseto": ((112, 140, 72), (84, 108, 52), (150, 176, 96)),
+    "fogo": ((112, 100, 100), (82, 72, 74), (150, 136, 132)),
+    "gelo": ((226, 236, 246), (196, 212, 230), (250, 252, 255)),
+    "eletrico": ((128, 136, 148), (96, 104, 116), (164, 172, 184)),
+    "veneno": ((150, 112, 150), (116, 84, 118), (182, 146, 182)),
+    "psiquico": ((206, 180, 214), (170, 146, 184), (232, 214, 238)),
+    "fantasma": ((96, 92, 120), (70, 66, 92), (128, 124, 156)),
+    "lutador": ((196, 160, 104), (160, 126, 80), (222, 192, 140)),
+    "normal": ((200, 196, 184), (166, 160, 148), (226, 222, 212)),
+    "voador": ((176, 134, 92), (140, 102, 66), (206, 168, 124)),
+    "aco": ((150, 156, 164), (116, 122, 132), (184, 190, 198)),
+    "dragao": ((150, 112, 96), (114, 82, 70), (184, 146, 128)),
+}
 
 
-def gyms():
+def arena_list():
+    return sorted(p.stem for p in (SRV / "arenas").glob("*.json"))
+
+
+def gym_areas():
     src = (SRV / "gyms.go").read_text()
-    out = re.findall(r'\{"(\w+)", "(\w+)", "([\w]+)"', src)
-    field = (SRV / "field.go").read_text()
-    theme = dict(re.findall(r'"(\w+_\d)":\s*"(\w+)"', field))
-    return [(gid, area, theme.get(gid, "normal")) for gid, _, area in out]
-
-
-def gba_tile(m, atlas_below, atlas_above, idx):
-    t = Image.new("RGBA", (16, 16))
-    cols = m["columns"]
-    for atlas, layer in ((atlas_below, m["tiles"]), (atlas_above, m.get("above") or [])):
-        if atlas is None or idx >= len(layer) or layer[idx] is None or layer[idx] < 0:
-            continue
-        k = layer[idx]
-        box = ((k % cols) * 16, (k // cols) * 16, (k % cols) * 16 + 16, (k // cols) * 16 + 16)
-        if box[3] > atlas.size[1]:
-            continue
-        t.alpha_composite(atlas.crop(box))
-    return t
-
-
-def ds_tile(img, crop, x, y):
-    px, py = x * 16 - crop[0], y * 16 - crop[1]
-    if px < 0 or py < 0 or px + 16 > img.size[0] or py + 16 > img.size[1]:
-        return None
-    return img.crop((px, py, px + 16, py + 16)).convert("RGBA")
-
-
-def tiles_by_class(area):
-    """Tiles de 16px do mapa, agrupados pela classe da casa do servidor."""
-    m = json.loads((MAPS / f"{area}.json").read_text())
-    s = json.loads((SRV / "maps" / f"{area}.json").read_text())
-    w, h, cells = s["w"], s["h"], s["cells"]
-    groups = {}
-    if "image" in m and m["image"]:
-        im = m["image"]
-        p = MAPS / im["dir"] / "0_0.png"
-        if not p.exists():
-            return groups
-        img = Image.open(p).convert("RGBA")
-        for y in range(h):
-            for x in range(w):
-                t = ds_tile(img, im.get("crop") or [0, 0], x, y)
-                if t is not None:
-                    groups.setdefault(cells[y * w + x], []).append((x, y, t))
-    else:
-        below = Image.open(MAPS / f"{m['atlas']}_below.png").convert("RGBA")
-        ap = MAPS / f"{m['atlas']}_above.png"
-        above = Image.open(ap).convert("RGBA") if ap.exists() else None
-        for y in range(h):
-            for x in range(w):
-                groups.setdefault(cells[y * w + x], []).append((x, y, gba_tile(m, below, above, y * w + x)))
-    return groups, w, h
-
-
-def common(items, interior=None):
-    c = Counter()
-    keep = {}
-    for x, y, t in items:
-        if interior and not interior(x, y):
-            continue
-        a = t.getchannel("A").getextrema()[1]
-        if a == 0 or sum(avg(t)) < 60:
-            continue  # vazio ou o preto fora do desenho do DS
-        key = t.tobytes()
-        c[key] += 1
-        keep[key] = t
-    if not c:
-        return None
-    return keep[c.most_common(1)[0][0]]
-
-
-def up(t):
-    return t.resize((T, T), Image.NEAREST)
+    return {gid: area for gid, _, area in re.findall(r'\{"(\w+)", "(\w+)", "([\w]+)"', src)}
 
 
 def avg(t):
-    px = [p for p in t.convert('RGBA').get_flattened_data() if p[3] > 0] if hasattr(t, 'get_flattened_data') else [p for p in t.getdata() if p[3] > 0]
+    px = [p for p in t.convert("RGBA").getdata() if p[3] > 0]
     n = max(1, len(px))
     return tuple(sum(p[i] for p in px) // n for i in range(3))
 
@@ -110,126 +65,291 @@ def shade(c, k):
     return tuple(max(0, min(255, int(v * k))) for v in c)
 
 
-def paint(kind, base, seed):
-    """Casas que o ginásio não tem, em pixel art de 16px."""
-    r = random.Random(seed)
-    t = Image.new("RGBA", (16, 16))
-    d = ImageDraw.Draw(t)
-    pal = {
-        "w": [(56, 120, 208), (80, 152, 232), (152, 208, 248)],
-        "l": [(200, 56, 24), (240, 120, 32), (255, 208, 72)],
-        "i": [(168, 216, 240), (208, 240, 255), (255, 255, 255)],
-        "x": [(112, 56, 144), (152, 88, 184), (200, 144, 224)],
-        "e": [shade(base, .7), (248, 216, 64), (255, 248, 168)],
-        "g": [(48, 120, 56), (80, 168, 72), (136, 208, 96)],
-        "s": [(176, 136, 80), (208, 168, 104), (232, 200, 136)],
-        "r": [(88, 80, 72), (136, 124, 108), (184, 172, 152)],
-        "n": [(232, 240, 248), (200, 220, 240), (255, 255, 255)],
-        "f": [(168, 168, 176), (136, 136, 148), (200, 200, 208)],
-    }[kind]
-    d.rectangle((0, 0, 15, 15), fill=pal[0] + (255,))
-    if kind in "wlx":
-        for y in range(0, 16, 4):
-            off = r.randrange(4)
-            for x in range(off, 16, 8):
-                d.line((x, y + 1, x + 3, y + 1), fill=pal[1] + (255,))
+def mix(a, b, k):
+    return tuple(int(a[i] * (1 - k) + b[i] * k) for i in range(3))
+
+
+def gym_floor(area):
+    """O tile de chão mais comum do ginásio original (16px)."""
+    try:
+        m = json.loads((MAPS / f"{area}.json").read_text())
+        s = json.loads((SRV / "maps" / f"{area}.json").read_text())
+    except FileNotFoundError:
+        return None
+    w, h, cells = s["w"], s["h"], s["cells"]
+    tiles = Counter()
+    keep = {}
+    if m.get("image"):
+        p = MAPS / m["image"]["dir"] / "0_0.png"
+        if not p.exists():
+            return None
+        img = Image.open(p).convert("RGBA")
+        crop = m["image"].get("crop") or [0, 0]
+        get = lambda x, y: img.crop((x * 16 - crop[0], y * 16 - crop[1], x * 16 - crop[0] + 16, y * 16 - crop[1] + 16)) \
+            if 0 <= x * 16 - crop[0] and x * 16 - crop[0] + 16 <= img.size[0] and 0 <= y * 16 - crop[1] and y * 16 - crop[1] + 16 <= img.size[1] else None
+    else:
+        below = Image.open(MAPS / f"{m['atlas']}_below.png").convert("RGBA")
+        cols = m["columns"]
+
+        def get(x, y):
+            k = m["tiles"][y * w + x]
+            if k is None or k < 0:
+                return None
+            box = ((k % cols) * 16, (k // cols) * 16, (k % cols) * 16 + 16, (k // cols) * 16 + 16)
+            return below.crop(box) if box[3] <= below.size[1] else None
+    for y in range(3, h - 1):
+        for x in range(1, w - 1):
+            if cells[y * w + x] != ".":
+                continue
+            t = get(x, y)
+            if t is None or sum(avg(t)) < 150:
+                continue
+            key = t.tobytes()
+            tiles[key] += 1
+            keep[key] = t
+    if not tiles:
+        return None
+    return keep[tiles.most_common(1)[0][0]].convert("RGBA")
+
+
+def canvas(c):
+    t = Image.new("RGBA", (16, 16), c + (255,))
+    return t, ImageDraw.Draw(t)
+
+
+def specks(d, r, cols, n):
+    for _ in range(n):
+        d.point((r.randrange(16), r.randrange(16)), fill=r.choice(cols) + (255,))
+
+
+def paint(kind, pal, v, theme):
+    """Uma casa de 16px do terreno `kind`, variação `v`."""
+    r = random.Random(f"{theme}{kind}{v}")
+    light, dark, hi = pal
+    if kind == ".":
+        t, d = canvas(light)
+        # Lajes: juntas em posições diferentes por variação.
+        off = (0, 4, 8, 2)[v]
+        d.line((0, 15, 15, 15), fill=dark + (255,))
+        d.line(((off + 7) % 16, 0, (off + 7) % 16, 15), fill=dark + (255,))
+        d.line((0, 0, 15, 0), fill=hi + (255,))
+        specks(d, r, [shade(light, .92), shade(light, 1.06)], 6 + v * 2)
+    elif kind == ",":
+        wood = mix(light, (168, 122, 76), .65)
+        t, d = canvas(wood)
+        for y in (3, 7, 11, 15):
+            d.line((0, y, 15, y), fill=shade(wood, .72) + (255,))
+        for y in (0, 4, 8, 12):
+            x = (v * 5 + y * 3) % 16
+            d.line((x, y, x, y + 2), fill=shade(wood, .8) + (255,))
+        specks(d, r, [shade(wood, 1.1)], 4)
+    elif kind == "s":
+        sand = mix(light, (196, 160, 108), .7)
+        t, d = canvas(sand)
+        specks(d, r, [shade(sand, .85), shade(sand, 1.1), shade(sand, .75)], 18 + v * 3)
+        if v == 3:
+            d.ellipse((4, 6, 8, 9), fill=shade(sand, .7) + (255,))
+    elif kind == "m":
+        mud = (104, 82, 58)
+        t, d = canvas(mud)
+        specks(d, r, [shade(mud, .8), shade(mud, 1.15)], 16)
+        d.ellipse((3 + v, 5, 9 + v, 9), fill=(86, 104, 112, 255))
+    elif kind == "n":
+        snow = (236, 242, 250)
+        t, d = canvas(snow)
+        specks(d, r, [(212, 224, 240), (255, 255, 255)], 10 + v * 3)
+    elif kind == "M":
+        steel = mix(light, (140, 148, 160), .7)
+        t, d = canvas(steel)
+        d.rectangle((0, 0, 15, 15), outline=shade(steel, .7) + (255,))
+        d.line((1, 1, 14, 1), fill=shade(steel, 1.2) + (255,))
+        for x, y in ((3, 3), (12, 3), (3, 12), (12, 12)):
+            d.point((x, y), fill=shade(steel, .6) + (255,))
+        if v % 2:
+            for k in range(2, 14, 4):
+                d.line((k, 6, k + 2, 9), fill=shade(steel, .85) + (255,))
+    elif kind == "b":
+        plank = (150, 104, 64)
+        t, d = canvas(plank)
+        for x in (0, 5, 10, 15):
+            d.line((x, 0, x, 15), fill=shade(plank, .65) + (255,))
+        d.point((2 + v, 4), fill=shade(plank, .5) + (255,))
+        d.point((7, 11 - v), fill=shade(plank, .5) + (255,))
+    elif kind in "pk_":
+        stone = mix(light, (220, 216, 206), .5)
+        base = paint("W", pal, v, theme) if kind == "_" else canvas(stone)[0]
+        t = base
+        d = ImageDraw.Draw(t)
+        if kind == "_":
+            d.rectangle((1, 1, 14, 14), outline=(140, 170, 190, 160))
+        else:
+            d.rectangle((0, 0, 15, 15), outline=shade(stone, .7) + (255,))
+            d.line((1, 1, 14, 1), fill=shade(stone, 1.15) + (255,))
+            if kind == "k":
+                for k in range(0, 16, 4):
+                    d.line((k, 13, k + 2, 13), fill=(230, 160, 40, 255))
+            else:
+                d.line((7, 4, 8, 11), fill=shade(stone, .85) + (255,))
+    elif kind in "wuW><^vz":
+        deep = kind in "W><^vz"
+        water = (56, 112, 200) if deep else (96, 164, 220)
+        if kind == "u":
+            water = (58, 142, 150)
+        if theme == "agua" and not deep:
+            water = (112, 184, 232)
+        t, d = canvas(water)
+        for y in range(1, 16, 4):
+            x = (y * 5 + v * 4) % 16
+            d.line((x, y, x + 4, y), fill=shade(water, 1.25) + (255,))
+        specks(d, r, [shade(water, .85)], 5)
+        if kind in "><^v":
+            ax = {">": ((4, 8), (10, 8), (8, 6), (8, 10)), "<": ((12, 8), (6, 8), (8, 6), (8, 10)),
+                  "^": ((8, 12), (8, 6), (6, 8), (10, 8)), "v": ((8, 4), (8, 10), (6, 8), (10, 8))}[kind]
+            c = (170, 214, 248, 255)
+            d.line(ax[0] + ax[1], fill=c)
+            d.line(ax[1] + ax[2], fill=c)
+            d.line(ax[1] + ax[3], fill=c)
+        if kind == "z":
+            d.line((3, 2, 7, 8, 5, 9, 10, 14), fill=(255, 236, 90, 255))
+    elif kind in "ij":
+        ice = (176, 220, 244)
+        t, d = canvas(ice)
+        d.line((2 + v, 13, 12, 3 + v), fill=(232, 246, 255, 255))
+        d.line((7, 15, 15, 7), fill=(214, 238, 252, 255))
+        specks(d, r, [(150, 200, 232)], 4)
+        if kind == "j":
+            d.line((3, 4, 7, 8, 6, 12, 11, 15), fill=(90, 130, 170, 255))
+            d.line((7, 8, 13, 6), fill=(90, 130, 170, 255))
+    elif kind == "g":
+        base = (64, 140, 64)
+        t, d = canvas(base)
+        for x in range(0, 16, 2):
+            hgt = 6 + r.randrange(7)
+            col = r.choice([(88, 176, 80), (104, 192, 88), (52, 120, 56)])
+            d.line((x, 15, x + r.choice((-1, 0, 1)), 15 - hgt), fill=col + (255,))
+    elif kind == "o":
+        t = paint(",", pal, v, theme) if theme == "planta" else canvas((84, 150, 70))[0]
+        d = ImageDraw.Draw(t)
+        for _ in range(5):
+            x, y = r.randrange(1, 14), r.randrange(1, 14)
+            c = r.choice([(240, 120, 160), (250, 220, 80), (250, 250, 250), (180, 120, 230)])
+            d.rectangle((x, y, x + 1, y + 1), fill=c + (255,))
+            d.point((x, y + 2), fill=(60, 130, 60, 255))
+    elif kind == "X":
+        t = paint(".", pal, v, theme)
+        d = ImageDraw.Draw(t)
+        c = (236, 236, 240, 220)
+        for k in range(0, 16, 5):
+            d.line((0, k, 15, 15 - k), fill=c)
+        d.line((8, 0, 8, 15), fill=c)
+        d.ellipse((4, 4, 12, 12), outline=c)
+    elif kind == "f":
+        t, d = canvas((60, 48, 40))
+        specks(d, r, [(240, 120, 40), (255, 200, 70), (120, 40, 20)], 22)
+    elif kind == "l":
+        lava = (208, 64, 24)
+        t, d = canvas(lava)
+        for y in range(0, 16, 3):
+            x = (y * 7 + v * 5) % 16
+            d.line((x, y, x + 5, y + 1), fill=(248, 140, 40, 255))
         for _ in range(3):
             x, y = r.randrange(14), r.randrange(14)
-            d.point((x, y), fill=pal[2] + (255,))
-    elif kind == "i":
-        d.rectangle((0, 0, 15, 15), fill=pal[1] + (255,))
-        d.line((2, 12, 12, 2), fill=pal[2] + (255,))
-        d.line((6, 14, 14, 6), fill=pal[2] + (255,))
-        d.rectangle((0, 0, 15, 15), outline=pal[0] + (255,))
+            d.rectangle((x, y, x + 1, y + 1), fill=(255, 224, 96, 255))
     elif kind == "e":
-        d.rectangle((1, 1, 14, 14), fill=shade(base, .85) + (255,), outline=pal[0] + (255,))
-        d.line((9, 2, 5, 8, 10, 8, 6, 14), fill=pal[1] + (255,))
-    elif kind == "g":
-        for x in range(0, 16, 3):
-            hgt = 5 + r.randrange(5)
-            d.line((x + 1, 15, x + 1, 15 - hgt), fill=pal[1] + (255,))
-            d.point((x + 1, 15 - hgt), fill=pal[2] + (255,))
-    elif kind == "s":
-        for _ in range(14):
-            d.point((r.randrange(16), r.randrange(16)), fill=pal[r.randrange(1, 3)] + (255,))
-    elif kind == "n":
-        for _ in range(10):
-            d.point((r.randrange(16), r.randrange(16)), fill=pal[1] + (255,))
-    elif kind == "f":
-        d.line((0, 7, 15, 7), fill=pal[1] + (255,))
-        d.line((0, 15, 15, 15), fill=pal[1] + (255,))
-        d.line((7, 0, 7, 7), fill=pal[1] + (255,))
-        d.line((15, 8, 15, 15), fill=pal[1] + (255,))
-        d.line((0, 0, 6, 0), fill=pal[2] + (255,))
-    elif kind == "r":
-        t = Image.new("RGBA", (16, 16))
+        t = paint("M" if theme in ("eletrico", "fogo", "aco") else ".", pal, v, theme)
         d = ImageDraw.Draw(t)
-        d.ellipse((1, 3, 14, 15), fill=pal[0] + (255,))
-        d.ellipse((2, 2, 13, 13), fill=pal[1] + (255,))
-        d.ellipse((4, 3, 9, 7), fill=pal[2] + (255,))
+        d.rectangle((2, 2, 13, 13), fill=(56, 60, 72, 255), outline=(250, 210, 60, 255))
+        d.line((9, 3, 6, 8, 10, 8, 7, 13), fill=(255, 236, 110, 255))
+    elif kind == "x":
+        goo = (122, 64, 150)
+        t, d = canvas(goo)
+        specks(d, r, [(160, 100, 196), (96, 44, 120)], 16)
+        d.ellipse((3 + v, 4, 7 + v, 8), outline=(200, 150, 230, 255))
+    elif kind == "V":
+        t = paint("M" if theme in ("fogo", "eletrico", "aco") else ".", pal, v, theme)
+        d = ImageDraw.Draw(t)
+        d.ellipse((2, 2, 13, 13), fill=(40, 40, 44, 255), outline=(90, 90, 96, 255))
+        for k in (5, 8, 11):
+            d.line((4, k, 11, k), fill=(150, 72, 40, 255) if theme == "fogo" else (120, 130, 140, 255))
+    elif kind == "Y":
+        t = paint(".", pal, v, theme)
+        d = ImageDraw.Draw(t)
+        d.ellipse((1, 3, 14, 12), fill=(80, 40, 120, 255), outline=(200, 140, 250, 255))
+        d.ellipse((5, 6, 10, 9), fill=(230, 200, 255, 255))
+    elif kind in "}{)(":
+        t = paint(".", pal, v, theme)
+        d = ImageDraw.Draw(t)
+        c = (230, 240, 250, 200)
+        for y in (4, 10):
+            d.line((2 + v, y, 12 + v % 2, y), fill=c)
+            d.point((13, y - 1), fill=c)
+        if kind in ")(":
+            t = t.rotate(90 if kind == "(" else -90)
+        elif kind == "{":
+            t = t.transpose(Image.FLIP_LEFT_RIGHT)
+    elif kind == "R":
+        rock = {"agua": (200, 208, 220), "planta": (190, 220, 210), "fogo": (88, 76, 74), "gelo": (120, 140, 168),
+                "eletrico": (82, 88, 100), "aco": (90, 96, 106)}.get(theme, mix(dark, (110, 96, 84), .5))
+        t, d = canvas(rock)
+        specks(d, r, [shade(rock, .82), shade(rock, 1.12)], 20)
+        d.line((0, 0, 15, 0), fill=shade(rock, 1.2) + (255,))
+        if theme in ("rocha", "terra", "gelo", "dragao", "inseto", "lutador"):
+            d.line((3 + v, 2, 6, 9), fill=shade(rock, .7) + (255,))
+    elif kind == "T":
+        t, d = canvas((70, 74, 86))
+        d.rectangle((1, 1, 14, 14), outline=(110, 116, 130, 255))
+        d.line((0, 8, 15, 8), fill=(150, 120, 60, 255) if theme == "fogo" else (90, 140, 170, 255))
+        d.rectangle((3 + v * 2, 3, 4 + v * 2, 4), fill=(120, 230, 140, 255) if v % 2 else (240, 90, 70, 255))
+    elif kind == "G":
+        t, d = canvas((150, 200, 220))
+        d.line((2, 14, 14, 2), fill=(230, 248, 255, 255))
+        d.line((0, 0, 15, 0), fill=(90, 110, 120, 255))
+        d.line((0, 15, 15, 15), fill=(90, 110, 120, 255))
+    elif kind == "O":
+        t, d = canvas((18, 22, 34))
+        if theme == "voador":
+            t, d = canvas((140, 190, 236))
+            d.ellipse((2 + v, 5, 10 + v, 10), fill=(244, 248, 252, 255))
+    else:
+        t, _ = canvas(light)
     return t
 
 
-def platform(floor):
-    t = floor.copy()
-    d = ImageDraw.Draw(t)
-    base = avg(floor)
-    d.rectangle((0, 0, 15, 15), outline=shade(base, 1.25) + (255,))
-    d.line((0, 15, 15, 15), fill=shade(base, .55) + (255,))
-    d.line((0, 14, 15, 14), fill=shade(base, .7) + (255,))
-    return t
+def floor_variants(base, pal, theme):
+    """Variações do piso original do ginásio: manchas, desgaste e juntas."""
+    out = [base]
+    for v in range(1, VARIANTS):
+        r = random.Random(f"{theme}floor{v}")
+        t = base.copy()
+        d = ImageDraw.Draw(t)
+        c = avg(base)
+        for _ in range(4 + v * 2):
+            x, y = r.randrange(16), r.randrange(16)
+            d.point((x, y), fill=shade(c, r.choice((.85, .9, 1.08))) + (255,))
+        if v == 3:
+            d.line((2, 12, 6, 9), fill=shade(c, .8) + (255,))
+        out.append(t)
+    return out
 
 
 def build(gid, area, theme):
-    try:
-        groups, w, h = tiles_by_class(area)
-    except (FileNotFoundError, ValueError):
-        groups, w, h = {}, 1, 1
-    inside = lambda x, y: 0 < x < w - 1 and 2 < y < h - 1
-    floor = common(groups.get(".", []), inside) or common(groups.get('"', [])) or paint("s", (160, 160, 160), 1)
-    if sum(avg(floor)) < 150 or theme == "gelo":
-        # Sala escura demais (ou ginásio de gelo): chão pintado claro.
-        floor = paint("n" if theme == "gelo" else "f", avg(floor), 10)
-    base = avg(floor)
-    water = common(groups.get("~", []), inside)
-    rock = None
-    if gid in MAP_ROCKS:
-        # Ginásios com pedregulhos de verdade no mapa (o do Brock).
-        rock = common(groups.get("#", []), inside)
-    grass = common(groups.get('"', []))
-    tiles = {
-        ".": floor,
-        "w": water or paint("w", base, 2),
-        "r": rock or paint("r", base, 3),
-        "p": platform(floor),
-        "s": paint("s", base, 4) if theme not in ("rocha", "terra") else floor,
-        "g": grass or paint("g", base, 5),
-        "l": paint("l", base, 6),
-        "i": paint("i", base, 7),
-        "e": paint("e", base, 8),
-        "x": paint("x", base, 9),
-    }
-    if theme in ("rocha", "terra"):
-        # O chão de terra do ginásio é a areia; o "chão liso" fica um tom acima.
-        tiles["."] = Image.eval(floor, lambda v: min(255, int(v * 1.12)))
-    if rock is not None:
-        # A pedra do mapa vem sem fundo: coloca o chão por baixo.
-        under = tiles["s"] if theme in ("rocha", "terra") else floor
-        r2 = under.copy()
-        r2.alpha_composite(rock)
-        tiles["r"] = r2
-    else:
-        r2 = tiles["s"].copy() if theme in ("rocha", "terra") else floor.copy()
-        r2.alpha_composite(tiles["r"])
-        tiles["r"] = r2
-    strip = Image.new("RGBA", (T * len(ORDER), T))
-    for i, k in enumerate(ORDER):
-        strip.paste(up(tiles[k]), (i * T, 0))
-    strip.save(OUT / f"{gid}.png")
-    return bool(water), bool(rock)
+    pal = THEME.get(theme, THEME["normal"])
+    base = gym_floor(area) if area else None
+    atlas = Image.new("RGBA", (T * VARIANTS, T * len(ORDER)))
+    for row, kind in enumerate(ORDER):
+        if kind == "." and base is not None:
+            tiles = floor_variants(base, pal, theme)
+        else:
+            tiles = [paint(kind, pal, v, theme) for v in range(VARIANTS)]
+        for v, t in enumerate(tiles):
+            atlas.paste(t.resize((T, T), Image.NEAREST), (v * T, row * T))
+    atlas.save(OUT / f"{gid}.png")
+    return base is not None
 
 
 if __name__ == "__main__":
     OUT.mkdir(parents=True, exist_ok=True)
-    for gid, area, theme in gyms():
-        print(gid, area, theme, build(gid, area, theme))
+    areas = gym_areas()
+    for gid in arena_list():
+        theme = json.loads((SRV / "arenas" / f"{gid}.json").read_text())["theme"]
+        print(gid, theme, build(gid, areas.get(gid), theme))
